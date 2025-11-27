@@ -8,10 +8,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 254542755920789878, guid: 975862d4e0621904eb497ce755294990, type: 3}
-      propertyPath: baseSpeed
-      value: 2
-      objectReference: {fileID: 0}
     - target: {fileID: 4777620063708500714, guid: 975862d4e0621904eb497ce755294990, type: 3}
       propertyPath: m_Name
       value: EnnemyBig

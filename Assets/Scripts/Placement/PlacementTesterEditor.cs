@@ -10,7 +10,7 @@ namespace Placement
         {
             DrawDefaultInspector();
 
-            var tester = (PlacementTester)target;
+            PlacementTester tester = (PlacementTester)target;
 
             GUILayout.Space(10);
             GUILayout.Label("Quick Actions", EditorStyles.boldLabel);
@@ -26,7 +26,7 @@ namespace Placement
                 GUILayout.Space(5);
                 if (GUILayout.Button("Stop Placement", GUILayout.Height(30)))
                 {
-                    var manager = tester.GetComponentInChildren<PlacementManager>();
+                    var manager = tester.GetComponentInChildren<PlacementManager>(); 
 
                     Debug.Log("Use Backspace or Right Click in Game View to stop.");
                 }

@@ -1,502 +1,293 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Unity.AI.Navigation;
 using Unity.Mathematics;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.Serialization;
 using UnityEngine.Splines;
 
 namespace Pathing
 {
+    [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer), typeof(MeshCollider))]
     public class RoadNetworkGenerator : MonoBehaviour
     {
-        [Header("Terrain Texturing")] public bool applySplatting;
-        public int terrainLayerIndex;
+        [SerializeField] [HideInInspector] private List<GameObject> spawnedBlockagesList = new();
+        private Dictionary<int, GameObject> _blockageMap = new();
+    
+        [Header("Props & Decor")] public GameObject blockagePrefab; 
+        
+        [Header("Terrain Texturing")] 
+        public bool applySplatting = false;
+        [Tooltip("L'index de la couche de texture (Layer) du terrain à peindre sous la route (0, 1, 2...).")]
+        public int terrainLayerIndex = 0; 
+        [Tooltip("Largeur supplémentaire à peindre autour de la route.")]
         public float splatWidthBuffer = 2.0f;
 
+        [SerializeField] [HideInInspector] private List<GameObject> _spawnedProps = new();
+
+        [Header("Debug Tools")] 
+        [Range(0.1f, 1f)] public float gizmoSize = 0.3f;
+        [Range(1, 10)] public int gizmoSkip = 1; 
+    
         [Header("Main Settings")] public SplineContainer splineContainer;
+
         public float groundOffset = 0.05f;
         public bool useSplineTwist = true;
 
-        [Header("Navigation Logic")] 
-        public int roadEdgeAreaID = 3; // High Cost
-        public int roadCenterAreaID = 4; // Low Cost
-        
-        [Tooltip("Prefab with a NavMeshObstacle(Carve=True).")]
-        public GameObject navigationBlockerPrefab;
-        
-        [Tooltip("Lifts the blocker up. Useful if your prefab pivot is in the center.")]
-        public float blockerHeightOffset = 0.0f; // <--- NEW: Fixes "half in ground"
-
-        [Range(0.1f, 0.9f)] public float centerLaneWidthPercent = 0.5f;
-
-        [Header("Junction Corners")] [Range(1, 10)]
+        [Header("Junction Corners")] [Tooltip("1 = Straight Line, 5+ = Smooth Curve")] [Range(1, 10)]
         public int cornerResolution = 5;
+
+        [Tooltip("How much the corner curves outward. 0.5 is standard.")]
         public float cornerCurveStrength = 0.5f;
 
-        [Header("Junction Quality")] [Range(1, 10)]
+        [Header("Junction Quality")]
+        [Tooltip("Number of rings from center to rim. Higher = better ground snapping.")]
+        [Range(1, 10)]
         public int junctionResolution = 4;
 
         [Header("Editor Performance")] public bool autoUpdate;
-
         [Header("Terrain Snapping")] public bool snapToTerrain = true;
+
         public LayerMask groundLayer;
         public float raycastDistance = 100f;
 
         [Header("Cozy / Organic Feel")] public bool enableWobble = true;
+
         public float wobbleScale = 0.5f;
         public float wobbleAmount = 0.8f;
         public bool intersectionBulge = true;
         public float bulgeMultiplier = 1.3f;
 
         [Header("Material Blending")] public float maxStoneWidth = 8.0f;
-        public float minDirtWidth = 2.0f;
 
-        public Material roadMaterial;
-        public Material navDebugMaterial; 
+        public float minDirtWidth = 2.0f;
 
         [Header("Per-Spline Configuration")] public List<RoadProfile> roadProfiles = new();
 
-        private readonly Dictionary<int, SplineConnectionIds> _connectionMap = new();
-        private readonly Dictionary<int, (SeamData StartSeam, SeamData EndSeam)> _seamPositionMap = new();
-        
-        // Registry to look up roads by index at runtime
-        private readonly Dictionary<int, RoadSegmentController> _roadRegistry = new();
+        [HideInInspector] public Mesh generatedMesh;
 
-        private void Awake()
+        private readonly Dictionary<int, SplineConnectionIds> _connectionMap = new();
+        [SerializeField] private List<Vector3> debugJunctionPoints = new();
+ 
+        public void ResetBlockages()
         {
-            // CRITICAL FIX: Rebuild registry at runtime startup
-            // because Dictionaries are not saved in the scene.
-            _roadRegistry.Clear();
-            var controllers = GetComponentsInChildren<RoadSegmentController>();
-            foreach (var controller in controllers)
+            var count = Mathf.Min(splineContainer.Splines.Count, roadProfiles.Count);
+            for (var i = 0; i < count; i++)
             {
-                if (!_roadRegistry.ContainsKey(controller.SplineIndex))
+                roadProfiles[i].isBlocked = true;
+            }
+
+
+            GenerateBlockages();
+        }
+
+        private void OnValidate()
+        {
+#if UNITY_EDITOR
+            if (autoUpdate) 
+                EditorApplication.delayCall += () =>
                 {
-                    _roadRegistry.Add(controller.SplineIndex, controller);
+                    if (this != null && !Application.isPlaying) Generate();
+                };
+#endif
+        }
+
+
+        private Dictionary<int, GameObject> _blockageInstances = new();
+
+
+        private void GenerateBlockages()
+        {
+            // 1. CLEANUP PHASE
+            // Check the serialized list first (Editor safety)
+            if (spawnedBlockagesList != null)
+            {
+                for (int i = spawnedBlockagesList.Count - 1; i >= 0; i--)
+                {
+                    var obj = spawnedBlockagesList[i];
+                    if (obj != null)
+                    {
+                        if (Application.isPlaying) Destroy(obj);
+                        else DestroyImmediate(obj);
+                    }
+                }
+            }
+        
+            // Also check the runtime dictionary just in case
+            foreach (var kvp in _blockageMap)
+            {
+                if (kvp.Value != null)
+                {
+                    if (Application.isPlaying) Destroy(kvp.Value);
+                    else DestroyImmediate(kvp.Value);
+                }
+            }
+
+            // Reset containers
+            spawnedBlockagesList = new List<GameObject>();
+            _blockageMap.Clear();
+
+            if (!blockagePrefab) return;
+
+            // 2. SPAWN PHASE
+            var count = Mathf.Min(splineContainer.Splines.Count, roadProfiles.Count);
+            for (var i = 0; i < count; i++)
+            {
+                if (roadProfiles[i].isBlocked)
+                {
+                    SpawnBlockageForSpline(i);
                 }
             }
         }
-        
-#if UNITY_EDITOR
-        private void OnValidate()
+
+        private void SpawnBlockageForSpline(int index)
         {
-            if (autoUpdate && !Application.isPlaying)
-                EditorApplication.delayCall += () =>
-                {
-                    if (this) Generate();
-                };
-        }
+            var spline = splineContainer.Splines[index];
+            spline.Evaluate(0.5f, out var localPos, out var localTan, out var localUp);
+
+            var worldPos = splineContainer.transform.TransformPoint(localPos);
+            var worldTan = splineContainer.transform.TransformDirection(localTan);
+            var worldUp = splineContainer.transform.TransformDirection(localUp);
+
+            var finalPos = SnapToGround(worldPos);
+            var rot = Quaternion.LookRotation(worldTan, worldUp);
+
+            GameObject obj;
+#if UNITY_EDITOR
+            if (!Application.isPlaying &&
+                PrefabUtility.GetPrefabAssetType(blockagePrefab) != PrefabAssetType.NotAPrefab)
+                obj = (GameObject)PrefabUtility.InstantiatePrefab(blockagePrefab, transform);
+            else
 #endif
+                obj = Instantiate(blockagePrefab, transform);
+
+            obj.transform.position = finalPos;
+            obj.transform.rotation = rot;
+            obj.name = $"Blockage_Spline_{index}";
+
+            // Add to BOTH containers
+            spawnedBlockagesList.Add(obj); // Keeps reference safe in Editor
+            _blockageMap[index] = obj;      // Allows fast access in Game
+        }
+
+        // [CHANGE 3] Public API for the Wave Manager
+        public void UnlockRoad(int splineIndex)
+        {
+            // Failsafe: Rebuild dictionary if empty (happens if you start game without regenerating)
+            if (_blockageMap.Count == 0 && spawnedBlockagesList.Count > 0)
+            {
+                RebuildBlockageMap();
+            }
+
+            if (splineIndex < 0 || splineIndex >= roadProfiles.Count) return;
+
+            // 1. Update Data so it doesn't come back on regeneration
+            roadProfiles[splineIndex].isBlocked = false;
+
+            // 2. Remove Visuals
+            if (_blockageMap.TryGetValue(splineIndex, out GameObject prop))
+            {
+                if (prop != null)
+                {
+                    // Remove from the Serialized List too so it doesn't cause null errors later
+                    if (spawnedBlockagesList.Contains(prop)) spawnedBlockagesList.Remove(prop);
+
+                    if (Application.isPlaying) Destroy(prop);
+                    else DestroyImmediate(prop);
+                }
+                _blockageMap.Remove(splineIndex);
+            }
+        }
+
+        // Helper to map the list back to dictionary at Runtime Start
+        private void RebuildBlockageMap()
+        {
+            _blockageMap.Clear();
+            foreach (var obj in spawnedBlockagesList)
+            {
+                if (obj == null) continue;
+            
+                // Extract ID from name "Blockage_Spline_3"
+                string[] parts = obj.name.Split('_');
+                if (parts.Length > 0 && int.TryParse(parts[parts.Length - 1], out int id))
+                {
+                    _blockageMap[id] = obj;
+                }
+            }
+        }
+
+        private void Awake()
+        {
+            // Ensure map is ready when game starts
+            RebuildBlockageMap();
+        }
 
         [ContextMenu("Force Generate Road")]
         public void Generate()
         {
+            debugJunctionPoints.Clear();
+            _connectionMap.Clear();
+
             if (!splineContainer) splineContainer = GetComponent<SplineContainer>();
             if (!splineContainer) return;
 
             SyncProfiles();
-            _connectionMap.Clear();
-            _seamPositionMap.Clear();
-            _roadRegistry.Clear(); 
 
-            // 1. Cleanup Children
-            for (var i = transform.childCount - 1; i >= 0; i--)
-            {
-                var child = transform.GetChild(i).gameObject;
-                if (Application.isPlaying) Destroy(child);
-                else DestroyImmediate(child);
-            }
+            GenerateBlockages();
 
-            // 2. Build Graph & Pre-calculate Trims
+            if (!generatedMesh) generatedMesh = new Mesh();
+            generatedMesh.Clear();
+            generatedMesh.name = "ProceduralRoadNetwork";
+            generatedMesh.indexFormat = IndexFormat.UInt32;
+
+            var allVerts = new List<Vector3>();
+            var allTris = new List<int>();
+            // allUvs removed
+            var allColors = new List<Color>();
+
             var nodes = BuildNodeGraph();
+
             var splineTrims = new Dictionary<int, Vector2>();
             for (var i = 0; i < splineContainer.Splines.Count; i++)
             {
                 splineTrims[i] = new Vector2(0f, 1f);
-                _connectionMap[i] = new SplineConnectionIds();
-                _seamPositionMap[i] = (new SeamData(), new SeamData());
+                _connectionMap[i] = new SplineConnectionIds(); 
             }
 
-            // 3. Generate Junctions
-            var junctionCount = 0;
             foreach (var node in nodes)
                 if (node.Connections.Count > 2)
-                    GenerateJunctionObject(node, splineTrims, junctionCount++);
+                    GenerateJunctionMesh(node, allVerts, allTris, allColors, splineTrims);
 
-            // 4. Generate Road Strips
             var splineIndex = 0;
             foreach (var spline in splineContainer.Splines)
             {
                 var trim = splineTrims[splineIndex];
                 var profile = roadProfiles[splineIndex];
-
-                GenerateRoadObject(spline, splineIndex, trim.x, trim.y, profile);
+                GenerateRoadStrip(spline, splineIndex, trim.x, trim.y, profile, allVerts, allTris, allColors);
                 splineIndex++;
+            }
+
+            generatedMesh.SetVertices(allVerts);
+            generatedMesh.SetTriangles(allTris, 0);
+            generatedMesh.SetColors(allColors);
+
+            generatedMesh.RecalculateNormals();
+            generatedMesh.RecalculateTangents();
+            generatedMesh.RecalculateBounds();
+
+            GetComponent<MeshFilter>().sharedMesh = generatedMesh;
+            MeshCollider mc = GetComponent<MeshCollider>();
+            if (mc) 
+            {
+                mc.sharedMesh = null;
+                mc.sharedMesh = generatedMesh;
             }
 
             ApplyTerrainSplatting();
         }
-
-        // --- API for External Scripts ---
-
-        public void SetRoadBlocked(int splineIndex, bool isBlocked)
-        {
-            if (_roadRegistry.TryGetValue(splineIndex, out var controller))
-            {
-                // We call a specific Internal method to avoid infinite loops
-                // if the controller tries to call back to us.
-                controller.SetBlockedInternal(isBlocked);
-            }
-            else
-            {
-                Debug.LogWarning($"[RoadNetworkGenerator] Cannot find road for Spline Index {splineIndex}.");
-            }
-        }
-
-        // --------------------------------------------------------------------------------
-        // Object Generation Helpers
-        // --------------------------------------------------------------------------------
-
-        private void GenerateJunctionObject(Node node, Dictionary<int, Vector2> trims, int index)
-        {
-            var meshData = new MeshData();
-            GenerateJunctionGeometry(node, meshData, trims);
-            if (meshData.verts.Count == 0) return;
-
-            var go = CreateMeshObject($"Junction_{index}", meshData, roadEdgeAreaID);
-            go.transform.SetParent(transform, false);
-        }
-
-        private void GenerateRoadObject(Spline spline, int splineIndex, float tStart, float tEnd, RoadProfile profile)
-        {
-            var halfCenter = centerLaneWidthPercent * 0.5f;
-            var seamLeft = 0.5f - halfCenter;
-            var seamRight = 0.5f + halfCenter;
-
-            // 1. Generate the Three Strips
-            var leftData = new MeshData();
-            GenerateRoadRibbon(spline, splineIndex, tStart, tEnd, profile, 0.0f, seamLeft, leftData);
-
-            var rightData = new MeshData();
-            GenerateRoadRibbon(spline, splineIndex, tStart, tEnd, profile, seamRight, 1.0f, rightData);
-
-            var centerData = new MeshData();
-            GenerateRoadRibbon(spline, splineIndex, tStart, tEnd, profile, seamLeft, seamRight, centerData);
-
-            // 2. Combine Left and Right into the Main Road Mesh
-            var combinedRoad = new MeshData();
-            combinedRoad.verts.AddRange(leftData.verts);
-            combinedRoad.colors.AddRange(leftData.colors);
-            combinedRoad.tris.AddRange(leftData.tris);
-
-            var vertOffset = leftData.verts.Count;
-            combinedRoad.verts.AddRange(rightData.verts);
-            combinedRoad.colors.AddRange(rightData.colors);
-            foreach (var t in rightData.tris) combinedRoad.tris.Add(t + vertOffset);
-
-            // Create Main Road Object
-            if (combinedRoad.verts.Count > 0)
-            {
-                var roadGO = CreateMeshObject($"Road_{splineIndex}", combinedRoad, roadEdgeAreaID);
-                roadGO.transform.SetParent(transform, false);
-
-                // --- NEW: Setup Navigation Blocker with Profile Settings ---
-                GameObject blockerInstance = null;
-                bool initialBlockedState = profile.defaultBlocked; // Read from profile
-
-                if (navigationBlockerPrefab != null)
-                {
-                    float midT = Mathf.Lerp(tStart, tEnd, 0.5f);
-                    spline.Evaluate(midT, out var rawP, out var rawTan, out var rawUp);
-                    
-                    Vector3 snappedPos = SnapToGround((Vector3)rawP);
-                    
-                    // --- FIX: Apply Height Offset ---
-                    snappedPos += Vector3.up * blockerHeightOffset;
-
-                    Vector3 forward = math.normalizesafe(rawTan);
-                    Vector3 up = useSplineTwist ? math.normalizesafe(rawUp) : Vector3.up;
-                    if(forward == Vector3.zero) forward = Vector3.forward;
-
-                    blockerInstance = Instantiate(navigationBlockerPrefab, roadGO.transform);
-                    blockerInstance.name = "Nav_Blocker";
-                    blockerInstance.transform.localPosition = snappedPos; 
-                    blockerInstance.transform.rotation = Quaternion.LookRotation(forward, up);
-                    
-                    // Set initial state based on profile
-                    blockerInstance.SetActive(initialBlockedState);
-                }
-
-                // Add Controller and Register
-                var controller = roadGO.AddComponent<RoadSegmentController>();
-                // --- FIX: Pass 'this' (RoadNetworkGenerator) to the controller ---
-                controller.Initialize(this, splineIndex, blockerInstance, initialBlockedState);
-                _roadRegistry[splineIndex] = controller;
-
-#if UNITY_EDITOR
-                GameObjectUtility.SetStaticEditorFlags(roadGO, StaticEditorFlags.NavigationStatic);
-#endif
-
-                // 3. Create the Center Lane Object
-                if (centerData.verts.Count > 0)
-                {
-                    var centerGO = new GameObject("Nav_Center");
-                    centerGO.transform.SetParent(roadGO.transform, false);
-                    centerGO.transform.localPosition = Vector3.zero;
-
-                    var mf = centerGO.AddComponent<MeshFilter>();
-                    var mr = centerGO.AddComponent<MeshRenderer>();
-                    mr.sharedMaterial = roadMaterial;
-
-                    var centerMesh = new Mesh();
-                    centerMesh.name = $"CenterMesh_{splineIndex}";
-                    centerMesh.SetVertices(centerData.verts);
-                    centerMesh.SetTriangles(centerData.tris, 0);
-                    centerMesh.SetColors(centerData.colors);
-                    centerMesh.RecalculateNormals();
-                    centerMesh.RecalculateTangents();
-                    mf.sharedMesh = centerMesh;
-
-                    var mod = centerGO.AddComponent<NavMeshModifier>();
-                    mod.overrideArea = true;
-                    mod.area = roadCenterAreaID;
-
-#if UNITY_EDITOR
-                    GameObjectUtility.SetStaticEditorFlags(centerGO, StaticEditorFlags.NavigationStatic);
-#endif
-                }
-            }
-        }
-
-        private void GenerateRoadRibbon(Spline spline, int splineIndex, float tStart, float tEnd, RoadProfile profile,
-            float uMin, float uMax, MeshData data)
-        {
-            var splineLength = spline.GetLength();
-            var activeLength = (tEnd - tStart) * splineLength;
-            if (activeLength < 0.01f) return;
-
-            var segments = Mathf.CeilToInt(activeLength / Mathf.Max(0.1f, profile.vertexSpacing));
-            var widthPercent = uMax - uMin;
-            var resolution = Mathf.Max(1, Mathf.RoundToInt(profile.crossResolution * widthPercent));
-            var prevRowIndices = new List<int>();
-
-            for (var i = 0; i <= segments; i++)
-            {
-                var tRaw = i / (float)segments;
-                var t = Mathf.Lerp(tStart, tEnd, tRaw);
-                var currentWidth = GetNaturalWidth(t, splineLength, profile.width);
-
-                spline.Evaluate(t, out var rawPos, out var rawTangent, out var rawUp);
-                var splinePos = (Vector3)rawPos;
-                var forward = ((Vector3)rawTangent).normalized;
-                if (forward == Vector3.zero) forward = Vector3.forward;
-                var localUp = useSplineTwist ? ((Vector3)rawUp).normalized : Vector3.up;
-                var right = Vector3.Cross(localUp, forward).normalized;
-
-                var currentRowIndices = new List<int>();
-
-                for (var x = 0; x <= resolution; x++)
-                {
-                    var uLocal = x / (float)resolution;
-                    var uGlobal = Mathf.Lerp(uMin, uMax, uLocal);
-                    var offsetMultiplier = uGlobal - 0.5f;
-                    var posRaw = splinePos + right * (offsetMultiplier * currentWidth);
-                    var posSnapped = SnapToGround(posRaw); 
-
-                    data.verts.Add(posSnapped);
-                    data.colors.Add(CalculateVertexColor(currentWidth, uGlobal)); 
-                    currentRowIndices.Add(data.verts.Count - 1);
-                }
-
-                if (i > 0)
-                    for (var x = 0; x < resolution; x++)
-                    {
-                        var currentLeft = currentRowIndices[x];
-                        var currentRight = currentRowIndices[x + 1];
-                        var prevLeft = prevRowIndices[x];
-                        var prevRight = prevRowIndices[x + 1];
-
-                        data.tris.Add(prevLeft);
-                        data.tris.Add(currentLeft);
-                        data.tris.Add(prevRight);
-
-                        data.tris.Add(prevRight);
-                        data.tris.Add(currentLeft);
-                        data.tris.Add(currentRight);
-                    }
-
-                prevRowIndices = currentRowIndices;
-            }
-        }
-
-        private GameObject CreateMeshObject(string name, MeshData data, int areaID)
-        {
-            var go = new GameObject(name) { layer = gameObject.layer };
-            var mf = go.AddComponent<MeshFilter>();
-            var mr = go.AddComponent<MeshRenderer>();
-            var mc = go.AddComponent<MeshCollider>();
-            var mod = go.AddComponent<NavMeshModifier>();
-
-            mr.sharedMaterial = roadMaterial;
-            var mesh = new Mesh { name = name + "_Mesh", indexFormat = IndexFormat.UInt32 };
-            mesh.SetVertices(data.verts);
-            mesh.SetTriangles(data.tris, 0);
-            mesh.SetColors(data.colors);
-            mesh.RecalculateNormals();
-            mesh.RecalculateTangents();
-            mesh.RecalculateBounds();
-
-            mf.sharedMesh = mesh;
-            mc.sharedMesh = mesh;
-            mod.overrideArea = true;
-            mod.area = areaID;
-
-            return go;
-        }
-
-        // --------------------------------------------------------------------------------
-        // Geometry / Junction / Util Methods
-        // --------------------------------------------------------------------------------
-
-        private void GenerateJunctionGeometry(Node node, MeshData data, Dictionary<int, Vector2> trims)
-        {
-            node.Connections.Sort((a, b) => {
-                var angleA = Mathf.Atan2(a.Tangent.x, a.Tangent.z);
-                var angleB = Mathf.Atan2(b.Tangent.x, b.Tangent.z);
-                return angleA.CompareTo(angleB);
-            });
-            var centerPos = SnapToGround(node.Position);
-            var rightEdges = new List<JunctionEdge>();
-            var leftEdges = new List<JunctionEdge>();
-
-            foreach (var conn in node.Connections)
-            {
-                var profile = roadProfiles[conn.SplineIndex];
-                var spline = splineContainer.Splines[conn.SplineIndex];
-                var splineLen = spline.GetLength();
-                var effectiveWidth = profile.width * (intersectionBulge ? bulgeMultiplier : 1.0f);
-                var retractMeters = effectiveWidth * 0.5f * profile.junctionRetractMultiplier;
-                var tOffset = splineLen > 0.001f ? Mathf.Clamp01(retractMeters / splineLen) : 0;
-
-                if (conn.IsStart) {
-                    var current = trims[conn.SplineIndex];
-                    trims[conn.SplineIndex] = new Vector2(Mathf.Max(current.x, tOffset), current.y);
-                } else {
-                    var current = trims[conn.SplineIndex];
-                    trims[conn.SplineIndex] = new Vector2(current.x, Mathf.Min(current.y, 1f - tOffset));
-                }
-
-                var evalT = conn.IsStart ? tOffset : 1f - tOffset;
-                spline.Evaluate(evalT, out var pos, out var tan, out var up);
-                Vector3 fwd = math.normalizesafe(tan);
-                if (fwd == Vector3.zero) fwd = conn.IsStart ? Vector3.forward : Vector3.back;
-                var outDirection = conn.IsStart ? -fwd : fwd;
-                var right = Vector3.Cross(Vector3.up, fwd).normalized;
-                var rawPos = (Vector3)pos;
-
-                var steps = Mathf.Max(1, junctionResolution);
-                var crossRes = Mathf.Max(1, profile.crossResolution);
-                var prevRowIndices = new List<int>();
-                var armLeftIndices = new List<int>();
-                var armRightIndices = new List<int>();
-                var seamPositions = new List<Vector3>();
-
-                for (var s = 0; s <= steps; s++)
-                {
-                    var tLength = s / (float)steps;
-                    var currentHalfWidth = Mathf.Lerp(0f, effectiveWidth * 0.5f, tLength);
-                    var rayPos = Vector3.Lerp(centerPos, rawPos, tLength);
-                    var currentRowIndices = new List<int>();
-
-                    for (var x = 0; x <= crossRes; x++)
-                    {
-                        var u = x / (float)crossRes;
-                        var widthOffset = (u - 0.5f) * 2f * currentHalfWidth;
-                        var posSnapped = SnapToGround(rayPos + right * widthOffset);
-                        var newIdx = data.verts.Count;
-                        data.verts.Add(posSnapped);
-                        currentRowIndices.Add(newIdx);
-                        var ringWidth = Mathf.Lerp(0f, effectiveWidth, tLength);
-                        var col = CalculateVertexColor(ringWidth, u);
-                        col.a = 1.0f;
-                        data.colors.Add(col);
-
-                        if (x == 0) armLeftIndices.Add(newIdx);
-                        if (x == crossRes) armRightIndices.Add(newIdx);
-                        if (s == steps) seamPositions.Add(posSnapped);
-                    }
-                    if (s > 0) {
-                         for (var x = 0; x < crossRes; x++) {
-                            var c = currentRowIndices[x + 1]; var d = currentRowIndices[x];
-                            var b = prevRowIndices[x]; var a = prevRowIndices[x + 1];
-                            if (conn.IsStart) { data.tris.Add(a); data.tris.Add(b); data.tris.Add(d); data.tris.Add(a); data.tris.Add(d); data.tris.Add(c); }
-                            else { data.tris.Add(a); data.tris.Add(d); data.tris.Add(b); data.tris.Add(a); data.tris.Add(c); data.tris.Add(d); }
-                        }
-                    }
-                    prevRowIndices = currentRowIndices;
-                }
-                var sd = new SeamData { Positions = seamPositions, Tangent = outDirection };
-                if (conn.IsStart) _seamPositionMap[conn.SplineIndex] = (sd, _seamPositionMap[conn.SplineIndex].EndSeam);
-                else _seamPositionMap[conn.SplineIndex] = (_seamPositionMap[conn.SplineIndex].StartSeam, sd);
-
-                var finalLeft = data.verts[prevRowIndices[0]];
-                var finalRight = data.verts[prevRowIndices[crossRes]];
-                if (conn.IsStart) {
-                    leftEdges.Add(new JunctionEdge { position = finalLeft, tangentDir = outDirection, indices = armLeftIndices });
-                    rightEdges.Add(new JunctionEdge { position = finalRight, tangentDir = outDirection, indices = armRightIndices });
-                } else {
-                    leftEdges.Add(new JunctionEdge { position = finalRight, tangentDir = outDirection, indices = armRightIndices });
-                    rightEdges.Add(new JunctionEdge { position = finalLeft, tangentDir = outDirection, indices = armLeftIndices });
-                }
-            }
-            
-            var count = node.Connections.Count;
-            for (var i = 0; i < count; i++) {
-                var startEdge = rightEdges[i];
-                var endEdge = leftEdges[(i + 1) % count];
-                var p0 = startEdge.position; var p3 = endEdge.position;
-                var dist = Vector3.Distance(p0, p3);
-                var p1 = p0 + startEdge.tangentDir * dist * cornerCurveStrength;
-                var p2 = p3 + endEdge.tangentDir * dist * cornerCurveStrength;
-                var prevColumnIndices = new List<int>();
-                var curveSteps = Mathf.Max(1, cornerResolution);
-                var ringSteps = Mathf.Max(1, junctionResolution);
-
-                for (var s = 0; s <= curveSteps; s++) {
-                    var tCurve = s / (float)curveSteps;
-                    var rimPos = CalculateCubicBezierPoint(tCurve, p0, p1, p2, p3);
-                    var currentColumnIndices = new List<int>();
-                    var isStartWeld = s == 0; var isEndWeld = s == curveSteps;
-                    for (var r = 0; r <= ringSteps; r++) {
-                        var currentIdx = -1;
-                        if (isStartWeld && r < startEdge.indices.Count) currentIdx = startEdge.indices[r];
-                        else if (isEndWeld && r < endEdge.indices.Count) currentIdx = endEdge.indices[r];
-                        if (currentIdx == -1) {
-                            var tRing = r / (float)ringSteps;
-                            var posRaw = Vector3.Lerp(centerPos, rimPos, tRing);
-                            if (r == ringSteps) posRaw = rimPos;
-                            var posSnapped = SnapToGround(posRaw);
-                            currentIdx = data.verts.Count;
-                            data.verts.Add(posSnapped);
-                            var redChannel = 1f - Mathf.SmoothStep(0.5f, 1.0f, tRing);
-                            var alpha = r == ringSteps ? 0f : 1f;
-                            data.colors.Add(new Color(redChannel, 0, 0, alpha));
-                        }
-                        currentColumnIndices.Add(currentIdx);
-                        if (s > 0 && r > 0) {
-                            var c = currentIdx; var d = currentColumnIndices[r - 1];
-                            var b = prevColumnIndices[r]; var a = prevColumnIndices[r - 1];
-                            data.tris.Add(a); data.tris.Add(b); data.tris.Add(c); data.tris.Add(a); data.tris.Add(c); data.tris.Add(d);
-                        }
-                    }
-                    prevColumnIndices = currentColumnIndices;
-                }
-            }
-        }
-
+    
         private float GetNaturalWidth(float t, float splineLength, float baseWidth)
         {
             var currentWidth = baseWidth;
@@ -517,90 +308,144 @@ namespace Pathing
                     currentWidth = Mathf.Lerp(currentWidth, baseWidth * bulgeMultiplier, bulgeFactor);
                 }
             }
+
             return currentWidth;
         }
 
         private Color CalculateVertexColor(float currentWidth, float uAcross)
         {
-            var roadTypeStrength = Mathf.InverseLerp(minDirtWidth, maxStoneWidth, currentWidth);
-            var distFromCenter = Mathf.Abs(uAcross - 0.5f) * 2f;
-            var shoulderMask = 1f - Mathf.SmoothStep(0.6f, 0.95f, distFromCenter);
-            var finalRed = roadTypeStrength * shoulderMask;
-            var alpha = 1f;
-            if (distFromCenter > 0.95f) alpha = Mathf.InverseLerp(1.0f, 0.95f, distFromCenter);
+            float roadTypeStrength = Mathf.InverseLerp(minDirtWidth, maxStoneWidth, currentWidth);
+            float distFromCenter = Mathf.Abs(uAcross - 0.5f) * 2f;
+            float shoulderMask = 1f - Mathf.SmoothStep(0.6f, 0.95f, distFromCenter);
+            float finalRed = roadTypeStrength * shoulderMask;
+
+            float alpha = 1f;
+            if (distFromCenter > 0.95f)
+            {
+                alpha = Mathf.InverseLerp(1.0f, 0.95f, distFromCenter);
+            }
+
             return new Color(finalRed, 0, 0, alpha);
         }
 
         private void SyncProfiles()
         {
             var targetCount = splineContainer.Splines.Count;
-            if (roadProfiles.Count > targetCount)
-                roadProfiles.RemoveRange(targetCount, roadProfiles.Count - targetCount);
+            if (roadProfiles.Count > targetCount) roadProfiles.RemoveRange(targetCount, roadProfiles.Count - targetCount);
             while (roadProfiles.Count < targetCount)
                 roadProfiles.Add(new RoadProfile { name = $"Spline {roadProfiles.Count}", width = 6.0f });
         }
-
+        
         private void ApplyTerrainSplatting()
-        {
-            if (!applySplatting || !splineContainer) return;
-            var terrain = Terrain.activeTerrain;
-            if (!terrain) return;
-            var tData = terrain.terrainData;
-            var alphamapW = tData.alphamapWidth;
-            var alphamapH = tData.alphamapHeight;
-            var splatmapData = tData.GetAlphamaps(0, 0, alphamapW, alphamapH);
-            var numLayers = tData.alphamapLayers;
-            if (terrainLayerIndex >= numLayers) return;
+{
+    if (!applySplatting || splineContainer == null) return;
 
-            for (var i = 0; i < splineContainer.Splines.Count; i++)
+    Terrain terrain = Terrain.activeTerrain;
+    if (terrain == null) return;
+
+    TerrainData tData = terrain.terrainData;
+    int alphamapW = tData.alphamapWidth;
+    int alphamapH = tData.alphamapHeight;
+    
+    // On récupère toutes les données de texture (Lourd, mais nécessaire)
+    // float[y, x, layer]
+    float[,,] splatmapData = tData.GetAlphamaps(0, 0, alphamapW, alphamapH);
+    int numLayers = tData.alphamapLayers;
+
+    // Sécurité : Vérifier que l'index existe
+    if (terrainLayerIndex >= numLayers)
+    {
+        Debug.LogWarning("Index de layer terrain invalide !");
+        return;
+    }
+
+    // Parcourir chaque Spline
+    for (int i = 0; i < splineContainer.Splines.Count; i++)
+    {
+        var spline = splineContainer.Splines[i];
+        var profile = roadProfiles[Mathf.Min(i, roadProfiles.Count - 1)];
+        float totalLen = spline.GetLength();
+        
+        // On avance le long de la spline tous les X mètres
+        float stepSize = 1.0f; // Précision de la peinture
+        int steps = Mathf.CeilToInt(totalLen / stepSize);
+
+        for (int s = 0; s <= steps; s++)
+        {
+            float t = s / (float)steps;
+            Vector3 worldPos = (Vector3)spline.EvaluatePosition(t);
+            // Convertir la position Monde en position Terrain Local (0 à 1)
+            worldPos = transform.TransformPoint(worldPos); // Si la spline est locale
+            
+            // Calcul des coordonnées sur la splatmap
+            Vector3 terrainPos = worldPos - terrain.transform.position;
+            float normX = terrainPos.x / tData.size.x;
+            float normZ = terrainPos.z / tData.size.z;
+
+            int mapX = Mathf.RoundToInt(normX * alphamapW);
+            int mapZ = Mathf.RoundToInt(normZ * alphamapH);
+
+            // Calcul de la largeur de peinture en pixels de texture
+            float roadWidthWorld = profile.width + splatWidthBuffer;
+            // Conversion largeur Monde -> largeur Pixels Texture
+            int brushRadius = Mathf.RoundToInt((roadWidthWorld / tData.size.x) * alphamapW * 0.5f);
+
+            // Peinture du carré autour du point (plus rapide qu'un cercle)
+            for (int x = -brushRadius; x <= brushRadius; x++)
             {
-                var spline = splineContainer.Splines[i];
-                var profile = roadProfiles[Mathf.Min(i, roadProfiles.Count - 1)];
-                var totalLen = spline.GetLength();
-                var steps = Mathf.CeilToInt(totalLen / 1.0f);
-                for (var s = 0; s <= steps; s++)
+                for (int y = -brushRadius; y <= brushRadius; y++)
                 {
-                    var t = s / (float)steps;
-                    var worldPos = (Vector3)spline.EvaluatePosition(t);
-                    worldPos = transform.TransformPoint(worldPos);
-                    var terrainPos = worldPos - terrain.transform.position;
-                    var normX = terrainPos.x / tData.size.x;
-                    var normZ = terrainPos.z / tData.size.z;
-                    var mapX = Mathf.RoundToInt(normX * alphamapW);
-                    var mapZ = Mathf.RoundToInt(normZ * alphamapH);
-                    var roadWidthWorld = profile.width + splatWidthBuffer;
-                    var brushRadius = Mathf.RoundToInt(roadWidthWorld / tData.size.x * alphamapW * 0.5f);
-                    for (var x = -brushRadius; x <= brushRadius; x++)
-                    for (var y = -brushRadius; y <= brushRadius; y++)
+                    int finalX = mapX + x;
+                    int finalY = mapZ + y;
+
+                    // Vérifier si on est dans les limites du terrain
+                    if (finalX >= 0 && finalX < alphamapW && finalY >= 0 && finalY < alphamapH)
                     {
-                        var finalX = mapX + x;
-                        var finalY = mapZ + y;
-                        if (finalX >= 0 && finalX < alphamapW && finalY >= 0 && finalY < alphamapH)
+                        // On met notre layer cible à 1 (100% opacité)
+                        splatmapData[finalY, finalX, terrainLayerIndex] = 1f;
+
+                        // On met tous les autres layers à 0 pour ce pixel
+                        for (int l = 0; l < numLayers; l++)
                         {
-                            splatmapData[finalY, finalX, terrainLayerIndex] = 1f;
-                            for (var l = 0; l < numLayers; l++)
-                                if (l != terrainLayerIndex)
-                                    splatmapData[finalY, finalX, l] = 0f;
+                            if (l != terrainLayerIndex)
+                            {
+                                splatmapData[finalY, finalX, l] = 0f;
+                            }
                         }
                     }
                 }
             }
-            tData.SetAlphamaps(0, 0, splatmapData);
         }
+    }
+
+    // Appliquer les changements au terrain
+    tData.SetAlphamaps(0, 0, splatmapData);
+}
 
         private Vector3 SnapToGround(Vector3 localPos)
         {
             if (!snapToTerrain) return localPos;
-            var worldPos = transform.TransformPoint(localPos);
+
+            // 1. Conversion Local -> World pour que le Raycast parte du bon endroit réel
+            Vector3 worldPos = transform.TransformPoint(localPos);
+
+            // 2. On part de très haut au-dessus de ce point
             var startPos = worldPos + Vector3.up * (raycastDistance * 0.5f);
+
             if (Physics.Raycast(startPos, Vector3.down, out var hit, raycastDistance, groundLayer))
             {
-                var finalWorldPos = hit.point + Vector3.up * groundOffset;
+                // 3. On a touché le sol
+                // Optionnel : Tu peux utiliser hit.normal pour orienter l'offset si tu veux être précis sur les pentes raides
+                Vector3 finalWorldPos = hit.point + Vector3.up * groundOffset;
+
+                // 4. Conversion World -> Local pour le Mesh (car le MeshFilter est local)
                 return transform.InverseTransformPoint(finalWorldPos);
             }
+
+            // Fallback : Si on ne touche rien, on garde la position théorique avec l'offset
             return localPos + Vector3.up * groundOffset;
         }
-
+    
         private List<Node> BuildNodeGraph()
         {
             var nodes = new List<Node>();
@@ -613,13 +458,20 @@ namespace Pathing
                 AddConnectionToGraph(nodes, startPos, i, true, spline, mergeDistance);
                 if (!spline.Closed) AddConnectionToGraph(nodes, endPos, i, false, spline, mergeDistance);
             }
+
             return nodes;
         }
 
-        private void AddConnectionToGraph(List<Node> nodes, Vector3 pos, int splineIdx, bool isStart, Spline spline, float dist)
+        private void AddConnectionToGraph(List<Node> nodes, Vector3 pos, int splineIdx, bool isStart, Spline spline,
+            float dist)
         {
             var node = nodes.FirstOrDefault(n => Vector3.Distance(n.Position, pos) < dist);
-            if (node == null) { node = new Node { Position = pos }; nodes.Add(node); }
+            if (node == null)
+            {
+                node = new Node { Position = pos };
+                nodes.Add(node);
+            }
+
             float3 tan, up, p;
             if (isStart) spline.Evaluate(0f, out p, out tan, out up);
             else spline.Evaluate(1f, out p, out tan, out up);
@@ -627,19 +479,305 @@ namespace Pathing
             var outDir = isStart ? -tangentDir : tangentDir;
             node.Connections.Add(new Connection { SplineIndex = splineIdx, IsStart = isStart, Tangent = outDir });
         }
+    
+        private void GenerateJunctionMesh(Node node, List<Vector3> verts, List<int> tris, List<Color> colors, Dictionary<int, Vector2> trims)
+        {
+            node.Connections.Sort((a, b) => {
+                var angleA = Mathf.Atan2(a.Tangent.x, a.Tangent.z);
+                var angleB = Mathf.Atan2(b.Tangent.x, b.Tangent.z);
+                return angleA.CompareTo(angleB);
+            });
 
+            var centerPos = SnapToGround(node.Position);
+            debugJunctionPoints.Add(centerPos);
+
+            var rightEdges = new List<JunctionEdge>();
+            var leftEdges = new List<JunctionEdge>();
+
+            // PASSE 1 : Road Arms
+            foreach (var conn in node.Connections)
+            {
+                var profile = roadProfiles[conn.SplineIndex];
+                var spline = splineContainer.Splines[conn.SplineIndex];
+                var splineLen = spline.GetLength();
+
+                var effectiveWidth = profile.width * (intersectionBulge ? bulgeMultiplier : 1.0f);
+                var retractMeters = effectiveWidth * 0.5f * profile.junctionRetractMultiplier;
+                var tOffset = splineLen > 0.001f ? Mathf.Clamp01(retractMeters / splineLen) : 0;
+    
+                if (conn.IsStart) {
+                    var current = trims[conn.SplineIndex];
+                    trims[conn.SplineIndex] = new Vector2(Mathf.Max(current.x, tOffset), current.y);
+                } else {
+                    var current = trims[conn.SplineIndex];
+                    trims[conn.SplineIndex] = new Vector2(current.x, Mathf.Min(current.y, 1f - tOffset));
+                }
+
+                var evalT = conn.IsStart ? tOffset : 1f - tOffset;
+                spline.Evaluate(evalT, out var pos, out var tan, out var up);
+
+                Vector3 fwd = math.normalizesafe(tan);
+                if (fwd == Vector3.zero) fwd = conn.IsStart ? Vector3.forward : Vector3.back;
+                var outDirection = conn.IsStart ? -fwd : fwd;
+                var right = Vector3.Cross(Vector3.up, fwd).normalized;
+                var rawPos = (Vector3)pos;
+
+                var steps = Mathf.Max(1, junctionResolution);
+                var crossRes = Mathf.Max(1, profile.crossResolution);
+
+                var prevRowIndices = new List<int>();
+                var armLeftIndices = new List<int>();
+                var armRightIndices = new List<int>();
+
+                for (var s = 0; s <= steps; s++)
+                {
+                    var tLength = s / (float)steps;
+                    var currentHalfWidth = Mathf.Lerp(0f, effectiveWidth * 0.5f, tLength);
+                    var rayPos = Vector3.Lerp(centerPos, rawPos, tLength);
+                    var currentRowIndices = new List<int>();
+
+                    for (var x = 0; x <= crossRes; x++)
+                    {
+                        // u is still used for GEOMETRY positioning (width), but not for UVs
+                        var u = x / (float)crossRes;
+                        var widthOffset = (u - 0.5f) * 2f * currentHalfWidth;
+                        var posSnapped = SnapToGround(rayPos + right * widthOffset);
+
+                        var newIdx = verts.Count;
+                        verts.Add(posSnapped);
+                        currentRowIndices.Add(newIdx);
+
+                        // UV addition removed
+
+                        // Color Logic
+                        float ringWidth = Mathf.Lerp(0f, effectiveWidth, tLength);
+                        Color col = CalculateVertexColor(ringWidth, u);
+                        col.a = 1.0f; 
+                        colors.Add(col);
+
+                        if (x == 0) {
+                            armLeftIndices.Add(newIdx);
+                        }
+                        if (x == crossRes) {
+                            armRightIndices.Add(newIdx);
+                        }
+
+                        if (s == steps) {
+                            if (conn.IsStart) _connectionMap[conn.SplineIndex].StartIndices.Add(newIdx);
+                            else _connectionMap[conn.SplineIndex].EndIndices.Add(newIdx);
+                        }
+                    }
+                
+                    if (s > 0)
+                        for (var x = 0; x < crossRes; x++) {
+                            var c = currentRowIndices[x + 1]; var d = currentRowIndices[x];
+                            var b = prevRowIndices[x]; var a = prevRowIndices[x + 1];
+                            if (conn.IsStart) {
+                                tris.Add(a); tris.Add(b); tris.Add(d); tris.Add(a); tris.Add(d); tris.Add(c);
+                            } else {
+                                tris.Add(a); tris.Add(d); tris.Add(b); tris.Add(a); tris.Add(c); tris.Add(d);
+                            }
+                        }
+                    prevRowIndices = currentRowIndices;
+                }
+
+                var finalLeft = verts[prevRowIndices[0]];
+                var finalRight = verts[prevRowIndices[crossRes]];
+
+                // Removed uValue and armLength from JunctionEdge creation
+                if (conn.IsStart) {
+                    leftEdges.Add(new JunctionEdge { position = finalLeft, tangentDir = outDirection, indices = armLeftIndices });
+                    rightEdges.Add(new JunctionEdge { position = finalRight, tangentDir = outDirection, indices = armRightIndices });
+                } else {
+                    leftEdges.Add(new JunctionEdge { position = finalRight, tangentDir = outDirection, indices = armRightIndices });
+                    rightEdges.Add(new JunctionEdge { position = finalLeft, tangentDir = outDirection, indices = armLeftIndices });
+                }
+            }
+
+            // PASSE 2 : Corners
+            var count = node.Connections.Count;
+            for (var i = 0; i < count; i++)
+            {
+                var startEdge = rightEdges[i];
+                var endEdge = leftEdges[(i + 1) % count];
+
+                var p0 = startEdge.position;
+                var p3 = endEdge.position;
+                var dist = Vector3.Distance(p0, p3);
+                var p1 = p0 + startEdge.tangentDir * dist * cornerCurveStrength;
+                var p2 = p3 + endEdge.tangentDir * dist * cornerCurveStrength;
+
+                var prevColumnIndices = new List<int>();
+                var curveSteps = Mathf.Max(1, cornerResolution);
+                var ringSteps = Mathf.Max(1, junctionResolution);
+
+                for (var s = 0; s <= curveSteps; s++)
+                {
+                    var tCurve = s / (float)curveSteps;
+                    var rimPos = CalculateCubicBezierPoint(tCurve, p0, p1, p2, p3);
+                    var currentColumnIndices = new List<int>();
+
+                    var isStartWeld = s == 0;
+                    var isEndWeld = s == curveSteps;
+                
+                    for (var r = 0; r <= ringSteps; r++)
+                    {
+                        var currentIdx = -1;
+
+                        if (isStartWeld) {
+                            if (r < startEdge.indices.Count) currentIdx = startEdge.indices[r];
+                        } else if (isEndWeld) {
+                            if (r < endEdge.indices.Count) currentIdx = endEdge.indices[r];
+                        }
+
+                        if (currentIdx == -1)
+                        {
+                            var tRing = r / (float)ringSteps;
+                            var posRaw = Vector3.Lerp(centerPos, rimPos, tRing);
+                            if (r == ringSteps) posRaw = rimPos; 
+                            var posSnapped = SnapToGround(posRaw);
+
+                            currentIdx = verts.Count;
+                            verts.Add(posSnapped);
+
+                            // UV addition removed
+
+                            // Color Logic
+                            float redChannel = 1f - Mathf.SmoothStep(0.5f, 1.0f, tRing);
+                            float alpha = (r == ringSteps) ? 0f : 1f;
+                            colors.Add(new Color(redChannel, 0, 0, alpha));
+                        }
+                        currentColumnIndices.Add(currentIdx);
+
+                        if (s > 0 && r > 0) {
+                            var c = currentIdx; var d = currentColumnIndices[r - 1];
+                            var b = prevColumnIndices[r]; var a = prevColumnIndices[r - 1];
+                            tris.Add(a); tris.Add(b); tris.Add(c); tris.Add(a); tris.Add(c); tris.Add(d);
+                        }
+                    }
+                    prevColumnIndices = currentColumnIndices;
+                }
+            }
+        }
+        
         private Vector3 CalculateCubicBezierPoint(float t, Vector3 p0, Vector3 p1, Vector3 p2, Vector3 p3)
         {
-            var u = 1 - t; var tt = t * t; var uu = u * u; var uuu = uu * u; var ttt = tt * t;
-            var p = uuu * p0; p += 3 * uu * t * p1; p += 3 * u * tt * p2; p += ttt * p3;
+            var u = 1 - t;
+            var tt = t * t;
+            var uu = u * u;
+            var uuu = uu * u;
+            var ttt = tt * t;
+
+            var p = uuu * p0;
+            p += 3 * uu * t * p1;
+            p += 3 * u * tt * p2;
+            p += ttt * p3;
+
             return p;
         }
 
-        // --- Data Classes ---
+        private void GenerateRoadStrip(Spline spline, int splineIndex, float tStart, float tEnd, RoadProfile profile,
+            List<Vector3> verts, List<int> tris, List<Color> colors)
+        {
+            var splineLength = spline.GetLength();
+            var activeLength = (tEnd - tStart) * splineLength;
+            if (activeLength < 0.01f) return;
 
-        private class MeshData { public readonly List<Color> colors = new(); public readonly List<int> tris = new(); public readonly List<Vector3> verts = new(); }
-        private class SeamData { public List<Vector3> Positions = new(); public Vector3 Tangent; }
-        
+            var segments = Mathf.CeilToInt(activeLength / Mathf.Max(0.1f, profile.vertexSpacing));
+            var resolution = Mathf.Max(1, profile.crossResolution);
+
+            var connIds = _connectionMap.TryGetValue(splineIndex, out var value) ? value : new SplineConnectionIds();
+
+            var prevRowIndices = new List<int>();
+
+            for (var i = 0; i <= segments; i++)
+            {
+                var tRaw = i / (float)segments;
+                var t = Mathf.Lerp(tStart, tEnd, tRaw);
+
+                spline.Evaluate(t, out var rawPos, out var rawTangent, out var rawUp);
+                var splinePos = (Vector3)rawPos;
+                var forward = ((Vector3)rawTangent).normalized;
+                if (forward == Vector3.zero) forward = Vector3.forward;
+                var up = ((Vector3)rawUp).normalized;
+                var localUp = useSplineTwist ? up : Vector3.up;
+                var right = Vector3.Cross(localUp, forward).normalized;
+                var currentWidth = GetNaturalWidth(t, splineLength, profile.width);
+
+                var currentRowIndices = new List<int>();
+
+                var isStartWeld = i == 0 && connIds.StartIndices.Count == resolution + 1;
+                var isEndWeld = i == segments && connIds.EndIndices.Count == resolution + 1;
+
+                for (var x = 0; x <= resolution; x++)
+                    if (isStartWeld)
+                    {
+                        currentRowIndices.Add(connIds.StartIndices[x]);
+                    }
+                    else if (isEndWeld)
+                    {
+                        currentRowIndices.Add(connIds.EndIndices[x]);
+                    }
+                    else
+                    {
+                        var u = x / (float)resolution;
+                        var offsetMultiplier = u - 0.5f;
+                        var posRaw = splinePos + right * (offsetMultiplier * currentWidth);
+                        var posSnapped = SnapToGround(posRaw);
+
+                        var newIdx = verts.Count;
+                        verts.Add(posSnapped);
+                        currentRowIndices.Add(newIdx);
+
+                        // UV addition removed
+                    
+                        colors.Add(CalculateVertexColor(currentWidth, u));
+                    }
+
+                if (i > 0)
+                    for (var x = 0; x < resolution; x++)
+                    {
+                        var currentLeft = currentRowIndices[x];
+                        var currentRight = currentRowIndices[x + 1];
+                        var prevLeft = prevRowIndices[x];
+                        var prevRight = prevRowIndices[x + 1];
+
+                        tris.Add(prevLeft);
+                        tris.Add(currentLeft);
+                        tris.Add(prevRight);
+                        tris.Add(prevRight);
+                        tris.Add(currentLeft);
+                        tris.Add(currentRight);
+                    }
+
+                prevRowIndices = currentRowIndices;
+            }
+        }
+    
+        public bool showSplineIndices = true;
+
+#if UNITY_EDITOR
+        private void OnDrawGizmos()
+        {
+            if (!showSplineIndices || splineContainer == null) return;
+
+            GUIStyle style = new GUIStyle();
+            style.normal.textColor = Color.yellow;
+            style.fontSize = 20;
+            style.fontStyle = FontStyle.Bold;
+
+            for (int i = 0; i < splineContainer.Splines.Count; i++)
+            {
+                var spline = splineContainer.Splines[i];
+                // Draw the ID at the center of the spline
+                Vector3 centerPos = (Vector3)spline.EvaluatePosition(0.5f);
+                centerPos = splineContainer.transform.TransformPoint(centerPos) + Vector3.up * 2f;
+            
+                Handles.Label(centerPos, $"ID: {i}", style);
+            }
+        }
+#endif
+
         [Serializable]
         public class RoadProfile
         {
@@ -649,16 +787,36 @@ namespace Pathing
             [Range(1, 8)] public int crossResolution = 4;
             [Range(0.5f, 12f)] public float junctionRetractMultiplier = 2.5f;
 
-            [Header("Navigation")]
-            [Tooltip("If true, the road will spawn with the NavBlocker active.")]
-            public bool defaultBlocked = true; 
+            [Header("Traffic")] public bool isBlocked = true;
         }
 
-        private class Node { public readonly List<Connection> Connections = new(); public Vector3 Position; }
-        private struct Connection { public bool IsStart; public int SplineIndex; public Vector3 Tangent; }
-        private class SplineConnectionIds { public readonly List<int> EndIndices = new(); public readonly List<int> StartIndices = new(); }
-        private struct JunctionEdge { public Vector3 position; public Vector3 tangentDir; public List<int> indices; }
+        private class Node
+        {
+            public readonly List<Connection> Connections = new();
+            public Vector3 Position;
+        }
+
+        private struct Connection
+        {
+            public bool IsStart;
+            public int SplineIndex;
+            public Vector3 Tangent;
+        }
+
+        private class SplineConnectionIds
+        {
+            public readonly List<int> EndIndices = new(); 
+            public readonly List<int> StartIndices = new();
+        }
+
+
+        private struct JunctionEdge
+        {
+            public Vector3 position;
+            public Vector3 tangentDir;
+            public int centerVertIndex;
+            public List<int> indices; 
+        }
+
     }
-
-
 }

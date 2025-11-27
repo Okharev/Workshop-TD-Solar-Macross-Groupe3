@@ -1,19 +1,16 @@
 ﻿using UnityEngine;
 using UnityEngine.AI;
 
-namespace Pathing
+[RequireComponent(typeof(NavMeshAgent))]
+public class TestNavMesh : MonoBehaviour
 {
-    [RequireComponent(typeof(NavMeshAgent))]
-    public class TestNavMesh : MonoBehaviour
+    private NavMeshAgent _agent;
+
+    private void Awake()
     {
-        private NavMeshAgent _agent;
+        _agent = GetComponent<NavMeshAgent>();
 
-        private void Awake()
-        {
-            _agent = GetComponent<NavMeshAgent>();
-
-            var dest = GameObject.FindGameObjectWithTag("Nexus");
-            _agent.SetDestination(dest.transform.position);
-        }
+        var dest = GameObject.FindGameObjectWithTag("Nexus");
+        _agent.SetDestination(dest.transform.position);
     }
 }

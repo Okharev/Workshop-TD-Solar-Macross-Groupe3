@@ -64,10 +64,6 @@ PrefabInstance:
       propertyPath: m_Name
       value: EnnemyMedium
       objectReference: {fileID: 0}
-    - target: {fileID: 8781234593180703897, guid: 8b8d71801f036614e9887ef7538737a9, type: 3}
-      propertyPath: baseSpeed
-      value: 4
-      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

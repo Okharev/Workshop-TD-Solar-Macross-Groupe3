@@ -5,8 +5,6 @@ TagManager:
   serializedVersion: 3
   tags:
   - Nexus
-  - Tower
-  - Enemy
   layers:
   - Default
   - TransparentFX
@@ -17,11 +15,11 @@ TagManager:
   - Roads
   - Terrain
   - PlacementBlockers
-  - PowerGrid
-  - EnemyGround
-  - Projectile
-  - PhysicalBlocker
-  - EnemyAir
+  - 
+  - 
+  - 
+  - 
+  - 
   - 
   - 
   - 
