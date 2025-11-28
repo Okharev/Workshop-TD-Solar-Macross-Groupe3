@@ -2,19 +2,19 @@
 
 namespace Economy
 {
-    // Used on child objects to help Raycasts find the parent Producer
+    // Add this script automatically in EnergyProducer.GenerateRangeTrigger
     public class EnergyFieldLink : MonoBehaviour
     {
-        private EnergyProducer _mainProducer;
+        private IEnergyProducer mainProducer;
 
-        public void Initialize(EnergyProducer producer)
+        public void Initialize(IEnergyProducer producer)
         {
-            _mainProducer = producer;
+            mainProducer = producer;
         }
 
-        public EnergyProducer GetProducer()
+        public IEnergyProducer GetProducer()
         {
-            return _mainProducer;
+            return mainProducer;
         }
     }
 }

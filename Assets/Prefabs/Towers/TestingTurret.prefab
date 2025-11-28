@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1990734976404385194}
   - component: {fileID: 2770589792623923187}
+  - component: {fileID: 3170851085483832339}
   m_Layer: 8
   m_Name: TestingTurret
   m_TagString: Untagged
@@ -54,6 +55,22 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 10, y: 8, z: 12}
   m_Center: {x: 0, y: 2, z: 0}
+--- !u!114 &3170851085483832339
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7615454975634943867}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 59633b8dcd384b42a84005c4df8b8c89, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Economy.EnergyConsumer
+  totalRequirement: 150
+  energylayer:
+    serializedVersion: 2
+    m_Bits: 512
 --- !u!1001 &8749312977491969044
 PrefabInstance:
   m_ObjectHideFlags: 0

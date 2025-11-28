@@ -1,26 +1,25 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using UnityEngine;
 
 namespace Economy
 {
     public class EnergyDebugUI : MonoBehaviour
     {
-        [Header("Settings")] public bool showDebug = true;
-
+        [Header("Settings")] 
+        public bool showDebug = true;
         public KeyCode toggleKey = KeyCode.F3;
         public float verticalOffset = 2.5f;
 
-        [Header("Update Frequency")] [Tooltip("How often to refresh the list of buildings (seconds)")]
+        [Header("Update Frequency")]
+        [Tooltip("How often to refresh the list of buildings (seconds)")]
         public float refreshRate = 0.5f;
 
-        private EnergyConsumer[] consumers = Array.Empty<EnergyConsumer>();
-        private UnityEngine.Camera mainCam;
-
         // Cache
-        private EnergyProducer[] producers = Array.Empty<EnergyProducer>();
-        private GUIStyle styleConsumer;
+        private EnergyProducer[] producers = new EnergyProducer[0];
+        private EnergyConsumer[] consumers = new EnergyConsumer[0];
+        private UnityEngine.Camera mainCam;
         private GUIStyle styleProducer;
+        private GUIStyle styleConsumer;
 
         private void Awake()
         {
@@ -31,16 +30,6 @@ namespace Economy
         private void Update()
         {
             if (Input.GetKeyDown(toggleKey)) showDebug = !showDebug;
-        }
-
-        private void OnGUI()
-        {
-            if (!showDebug || !mainCam) return;
-
-            if (styleProducer == null) SetupStyles();
-
-            DrawProducers();
-            DrawConsumers();
         }
 
         private IEnumerator CacheObjectsRoutine()
@@ -55,27 +44,38 @@ namespace Economy
                     producers = FindObjectsByType<EnergyProducer>(FindObjectsSortMode.None);
                     consumers = FindObjectsByType<EnergyConsumer>(FindObjectsSortMode.None);
                 }
-
                 yield return wait;
             }
+        }
+
+        private void OnGUI()
+        {
+            if (!showDebug || mainCam == null) return;
+
+            if (styleProducer == null) SetupStyles();
+
+            DrawProducers();
+            DrawConsumers();
         }
 
         private void DrawProducers()
         {
             foreach (var p in producers)
             {
-                if (!p || !p.isActiveAndEnabled) continue;
+                // FIX: Check !isActiveAndEnabled to hide UI instantly when object is disabled
+                // (waiting for the next Cache refresh takes too long)
+                if (p == null || !p.isActiveAndEnabled) continue;
 
-                var screenPos = GetScreenPosition(p.transform.position);
-                if (screenPos.z < 0) continue;
+                Vector3 screenPos = GetScreenPosition(p.transform.position);
+                if (screenPos.z < 0) continue; 
 
-                var current = p.CurrentLoad;
-                var available = p.GetAvailable();
-                var total = current + available;
+                int current = p.currentLoad; 
+                int available = p.GetAvailableEnergy();
+                int total = current + available;
 
-                var text = p.isMobileGenerator ? "GENERATOR" : "DISTRICT";
+                string text = p.isMobileGenerator ? "GENERATOR" : "DISTRICT";
                 text += $"\nLoad: {current}/{total}";
-
+            
                 GUI.color = available == 0 ? Color.red : Color.cyan;
 
                 DrawLabel(screenPos, text, styleProducer);
@@ -86,15 +86,17 @@ namespace Economy
         {
             foreach (var c in consumers)
             {
-                if (!c || !c.isActiveAndEnabled) continue;
+                // FIX: Check !isActiveAndEnabled
+                if (c == null || !c.isActiveAndEnabled) continue;
 
-                var screenPos = GetScreenPosition(c.transform.position);
+                Vector3 screenPos = GetScreenPosition(c.transform.position);
                 if (screenPos.z < 0) continue;
 
-                var isPowered = c.IsPowered;
-                var req = c.TotalRequirement.Value;
+                // FIX: Actually read the IsPowered property from the Consumer
+                bool isPowered = c.IsPowered; 
+                int req = c.GetEnergyRequirement();
 
-                var text = isPowered ? "POWERED" : "NO POWER";
+                string text = isPowered ? "POWERED" : "NO POWER";
                 text += $"\nReq: {req}";
 
                 GUI.color = isPowered ? Color.green : Color.red;
@@ -105,10 +107,10 @@ namespace Economy
 
         private void DrawLabel(Vector3 screenPos, string text, GUIStyle style)
         {
-            const float width = 100f;
-            const float height = 50f;
+            float width = 100f;
+            float height = 50f;
             // Invert Y for GUI coordinates
-            var rect = new Rect(screenPos.x - width / 2, Screen.height - screenPos.y - height / 2, width, height);
+            Rect rect = new Rect(screenPos.x - (width / 2), Screen.height - screenPos.y - (height / 2), width, height);
 
             GUI.Box(rect, GUIContent.none);
             GUI.Label(rect, text, style);
@@ -121,12 +123,10 @@ namespace Economy
 
         private void SetupStyles()
         {
-            styleProducer = new GUIStyle(GUI.skin.label)
-            {
-                alignment = TextAnchor.MiddleCenter,
-                fontStyle = FontStyle.Bold,
-                fontSize = 12
-            };
+            styleProducer = new GUIStyle(GUI.skin.label);
+            styleProducer.alignment = TextAnchor.MiddleCenter;
+            styleProducer.fontStyle = FontStyle.Bold;
+            styleProducer.fontSize = 12;
 
             styleConsumer = new GUIStyle(styleProducer);
         }

@@ -9,7 +9,7 @@ Material:
   m_PrefabAsset: {fileID: 0}
   m_Name: Mat_Ennemy_Debug
   m_Shader: {fileID: -6465566751694194690, guid: eae56f154faa1bd488b5c8dbf213876d, type: 3}
-  m_Parent: {fileID: -876546973899608171, guid: eae56f154faa1bd488b5c8dbf213876d, type: 3}
+  m_Parent: {fileID: 2100000, guid: fa8b3c78069eef84ba8aedcf9498bf42, type: 2}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
   m_InvalidKeywords: []

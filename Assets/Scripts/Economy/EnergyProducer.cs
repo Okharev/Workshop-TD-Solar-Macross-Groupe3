@@ -1,135 +1,175 @@
-﻿using UnityEngine;
+﻿using System;
+using System.Collections.Generic;
+using UnityEngine;
 
 namespace Economy
 {
-    public class EnergyProducer : MonoBehaviour
+    public interface IEnergyProducer
     {
-        [Header("Configuration")] public bool isMobileGenerator = true;
+        int ConsumeUpTo(int amount, IEnergyConsumer consumer);
+        void ReleaseEnergy(int amount, IEnergyConsumer consumer);
+        int GetAvailableEnergy();
+        bool IsLocalGenerator();
+        Vector3 GetPosition();
+        float GetBroadcastRadius(); 
+    }
 
-        // Reactive Properties
-        [SerializeField] private ReactiveInt maxCapacity = new(100);
-        [SerializeField] private ReactiveFloat broadcastRadius = new(15f);
+    [RequireComponent(typeof(Collider))]
+    public class EnergyProducer : MonoBehaviour, IEnergyProducer
+    {
+        [Header("Configuration")]
+        [Tooltip("Is this a placed building (Generator) or a map sector (District)?")]
+        [SerializeField]
+        public bool isMobileGenerator = true;
 
-        // Internal
-        private Vector3 _lastPos;
-        private SphereCollider _rangeCollider; // Reference to update size dynamically
+        [SerializeField] public int maxCapacity = 100;
 
-        public IReadOnlyReactiveProperty<int> MaxCapacity => maxCapacity;
-        public IReadOnlyReactiveProperty<float> BroadcastRadius => broadcastRadius;
+        [Header("Generator Settings")] 
+        [Tooltip("Radius of power provided.")] 
+        [SerializeField]
+        public float broadcastRadius = 15f;
+        
+        [SerializeField] private LayerMask consumerLayer;
 
-        // Runtime State (Read Only for public, Writable by Manager)
-        public int CurrentLoad { get; private set; }
+        private readonly Dictionary<IEnergyConsumer, int> outputMap = new();
 
-        public void Setup(int pmaxCapacity, float pbroadcastRadius, bool pmobileGenerator)
+        private int powerGridLayerIndex;
+        [SerializeField] public int currentLoad;
+
+        public event Action OnStateChanged;
+        
+        public float GetBroadcastRadius() => broadcastRadius;
+
+        private void Awake()
         {
-            this.maxCapacity.Value = pmaxCapacity;
-            this.broadcastRadius.Value = pbroadcastRadius;
-            this.isMobileGenerator = pmobileGenerator;
-        }
+            powerGridLayerIndex = LayerMask.NameToLayer("PowerGrid");
+            if (powerGridLayerIndex == -1) powerGridLayerIndex = 0; 
 
+            int blockerIndex = LayerMask.NameToLayer("PlacementBlockers");
+            if (blockerIndex != -1) consumerLayer = 1 << blockerIndex; 
+        }
+        
         private void Start()
         {
-            // Physics/Manager registration setup
-            _lastPos = transform.position;
-            if (isMobileGenerator) GenerateRangeTrigger();
-            // Registering with Manager is handled in OnEnable now
-        }
-
-        private void Update()
-        {
-            // Detect movement to dirty the grid
-            if ((transform.position - _lastPos).sqrMagnitude > 0.01f)
+            if (isMobileGenerator)
             {
-                _lastPos = transform.position;
-                EnergyGridManager.Instance.MarkDirty();
+                GenerateRangeTrigger();
             }
+            // Ensure visualizer knows about us if Start runs after OnEnable
+            ElectricityVisualizer.Instance?.RegisterProducer(this);
+            
+            EnergyHeatmapSystem.Instance?.Register(this);
         }
 
         private void OnEnable()
         {
-            EnergyGridManager.Instance?.Register(this);
+            ElectricityVisualizer.Instance?.RegisterProducer(this);
+            
+            EnergyHeatmapSystem.Instance?.Register(this);
 
-            BroadcastRadius.Subscribe(OnRadiusChanged).AddTo(this);
-            MaxCapacity.Subscribe(OnStatsChanged_Int).AddTo(this);
+            // When a District is re-enabled, it MUST tell the consumers 
+            // inside it to try and connect again.
+            NotifyNearbyConsumers();
+        }
+
+        private void NotifyNearbyConsumers()
+        {
+            // For Districts, this radius must be set to the Map Radius 
+            // (handled in DistrictGenerator.cs now)
+            Collider[] hits = Physics.OverlapSphere(transform.position, broadcastRadius, consumerLayer);
+
+            foreach (var hit in hits)
+            {
+                var consumer = hit.GetComponent<IEnergyConsumer>();
+                if (consumer != null)
+                {
+                    consumer.RefreshConnection();
+                }
+            }
         }
 
         private void OnDisable()
         {
-            EnergyGridManager.Instance?.Unregister(this);
+            ElectricityVisualizer.Instance?.UnregisterProducer(this);
+            
+            EnergyHeatmapSystem.Instance?.Unregister(this);
+
+            var consumers = new List<IEnergyConsumer>(outputMap.Keys);
+            foreach (var consumer in consumers)
+            {
+                consumer.OnPowerLost();
+            }
+
+            outputMap.Clear();
+            currentLoad = 0;
+            OnStateChanged?.Invoke();
+        }
+        
+        private void OnDestroy()
+        {
+            ElectricityVisualizer.Instance?.UnregisterProducer(this);
+            outputMap.Clear();
         }
 
         private void OnDrawGizmosSelected()
         {
-            Gizmos.color = new Color(0, 1, 1, 0.4f);
-            Gizmos.DrawWireSphere(transform.position, BroadcastRadius.Value);
+            // Draw gizmo for both types to debug radius issues
+            Gizmos.color = new Color(0, 1, 1, 0.3f); 
+            Gizmos.DrawWireSphere(transform.position, broadcastRadius);
         }
 
-        // Named methods make debugging easier than Lambdas
-        private void OnStatsChanged_Int(int _)
+        public int ConsumeUpTo(int amount, IEnergyConsumer consumer)
         {
-            EnergyGridManager.Instance?.MarkDirty();
+            if (!isActiveAndEnabled) return 0;
+
+            var available = maxCapacity - currentLoad;
+            var amountToGive = Mathf.Min(available, amount);
+
+            if (amountToGive > 0)
+            {
+                currentLoad += amountToGive;
+                if (!outputMap.TryAdd(consumer, amountToGive))
+                    outputMap[consumer] += amountToGive;
+
+                OnStateChanged?.Invoke();
+            }
+
+            return amountToGive;
         }
 
-        private void OnRadiusChanged(float newRadius)
+        public void ReleaseEnergy(int amount, IEnergyConsumer consumer)
         {
-            UpdateRangeCollider(newRadius);
-            EnergyGridManager.Instance?.MarkDirty();
+            currentLoad = Mathf.Max(0, currentLoad - amount);
+
+            if (outputMap.ContainsKey(consumer))
+            {
+                outputMap[consumer] -= amount;
+                if (outputMap[consumer] <= 0) outputMap.Remove(consumer);
+            }
+
+            OnStateChanged?.Invoke();
         }
 
-        // --- Logic Helper ---
-        public int GetAvailable()
-        {
-            return Mathf.Max(0, MaxCapacity.Value - CurrentLoad);
-        }
+        public int GetAvailableEnergy() => maxCapacity - currentLoad;
+        public bool IsLocalGenerator() => isMobileGenerator;
+        public Vector3 GetPosition() => transform.position;
+        public IReadOnlyDictionary<IEnergyConsumer, int> GetOutputMap() => outputMap;
 
-        // --- Manager Interface ---
-        public void ResetLoad()
-        {
-            CurrentLoad = 0;
-        }
-
-        public void AddLoad(int amount)
-        {
-            CurrentLoad += amount;
-        }
-
-        public void RemoveLoad(int amount)
-        {
-            CurrentLoad -= amount;
-        }
-
-        // --- Physics / Placement Helpers ---
         private void GenerateRangeTrigger()
         {
-            // Check if it already exists (e.g. from prefab)
-            var existing = transform.Find("EnergyField_Generated");
-            if (existing)
-            {
-                _rangeCollider = existing.GetComponent<SphereCollider>();
-                return;
-            }
+            if(transform.Find("EnergyField_Generated") != null) return;
 
             var fieldObj = new GameObject("EnergyField_Generated");
             fieldObj.transform.SetParent(transform);
             fieldObj.transform.localPosition = Vector3.zero;
+            fieldObj.layer = powerGridLayerIndex;
 
-            // Set Layer to "PowerGrid" or fallback to Default
-            var powerLayer = LayerMask.NameToLayer("PowerGrid");
-            if (powerLayer != -1) fieldObj.layer = powerLayer;
+            var col = fieldObj.AddComponent<SphereCollider>();
+            col.isTrigger = true;
+            col.radius = broadcastRadius;
 
-            _rangeCollider = fieldObj.AddComponent<SphereCollider>();
-            _rangeCollider.isTrigger = true;
-            _rangeCollider.radius = BroadcastRadius.Value;
-
-            // Add the Link script so Raycasts know who owns this trigger
             var link = fieldObj.AddComponent<EnergyFieldLink>();
             link.Initialize(this);
-        }
-
-        private void UpdateRangeCollider(float newRadius)
-        {
-            if (_rangeCollider != null)
-                _rangeCollider.radius = newRadius;
         }
     }
 }

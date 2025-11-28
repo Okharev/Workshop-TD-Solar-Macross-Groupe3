@@ -3,7 +3,6 @@ using UnityEngine;
 
 namespace Economy
 {
-    [DefaultExecutionOrder(-100)]
     public class CurrencyManager : MonoBehaviour
     {
         [SerializeField] private int startingMoney = 500;
