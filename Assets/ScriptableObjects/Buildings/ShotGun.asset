@@ -16,5 +16,5 @@ MonoBehaviour:
   description: Shotgun tower
   icon: {fileID: 0}
   cost: 10
-  energyDrain: 10
+  energyDrain: 100
   prefab: {fileID: 7615454975634943867, guid: 1d2549f2edb60d04f894dad9f7feae47, type: 3}

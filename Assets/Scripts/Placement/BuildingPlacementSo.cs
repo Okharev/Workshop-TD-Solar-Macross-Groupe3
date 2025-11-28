@@ -1,6 +1,4 @@
 ﻿using UnityEngine;
-using UnityEngine.Serialization;
-using UnityEngine.UI;
 
 namespace Placement
 {
@@ -11,8 +9,7 @@ namespace Placement
         public string description;
         public Texture2D icon;
         public int cost;
-        public int energyDrain;
-        
+        public int energyDrain = 10;
         public GameObject prefab;
     }
 }
