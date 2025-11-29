@@ -1,73 +1,75 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
 namespace Economy
 {
+    namespace Economy
+{
     public class EnergyHeatmapSystem : MonoBehaviour
     {
-        [Header("Map Settings")]
+        [Header("Settings")]
+        [SerializeField] private Material heatShaderMaterial;
         [SerializeField] private Vector2 mapSize = new Vector2(100, 100);
-        [SerializeField] private Vector3 mapCenter = Vector3.zero;
         
+        // Shader Property IDs (Performance Optimization)
+        private static readonly int GenDataID = Shader.PropertyToID("_GenData");
+        private static readonly int GenCountID = Shader.PropertyToID("_GenCount");
 
-        [Header("Visual Settings")]
-        [Tooltip("Resolution of the texture.")]
-        [SerializeField] private int resolution = 128; 
-        
-        [Tooltip("Color ramp. Left = Low Energy (0), Right = High Energy (Max).")]
-        [SerializeField] private Gradient energyGradient;
-        
-        [Tooltip("The amount of energy required to hit the brightest color (100% on gradient).")]
-        [SerializeField] private float maxEnergySpectrum = 500f; // e.g., 500 units = White Hot
-        
-        [SerializeField] private float globalAlpha = 0.6f;
-        [SerializeField] private float verticalOffset = 0.2f;
-        [Header("Update Settings")]
-        [SerializeField] private float refreshRate = 0.1f; 
-
-        // Dependencies
+        // Data buffers
         private readonly List<IEnergyProducer> producers = new();
-        private Texture2D heatmapTexture;
-        private Renderer meshRenderer;
-        
+        private Vector4[] shaderDataBuffer = new Vector4[128];
+
         public static EnergyHeatmapSystem Instance { get; private set; }
 
         private void Awake()
         {
+            // Singleton Setup
             if (Instance != null && Instance != this)
             {
                 Destroy(gameObject);
                 return;
             }
             Instance = this;
-            InitializeVisuals();
+            
+            InitializeQuad();
         }
 
-        private void InitializeVisuals()
+        private void Start()
         {
-            heatmapTexture = new Texture2D(resolution, resolution, TextureFormat.RGBA32, false);
-            heatmapTexture.wrapMode = TextureWrapMode.Clamp;
-            heatmapTexture.filterMode = FilterMode.Bilinear; // Smooths the pixels
-
-            GameObject plane = GameObject.CreatePrimitive(PrimitiveType.Quad);
-            plane.name = "Heatmap_Overlay";
-            plane.transform.SetParent(transform);
-            
-            plane.transform.localPosition = mapCenter + Vector3.up * verticalOffset;
-            plane.transform.localRotation = Quaternion.Euler(90, 0, 0);
-            plane.transform.localScale = new Vector3(mapSize.x, mapSize.y, 1);
-
-            meshRenderer = plane.GetComponent<Renderer>();
-            var mat = new Material(Shader.Find("Sprites/Default")); 
-            mat.mainTexture = heatmapTexture;
-            meshRenderer.material = mat;
-            
-            Destroy(plane.GetComponent<Collider>());
-            ToggleHeatmap(false);
+            // TODO(Florian) feels kinda hacky, maybe an event bus ?
+            var allProducers = FindObjectsByType<EnergyProducer>(FindObjectsSortMode.None);
+            foreach (var p in allProducers)
+            {
+                Register(p);
+            }
         }
 
-        private void OnEnable() => StartCoroutine(UpdateRoutine());
+        private void InitializeQuad()
+        {
+            // Create a quad to cover the map
+            GameObject quad = GameObject.CreatePrimitive(PrimitiveType.Quad);
+            quad.name = "Heatmap_Projector";
+            quad.transform.SetParent(transform);
+            
+            // ROTATION: 90 degrees (Flat facing down/up)
+            quad.transform.eulerAngles = new Vector3(90, 0, 0); 
+            
+            // SCALE: Make it cover the whole map
+            quad.transform.localScale = new Vector3(mapSize.x, mapSize.y, 1);
+            
+            // Posiiton it high
+            // It acts like a "Satellite" looking down.
+            // Ensure it is NOT inside the camera's near clip plane, but definitely above terrain.
+            float ceilingHeight = 50.0f; 
+            quad.transform.localPosition = new Vector3(0f, 0f, 0f) + Vector3.up * ceilingHeight; 
+
+            // Assign Material
+            var rend = quad.GetComponent<Renderer>();
+            rend.material = heatShaderMaterial; // Assign the new Projector Material here
+            
+            // Optimization: Projectors don't cast shadows
+            rend.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+        }
 
         public void Register(IEnergyProducer producer)
         {
@@ -78,110 +80,56 @@ namespace Economy
         {
             if (producers.Contains(producer)) producers.Remove(producer);
         }
-
-        public void ToggleHeatmap(bool isActive)
+        
+        public void ToggleHeatmap(bool show)
         {
-            if(meshRenderer != null) meshRenderer.enabled = isActive;
+            gameObject.SetActive(show);
         }
 
-        private IEnumerator UpdateRoutine()
+        private void Update()
         {
-            var wait = new WaitForSeconds(refreshRate);
-            Color[] colors = new Color[resolution * resolution];
-
-            while (enabled)
-            {
-                if (meshRenderer.enabled)
-                {
-                    GenerateDensityMap(colors);
-                    heatmapTexture.SetPixels(colors);
-                    heatmapTexture.Apply();
-                }
-                yield return wait;
-            }
+            // Update the Shader every frame
+            UpdateShaderData();
         }
 
-        // --- CORE LOGIC: OVERLAP DENSITY ---
-        private void GenerateDensityMap(Color[] colors)
+        private void UpdateShaderData()
         {
-            float worldWidth = mapSize.x;
-            float worldHeight = mapSize.y;
-            float worldLeft = mapCenter.x - worldWidth / 2f;
-            float worldBottom = mapCenter.z - worldHeight / 2f; 
-            var activeProducers = new List<(Vector3 pos, float rSq, float r, int energy)>();
-            
-            foreach (var p in producers)
+            int count = 0;
+
+            for (int i = 0; i < producers.Count; i++)
             {
+                // Safety check for array limit
+                if (count >= 128) break;
+
+                var p = producers[i];
                 if (p == null || p.Equals(null)) continue;
-                
-                // We now grab the AVAILABLE ENERGY (Power)
-                int energy = p.GetAvailableEnergy();
-                
-                // Optimization: Don't draw dead generators
-                if (energy <= 0) continue;
+                if (p.GetAvailableEnergy() <= 0) continue;
 
-                float r = p.GetBroadcastRadius();
-                activeProducers.Add((p.GetPosition(), r * r, r, energy));
+                Vector3 pos = p.GetPosition();
+                
+                // Pack data into Vector4: (X, Z, Radius, Energy)
+                // Note: We use X and Z for top-down world coordinates
+                shaderDataBuffer[count] = new Vector4(
+                    pos.x, 
+                    pos.z, 
+                    p.GetBroadcastRadius(), 
+                    (float)p.GetAvailableEnergy()
+                );
+                
+                count++;
             }
 
-            for (int y = 0; y < resolution; y++)
+            if (count == 0) 
             {
-                for (int x = 0; x < resolution; x++)
-                {
-                    float normX = (float)x / (resolution - 1);
-                    float normY = (float)y / (resolution - 1);
-
-                    Vector3 samplePos = new Vector3(
-                        worldLeft + normX * worldWidth,
-                        mapCenter.y,
-                        worldBottom + normY * worldHeight
-                    );
-
-                    float totalEnergyAtPixel = 0f;
-
-                    foreach (var (pos, rSq, r, energy) in activeProducers)
-                    {
-                        Vector3 flatPos = pos; 
-                        flatPos.y = mapCenter.y;
-
-                        float distSqr = (flatPos - samplePos).sqrMagnitude;
-
-                        if (distSqr < rSq)
-                        {
-                            float dist = Mathf.Sqrt(distSqr);
-                            
-                            // Calculate "Signal Quality" (0.0 to 1.0)
-                            // 1.0 at center, 0.0 at edge
-                            float signalQuality = Mathf.Clamp01(1.0f - (dist / r));
-                            
-                            // Optional: Curve it so the power stays strong further out
-                            signalQuality = Mathf.Pow(signalQuality, 0.5f);
-
-                            // Multiply signal by the Generator's actual POWER
-                            totalEnergyAtPixel += signalQuality * energy;
-                        }
-                    }
-
-                    // Normalize based on our Spectrum definition
-                    // Example: 
-                    // Pixel A has 50 energy (Wind) -> t = 0.1 (Blue)
-                    // Pixel B has 500 energy (Nuclear) -> t = 1.0 (White)
-                    // Pixel C has overlap (500 + 50) -> t = 1.1 (Clamped to White)
-                    
-                    if (totalEnergyAtPixel <= 1f)
-                    {
-                        colors[y * resolution + x] = Color.clear;
-                    }
-                    else
-                    {
-                        float t = Mathf.Clamp01(totalEnergyAtPixel / maxEnergySpectrum);
-                        Color c = energyGradient.Evaluate(t);
-                        c.a = globalAlpha; 
-                        colors[y * resolution + x] = c;
-                    }
-                }
+                // If this prints, your generators are not registered or have 0 energy!
+                Debug.LogWarning($"Heatmap Update: 0 Generators active. Buffer empty.");
             }
+            
+            // Send to GPU
+            heatShaderMaterial.SetInt(GenCountID, count);
+            heatShaderMaterial.SetVectorArray(GenDataID, shaderDataBuffer);
         }
     }
+}
     
 }

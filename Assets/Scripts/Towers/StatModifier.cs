@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Towers
 {
@@ -12,155 +13,121 @@ namespace Towers
     }
 
     [Serializable]
-    public class StatModifier
-    {
-        public readonly object Source;
-        public readonly StatModType Type;
-        public readonly float Value;
-
-        public StatModifier(float value, StatModType type, object source = null)
-        {
-            Value = value;
-            Type = type;
-            Source = source;
-        }
-    }
-
-    [Serializable]
     public class Stat
     {
-        [SerializeField] private ReactiveFloat _baseValue;
-        private readonly List<StatModifier> _modifiers = new();
-        
-        // On garde _value privé ou protégé
-        [SerializeField] private ReactiveFloat _value = new(0);
+        [SerializeField]
+        private float baseValue;
 
-        public Stat(float initialBaseValue = 0)
+        [SerializeField]
+        private bool isDirty = true; 
+
+        [SerializeField]
+        private float value;
+
+        [SerializeField] private List<StatModifier> modifiers = new(4);
+
+        public Stat() { }
+
+        public Stat(float baseValue)
         {
-            _baseValue = new ReactiveFloat(initialBaseValue);
-            _value = new ReactiveFloat(initialBaseValue);
-            Initialize();
+            this.baseValue = baseValue;
+            isDirty = true;
         }
 
-        // --- CORRECTION SYNTAXE ---
+        [SerializeField] public float Value
+        {
+            get
+            {
+                if (!isDirty && (value != 0 || baseValue == 0)) return value;
+                
+                value = CalculateFinalValue();
+                isDirty = false;
+                return value;
+            }
+        }
 
-        // 1. Accès direct : permet d'écrire "myStat.Value" (float)
-        public float Value => _value.Value;
-
-        // 2. Opérateur Implicite : permet d'écrire "float x = myStat;" ou "if(myStat > 10)"
-        public static implicit operator float(Stat s) => s.Value;
-
-        // 3. On expose l'observable pour ceux qui veulent s'abonner aux changements
-        public IReadOnlyReactiveProperty<float> Observable => _value;
-        
-        // (Le reste de tes méthodes BaseValue, AddModifier, Recalculate restent identiques...)
-        
         public float BaseValue
         {
-            get => _baseValue.Value;
-            set => _baseValue.Value = value;
+            get => baseValue;
+            set { baseValue = value; SetDirty(); }
         }
-
-        // Event for when the FINAL calculated value changes
-        public event Action<float> OnValueChanged
-        {
-            add => _value.OnValueChanged += value;
-            remove => _value.OnValueChanged -= value;
-        }
-
-        /// <summary>
-        ///     Call this in Awake() or Start() of the owning MonoBehaviour.
-        ///     Ensures internal listeners are hooked up.
-        /// </summary>
-        public void Initialize()
-        {
-            // Ensure we don't double subscribe if Initialize is called multiple times
-            _baseValue.OnValueChanged -= OnBaseValueChanged;
-            _baseValue.OnValueChanged += OnBaseValueChanged;
-
-            // Initial Calculation
-            Recalculate();
-        }
-
-        private void OnBaseValueChanged(float newVal)
-        {
-            Recalculate();
-        }
-
-        // --- Modifier Management ---
 
         public void AddModifier(StatModifier mod)
         {
-            _modifiers.Add(mod);
-            Recalculate();
+            modifiers ??= new List<StatModifier>();
+            
+            isDirty = true;
+            modifiers.Add(mod);
         }
 
         public bool RemoveModifier(StatModifier mod)
         {
-            var removed = _modifiers.Remove(mod);
-            if (removed) Recalculate();
-            return removed;
-        }
+            if (modifiers == null) return false;
 
+            if (!modifiers.Remove(mod)) return false;
+            
+            isDirty = true;
+            return true;
+        }
+        
         public void RemoveAllModifiersFromSource(object source)
         {
-            var changed = false;
-            for (var i = _modifiers.Count - 1; i >= 0; i--)
-                if (_modifiers[i].Source == source)
-                {
-                    _modifiers.RemoveAt(i);
-                    changed = true;
-                }
+            if (modifiers == null) return;
 
-            if (changed) Recalculate();
-        }
-
-        public void ClearModifiers()
-        {
-            if (_modifiers.Count > 0)
+            if (modifiers.RemoveAll(mod => mod.source == source) > 0)
             {
-                _modifiers.Clear();
-                Recalculate();
+                isDirty = true;
             }
         }
 
-        // --- Calculation Logic ---
+        private void SetDirty() => isDirty = true;
 
-        private void Recalculate()
+        private float CalculateFinalValue()
         {
-            var finalValue = _baseValue.Value;
+            modifiers ??= new List<StatModifier>();
+
+            var finalValue = baseValue;
             float sumPercentAdd = 0;
-            var totalPercentMult = 1f;
 
-            // Iterate list once? Or multiple times? 
-            // Splitting loops usually easier to read and statistically insignificant performance hit here.
-
-            // 1. Flat & Percent Add
-            foreach (var mod in _modifiers)
+            foreach (var mod in modifiers)
             {
-                switch (mod.Type)
+                switch (mod.type)
                 {
                     case StatModType.Flat:
-                        finalValue += mod.Value;
+                        finalValue += mod.value;
                         break;
                     case StatModType.PercentAdd:
-                        sumPercentAdd += mod.Value;
-                        break;
-                    case StatModType.PercentMult:
-                        totalPercentMult *= mod.Value;
+                        sumPercentAdd += mod.value;
                         break;
                 }
             }
 
-            // 2. Apply Percent Add
             finalValue *= 1 + sumPercentAdd;
 
-            // 3. Apply Percent Mult
-            finalValue *= totalPercentMult;
+            foreach (var mod in modifiers)
+            {
+                if (mod.type == StatModType.PercentMult)
+                {
+                    finalValue *= mod.value;
+                }
+            }
 
-            // 4. Update the Output ReactiveProperty
-            // The ReactiveProperty internal check ensures OnValueChanged only fires if the result is actually different
-            _value.Value = (float)Math.Round(finalValue, 4);
+            return (float)Math.Round(finalValue, 4);
+        }
+    }
+
+    [Serializable]
+    public class StatModifier
+    {
+        [SerializeField] public float value;
+        [SerializeField] public StatModType type;
+        [SerializeField] public object source;
+
+        public StatModifier(float value, StatModType type, object source = null)
+        {
+            this.value = value;
+            this.type = type;
+            this.source = source;
         }
     }
 }

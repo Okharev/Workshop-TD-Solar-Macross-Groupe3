@@ -3,9 +3,8 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Splines;
-using WaveSystem;
 
-namespace DynamicWaveSystem
+namespace WaveSystem
 {
 
     public class EnemySpawner : MonoBehaviour

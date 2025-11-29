@@ -5,39 +5,33 @@ namespace Towers
 {
     public class UpgradeProvider
     {
-        public enum DamageType
-        {
-            Direct,
-            AreaOfEffect,
-            DoT
-        }
-
-        public Action<OnFireData> OnFire;
-
-        // The Events
-        public Action<OnHitData> OnHit;
-        public Action<OnKillData> OnKill;
+        public enum DamageType { Direct, AreaOfEffect, DoT }
 
         // Data Packets
         public struct OnHitData
         {
-            public GameObject Origin;
-            public GameObject Target;
-            public float Damage;
-            public DamageType DamageType;
+            public GameObject origin;
+            public GameObject target;
+            public float damage;
+            public DamageType damageType;
         }
 
         public struct OnKillData
         {
-            public GameObject Origin;
-            public GameObject Target;
-            public float Damage;
+            public GameObject origin;
+            public GameObject target;
+            public float damage;
         }
 
         public struct OnFireData
         {
-            public GameObject Origin;
-            public GameObject Target;
+            public GameObject origin;
+            public GameObject target;
         }
+
+        // The Events
+        public Action<OnHitData> onHit;
+        public Action<OnKillData> onKill;
+        public Action<OnFireData> onFire;
     }
 }

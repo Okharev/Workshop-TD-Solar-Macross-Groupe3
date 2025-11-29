@@ -18,7 +18,7 @@ namespace Towers
         public string upgradeName;
         public string description;
 
-        public abstract IUpgradeInstance CreateInstance(BaseTower tower);
+        public abstract IUpgradeInstance CreateInstance(TowerEntity tower);
     }
 
     [CreateAssetMenu(menuName = "Upgrades/Bleed")]
@@ -27,8 +27,8 @@ namespace Towers
         public float stackDuration = 3f;
         public float tickRate = 0.5f;
         public int damagePerStack = 5;
-
-        public override IUpgradeInstance CreateInstance(BaseTower tower)
+        
+        public override IUpgradeInstance CreateInstance(TowerEntity tower)
         {
             return new BleedInstance(this, tower);
         }
@@ -36,36 +36,36 @@ namespace Towers
         [Serializable]
         private class BleedInstance : IUpgradeInstance
         {
-            private readonly BleedUpgradeSo _config;
-            private readonly BaseTower _tower;
+            private readonly BleedUpgradeSo config;
+            private readonly TowerEntity tower;
 
-            public BleedInstance(BleedUpgradeSo config, BaseTower tower)
+            public BleedInstance(BleedUpgradeSo config, TowerEntity tower)
             {
-                _config = config;
-                _tower = tower;
+                this.config = config;
+                this.tower = tower;
             }
 
             public void Enable()
             {
-                if (_tower.Events != null)
-                    _tower.Events.OnHit += TryApplyBleed;
+                if (tower.events != null)
+                    tower.events.onHit += TryApplyBleed;
             }
 
             public void Disable()
             {
-                if (_tower.Events != null)
-                    _tower.Events.OnHit -= TryApplyBleed;
+                if (tower.events != null)
+                    tower.events.onHit -= TryApplyBleed;
             }
 
             private void TryApplyBleed(UpgradeProvider.OnHitData data)
             {
-                if (!data.Target) return;
+                if (!data.target) return;
 
-                if (data.DamageType == UpgradeProvider.DamageType.DoT) return;
+                if (data.damageType == UpgradeProvider.DamageType.DoT) return;
 
-                if (!data.Target.TryGetComponent<StatusHandler>(out var statusHandler)) return;
+                if (!data.target.TryGetComponent<StatusHandler>(out var statusHandler)) return;
 
-                var effect = new BleedStatus(_config, _tower, data.Target);
+                var effect = new BleedStatus(config, tower, data.target);
                 statusHandler.ApplyStatus(effect);
             }
         }
@@ -73,17 +73,17 @@ namespace Towers
         [Serializable]
         private class BleedStatus : IStatusEffect
         {
-            private readonly BleedUpgradeSo _config;
-            private readonly BaseTower _sourceTower;
+            private readonly BleedUpgradeSo config;
+            private readonly TowerEntity sourceTower;
 
-            private readonly List<float> _stackExpirations = new(16);
-            private readonly GameObject _target;
+            private readonly List<float> stackExpirations = new(16);
+            private readonly GameObject target;
 
-            public BleedStatus(BleedUpgradeSo config, BaseTower sourceTower, GameObject target)
+            public BleedStatus(BleedUpgradeSo config, TowerEntity sourceTower, GameObject target)
             {
-                _config = config;
-                _sourceTower = sourceTower;
-                _target = target;
+                this.config = config;
+                this.sourceTower = sourceTower;
+                this.target = target;
             }
 
             public void OnApply(StatusHandler host)
@@ -100,12 +100,12 @@ namespace Towers
 
             public void OnEnd()
             {
-                _stackExpirations.Clear();
+                stackExpirations.Clear();
             }
 
             public IEnumerator Process(StatusHandler host)
             {
-                var waiter = new WaitForSeconds(_config.tickRate);
+                var waiter = new WaitForSeconds(config.tickRate);
 
                 while (true)
                 {
@@ -113,30 +113,30 @@ namespace Towers
 
                     var currentTime = Time.time;
 
-                    for (var i = _stackExpirations.Count - 1; i >= 0; i--)
-                        if (currentTime >= _stackExpirations[i])
-                            _stackExpirations.RemoveAt(i);
+                    for (var i = stackExpirations.Count - 1; i >= 0; i--)
+                        if (currentTime >= stackExpirations[i])
+                            stackExpirations.RemoveAt(i);
 
-                    if (_stackExpirations.Count == 0)
+                    if (stackExpirations.Count == 0)
                     {
                         yield return null;
 
-                        if (_stackExpirations.Count == 0) yield break;
+                        if (stackExpirations.Count == 0) yield break;
 
                         continue;
                     }
 
-                    if (!_target) yield break;
+                    if (!target) yield break;
                     //TODO if (!target.TryGetComponent<HealthComponent>(out var hp)) continue;
 
-                    var totalDamage = _stackExpirations.Count * _config.damagePerStack;
+                    var totalDamage = stackExpirations.Count * config.damagePerStack;
 
-                    _sourceTower.Events.OnHit?.Invoke(new UpgradeProvider.OnHitData
+                    sourceTower.events.onHit?.Invoke(new UpgradeProvider.OnHitData
                     {
-                        Origin = _sourceTower.gameObject,
-                        Target = _target,
-                        Damage = totalDamage,
-                        DamageType = UpgradeProvider.DamageType.DoT
+                        origin = sourceTower.gameObject,
+                        target = target,
+                        damage = totalDamage,
+                        damageType = UpgradeProvider.DamageType.DoT
                     });
 
                     // var isDead = hp.TakeDamage(totalDamage);
@@ -156,30 +156,30 @@ namespace Towers
 
             public Sprite GetIcon()
             {
-                return _config.icon;
+                return config.icon;
             }
 
             public float GetDurationRatio()
             {
-                if (_stackExpirations.Count == 0 || _config.stackDuration <= 0) return 0;
+                if (stackExpirations.Count == 0 || config.stackDuration <= 0) return 0;
 
                 var maxExpiration = 0f;
-                foreach (var exp in _stackExpirations)
+                foreach (var exp in stackExpirations)
                     if (exp > maxExpiration)
                         maxExpiration = exp;
 
                 var remaining = maxExpiration - Time.time;
-                return Mathf.Clamp01(remaining / _config.stackDuration);
+                return Mathf.Clamp01(remaining / config.stackDuration);
             }
 
             public int GetStackCount()
             {
-                return _stackExpirations.Count;
+                return stackExpirations.Count;
             }
 
             private void AddStack()
             {
-                _stackExpirations.Add(Time.time + _config.stackDuration);
+                stackExpirations.Add(Time.time + config.stackDuration);
             }
         }
     }
@@ -197,7 +197,7 @@ namespace Towers
         // [SerializeField] private VFXDefinition impactEffect;
 
 
-        public override IUpgradeInstance CreateInstance(BaseTower tower)
+        public override IUpgradeInstance CreateInstance(TowerEntity tower)
         {
             return new ExplosionInstance(this, tower);
         }
@@ -205,47 +205,47 @@ namespace Towers
         [Serializable]
         private class ExplosionInstance : IUpgradeInstance
         {
-            private readonly ExplosionUpgradeSo _config;
-            private readonly BaseTower _tower;
+            private readonly ExplosionUpgradeSo config;
+            private readonly TowerEntity tower;
 
             // Pre-allocated buffer for physics hits
             private Collider[] _colliders = new Collider[16];
 
-            public ExplosionInstance(ExplosionUpgradeSo config, BaseTower tower)
+            public ExplosionInstance(ExplosionUpgradeSo config, TowerEntity tower)
             {
-                _config = config;
-                _tower = tower;
+                this.config = config;
+                this.tower = tower;
             }
 
             public void Enable()
             {
-                if (_tower.Events != null)
-                    _tower.Events.OnKill += QueueExplosion;
+                if (tower.events != null)
+                    tower.events.onKill += QueueExplosion;
             }
 
             public void Disable()
             {
-                if (_tower.Events != null)
-                    _tower.Events.OnKill -= QueueExplosion;
+                if (tower.events != null)
+                    tower.events.onKill -= QueueExplosion;
             }
 
             private void QueueExplosion(UpgradeProvider.OnKillData data)
             {
-                var explosionCenter = data.Target.transform.position;
+                var explosionCenter = data.target.transform.position;
 
-                _tower.StartCoroutine(ExplosionRoutine(explosionCenter, data.Target));
+                tower.StartCoroutine(ExplosionRoutine(explosionCenter, data.target));
             }
 
             private IEnumerator ExplosionRoutine(Vector3 center, GameObject originalVictim)
             {
-                if (_config.explosionDelay > 0)
-                    yield return new WaitForSeconds(_config.explosionDelay);
+                if (config.explosionDelay > 0)
+                    yield return new WaitForSeconds(config.explosionDelay);
                 else
-                    yield return null;
+                    yield return null; 
 
                 // VFXManager.Instance.Spawn(config.impactEffect, center, Quaternion.identity);
 
-                var hits = Physics.OverlapSphereNonAlloc(center, _config.radius, _colliders, _config.enemyLayer);
+                var hits = Physics.OverlapSphereNonAlloc(center, config.radius, _colliders, config.enemyLayer);
 
                 for (var i = 0; i < hits; i++)
                 {
@@ -257,12 +257,12 @@ namespace Towers
 
                     // if (hp.currentHealth <= 0) continue;
 
-                    _tower.Events.OnHit?.Invoke(new UpgradeProvider.OnHitData
+                    tower.events.onHit?.Invoke(new UpgradeProvider.OnHitData
                     {
-                        Origin = _tower.gameObject,
-                        Target = hit.gameObject,
-                        Damage = _config.explosionDamage,
-                        DamageType = UpgradeProvider.DamageType.AreaOfEffect
+                        origin = tower.gameObject,
+                        target = hit.gameObject,
+                        damage = config.explosionDamage,
+                        damageType = UpgradeProvider.DamageType.AreaOfEffect
                     });
 
                     // if (hp.TakeDamage(config.explosionDamage))
@@ -284,7 +284,7 @@ namespace Towers
 
         // [SerializeField] private VFXDefinition impactEffect;
 
-        public override IUpgradeInstance CreateInstance(BaseTower tower)
+        public override IUpgradeInstance CreateInstance(TowerEntity tower)
         {
             return new ExecuteInstance(this, tower);
         }
@@ -292,30 +292,30 @@ namespace Towers
         [Serializable]
         private class ExecuteInstance : IUpgradeInstance
         {
-            private readonly ExecuteUpgradeSo _config;
-            private readonly BaseTower _tower;
+            private readonly ExecuteUpgradeSo config;
+            private readonly TowerEntity tower;
 
-            public ExecuteInstance(ExecuteUpgradeSo config, BaseTower tower)
+            public ExecuteInstance(ExecuteUpgradeSo config, TowerEntity tower)
             {
-                _config = config;
-                _tower = tower;
+                this.config = config;
+                this.tower = tower;
             }
 
             public void Enable()
             {
-                if (_tower.Events != null)
-                    _tower.Events.OnHit += TryExecuteTarget;
+                if (tower.events != null)
+                    tower.events.onHit += TryExecuteTarget;
             }
 
             public void Disable()
             {
-                if (_tower.Events != null)
-                    _tower.Events.OnHit -= TryExecuteTarget;
+                if (tower.events != null)
+                    tower.events.onHit -= TryExecuteTarget;
             }
 
             private void TryExecuteTarget(UpgradeProvider.OnHitData data)
             {
-                if (!data.Target) return;
+                if (!data.target) return;
 
                 // if (!data.target.TryGetComponent<HealthComponent>(out var healthComp)) return;
 
@@ -353,7 +353,7 @@ namespace Towers
 
         // private VFXDefinition impactEffect;
 
-        public override IUpgradeInstance CreateInstance(BaseTower tower)
+        public override IUpgradeInstance CreateInstance(TowerEntity tower)
         {
             return new PoisonInstance(this, tower);
         }
@@ -361,65 +361,65 @@ namespace Towers
         [Serializable]
         private class PoisonInstance : IUpgradeInstance
         {
-            private readonly PoisonUpgradeSo _config;
-            private readonly BaseTower _tower;
+            private readonly PoisonUpgradeSo config;
+            private readonly TowerEntity tower;
 
-            public PoisonInstance(PoisonUpgradeSo config, BaseTower tower)
+            public PoisonInstance(PoisonUpgradeSo config, TowerEntity tower)
             {
-                _config = config;
-                _tower = tower;
+                this.config = config;
+                this.tower = tower;
             }
 
             public void Enable()
             {
-                if (_tower.Events != null)
-                    _tower.Events.OnHit += TryApplyPoison;
+                if (tower.events != null)
+                    tower.events.onHit += TryApplyPoison;
             }
 
             public void Disable()
             {
-                if (_tower.Events != null)
-                    _tower.Events.OnHit -= TryApplyPoison;
+                if (tower.events != null)
+                    tower.events.onHit -= TryApplyPoison;
             }
 
             private void TryApplyPoison(UpgradeProvider.OnHitData data)
             {
-                if (!data.Target) return;
+                if (!data.target) return;
 
-                if (data.DamageType == UpgradeProvider.DamageType.DoT) return;
+                if (data.damageType == UpgradeProvider.DamageType.DoT) return;
 
-                if (!data.Target.TryGetComponent<StatusHandler>(out var statusHandler)) return;
+                if (!data.target.TryGetComponent<StatusHandler>(out var statusHandler)) return;
 
-                var effect = new PoisonStatus(_config, _tower, data.Target);
+                var effect = new PoisonStatus(config, tower, data.target);
                 statusHandler.ApplyStatus(effect);
             }
         }
 
         private class PoisonStatus : IStatusEffect
         {
-            private readonly PoisonUpgradeSo _config;
-            private readonly BaseTower _sourceTower;
-            private readonly GameObject _target;
-            private float _expirationTime;
+            private readonly PoisonUpgradeSo config;
+            private readonly TowerEntity sourceTower;
+            private readonly GameObject target;
+            private float expirationTime;
 
 
-            public PoisonStatus(PoisonUpgradeSo config, BaseTower sourceTower, GameObject target)
+            public PoisonStatus(PoisonUpgradeSo config, TowerEntity sourceTower, GameObject target)
             {
-                _config = config;
-                _sourceTower = sourceTower;
-                _target = target;
+                this.config = config;
+                this.sourceTower = sourceTower;
+                this.target = target;
             }
 
             public void OnApply(StatusHandler host)
             {
-                _expirationTime = Time.time + _config.duration;
+                expirationTime = Time.time + config.duration;
 
                 // VFXManager.Instance.Spawn(config.impactEffect, target.transform.position, Quaternion.identity);
             }
 
             public void Reapply(IStatusEffect newInstance)
             {
-                _expirationTime = Time.time + _config.duration;
+                expirationTime = Time.time + config.duration;
             }
 
             public void OnEnd()
@@ -428,35 +428,35 @@ namespace Towers
 
             public IEnumerator Process(StatusHandler host)
             {
-                var waiter = new WaitForSeconds(_config.tickRate);
+                var waiter = new WaitForSeconds(config.tickRate);
 
-                while (Time.time < _expirationTime)
+                while (Time.time < expirationTime)
                 {
                     yield return waiter;
+                    
+                    if (Time.time > expirationTime + 0.1f) yield break;
 
-                    if (Time.time > _expirationTime + 0.1f) yield break;
-
-                    if (!_target) yield break;
+                    if (!target) yield break;
 
                     // if (!target.TryGetComponent<HealthComponent>(out var hp)) continue;
 
-                    _sourceTower.Events.OnHit?.Invoke(new UpgradeProvider.OnHitData
+                    sourceTower.events.onHit?.Invoke(new UpgradeProvider.OnHitData
                     {
-                        Origin = _sourceTower.gameObject,
-                        Target = _target,
-                        Damage = _config.damagePerTick,
-                        DamageType = UpgradeProvider.DamageType.DoT
+                        origin = sourceTower.gameObject,
+                        target = target,
+                        damage = config.damagePerTick,
+                        damageType = UpgradeProvider.DamageType.DoT
                     });
 
                     // var isDead = hp.TakeDamage(config.damagePerTick);
 
                     // if (!isDead) continue;
 
-                    _sourceTower.Events.OnKill?.Invoke(new UpgradeProvider.OnKillData
+                    sourceTower.events.onKill?.Invoke(new UpgradeProvider.OnKillData
                     {
-                        Origin = _sourceTower.gameObject,
-                        Target = _target,
-                        Damage = _config.damagePerTick
+                        origin = sourceTower.gameObject,
+                        target = target,
+                        damage = config.damagePerTick
                     });
 
                     yield break;
@@ -465,14 +465,14 @@ namespace Towers
 
             public Sprite GetIcon()
             {
-                return _config.icon;
+                return config.icon;
             }
 
             public float GetDurationRatio()
             {
-                if (_config.duration <= 0) return 0;
-                var remaining = _expirationTime - Time.time;
-                return Mathf.Clamp01(remaining / _config.duration);
+                if (config.duration <= 0) return 0;
+                var remaining = expirationTime - Time.time;
+                return Mathf.Clamp01(remaining / config.duration);
             }
 
             public int GetStackCount()
