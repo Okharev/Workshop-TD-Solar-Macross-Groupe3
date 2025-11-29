@@ -225,12 +225,11 @@ namespace Placement
 
             ghostHelper.CreateGhost(blueprint.prefab.gameObject);
             
-            // --- NEW: Enable Heatmap if the building needs power ---
+            // Enable Heatmap if the building needs power ---
             if (blueprint.energyDrain > 0)
             {
-                EnergyHeatmapSystem.Instance?.ToggleHeatmap(true);
+                // EnergyHeatmapSystem.Instance?.ToggleHeatmap(true);
             }
-            // -------------------------------------------------------
         
             OnPlacementStarted?.Invoke();
         }
@@ -242,8 +241,8 @@ namespace Placement
             currentBuilding = null;
             ghostHelper.ClearGhost();
             
-            // --- NEW: Hide Heatmap ---
-            EnergyHeatmapSystem.Instance?.ToggleHeatmap(false);
+            // --- Hide Heatmap ---
+            // EnergyHeatmapSystem.Instance?.ToggleHeatmap(false);
             // -------------------------
         
             OnPlacementEnded?.Invoke();
@@ -362,7 +361,7 @@ namespace Placement
     }
 
     // ==========================================================
-    // SUB-SYSTEMS (Could be in separate files for cleaner project)
+    // SUB-SYSTEMS
     // ==========================================================
 
     #region Helper Classes (Ghost)

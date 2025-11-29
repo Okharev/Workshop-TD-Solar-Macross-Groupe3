@@ -93,7 +93,7 @@ namespace Camera
             currentDirVelocity = Vector3.Lerp(currentDirVelocity, targetInput, Time.unscaledDeltaTime * movementSmoothness);
         
             // Calculate the position we WOULD be at if we just moved normally
-            Vector3 nextPosition = transform.position + (currentDirVelocity * currentSpeed * Time.unscaledDeltaTime);
+            Vector3 nextPosition = transform.position + (currentDirVelocity * (currentSpeed * Time.unscaledDeltaTime));
 
             // --- 3. Predictive Obstacle Avoidance ---
             if (autoAvoidObstacles)

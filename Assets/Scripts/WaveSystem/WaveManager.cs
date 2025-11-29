@@ -1,13 +1,10 @@
-﻿using Pathing;
-using WaveSystem;
+﻿using System.Collections.Generic;
+using System.Linq;
+using Pathing;
+using UnityEngine;
 
-namespace DynamicWaveSystem
+namespace WaveSystem
 {
-    using System.Collections;
-    using System.Collections.Generic;
-    using System.Linq;
-    using UnityEngine;
-
     public class WaveManager : MonoBehaviour
     {
         [Header("References")]

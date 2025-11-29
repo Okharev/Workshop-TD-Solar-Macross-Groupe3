@@ -62,8 +62,6 @@ namespace Economy
         {
             foreach (var p in producers)
             {
-                // FIX: Check !isActiveAndEnabled to hide UI instantly when object is disabled
-                // (waiting for the next Cache refresh takes too long)
                 if (p == null || !p.isActiveAndEnabled) continue;
 
                 Vector3 screenPos = GetScreenPosition(p.transform.position);
@@ -86,13 +84,11 @@ namespace Economy
         {
             foreach (var c in consumers)
             {
-                // FIX: Check !isActiveAndEnabled
                 if (c == null || !c.isActiveAndEnabled) continue;
 
                 Vector3 screenPos = GetScreenPosition(c.transform.position);
                 if (screenPos.z < 0) continue;
 
-                // FIX: Actually read the IsPowered property from the Consumer
                 bool isPowered = c.IsPowered; 
                 int req = c.GetEnergyRequirement();
 

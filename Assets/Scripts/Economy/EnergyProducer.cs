@@ -14,90 +14,70 @@ namespace Economy
         float GetBroadcastRadius(); 
     }
 
-    [RequireComponent(typeof(Collider))]
     public class EnergyProducer : MonoBehaviour, IEnergyProducer
     {
         [Header("Configuration")]
         [Tooltip("Is this a placed building (Generator) or a map sector (District)?")]
-        [SerializeField]
-        public bool isMobileGenerator = true;
-
+        [SerializeField] public bool isMobileGenerator = true;
         [SerializeField] public int maxCapacity = 100;
 
         [Header("Generator Settings")] 
         [Tooltip("Radius of power provided.")] 
-        [SerializeField]
-        public float broadcastRadius = 15f;
+        [SerializeField] public float broadcastRadius = 15f;
         
         [SerializeField] private LayerMask consumerLayer;
 
+        // State Tracking
         private readonly Dictionary<IEnergyConsumer, int> outputMap = new();
-
-        private int powerGridLayerIndex;
         [SerializeField] public int currentLoad;
-
         public event Action OnStateChanged;
         
+        private Vector3 lastPos;
+        
+        // Helpers
+        private int powerGridLayerIndex;
         public float GetBroadcastRadius() => broadcastRadius;
+        public int GetAvailableEnergy() => maxCapacity - currentLoad;
+        public bool IsLocalGenerator() => isMobileGenerator;
+        public Vector3 GetPosition() => transform.position;
+        public IReadOnlyDictionary<IEnergyConsumer, int> GetOutputMap() => outputMap;
 
         private void Awake()
         {
             powerGridLayerIndex = LayerMask.NameToLayer("PowerGrid");
             if (powerGridLayerIndex == -1) powerGridLayerIndex = 0; 
 
-            int blockerIndex = LayerMask.NameToLayer("PlacementBlockers");
-            if (blockerIndex != -1) consumerLayer = 1 << blockerIndex; 
+            // Auto-detect layer if not set
+            if (consumerLayer == 0)
+            {
+                var blockerIndex = LayerMask.NameToLayer("PlacementBlockers");
+                if (blockerIndex != -1) consumerLayer = 1 << blockerIndex;
+            }
         }
         
         private void Start()
         {
-            if (isMobileGenerator)
-            {
-                GenerateRangeTrigger();
-            }
-            // Ensure visualizer knows about us if Start runs after OnEnable
+            lastPos = transform.position;
+            if (isMobileGenerator) GenerateRangeTrigger();
             ElectricityVisualizer.Instance?.RegisterProducer(this);
-            
-            EnergyHeatmapSystem.Instance?.Register(this);
         }
 
         private void OnEnable()
         {
             ElectricityVisualizer.Instance?.RegisterProducer(this);
-            
-            EnergyHeatmapSystem.Instance?.Register(this);
-
-            // When a District is re-enabled, it MUST tell the consumers 
-            // inside it to try and connect again.
             NotifyNearbyConsumers();
-        }
-
-        private void NotifyNearbyConsumers()
-        {
-            // For Districts, this radius must be set to the Map Radius 
-            // (handled in DistrictGenerator.cs now)
-            Collider[] hits = Physics.OverlapSphere(transform.position, broadcastRadius, consumerLayer);
-
-            foreach (var hit in hits)
-            {
-                var consumer = hit.GetComponent<IEnergyConsumer>();
-                if (consumer != null)
-                {
-                    consumer.RefreshConnection();
-                }
-            }
         }
 
         private void OnDisable()
         {
             ElectricityVisualizer.Instance?.UnregisterProducer(this);
-            
-            EnergyHeatmapSystem.Instance?.Unregister(this);
 
+            // Force disconnect everyone gracefully
             var consumers = new List<IEnergyConsumer>(outputMap.Keys);
             foreach (var consumer in consumers)
             {
-                consumer.OnPowerLost();
+                // This triggers the Consumer to look for power elsewhere
+                consumer.OnPowerLost(); 
             }
 
             outputMap.Clear();
@@ -111,13 +91,22 @@ namespace Economy
             outputMap.Clear();
         }
 
-        private void OnDrawGizmosSelected()
+        private void Update()
         {
-            // Draw gizmo for both types to debug radius issues
-            Gizmos.color = new Color(0, 1, 1, 0.3f); 
-            Gizmos.DrawWireSphere(transform.position, broadcastRadius);
-        }
+            // If we havent moved, do nothing
+            if (!transform.hasChanged) return;
 
+            // if we moved beyond a threshold we launch check
+            if (!((transform.position - lastPos).sqrMagnitude > 0.01f)) return;
+            
+            NotifyNearbyConsumers();
+            lastPos = transform.position;
+                
+            // If we want to avoid delay
+            transform.hasChanged = false;
+        }
+        
+        // Logic to give energy
         public int ConsumeUpTo(int amount, IEnergyConsumer consumer)
         {
             if (!isActiveAndEnabled) return 0;
@@ -137,6 +126,7 @@ namespace Economy
             return amountToGive;
         }
 
+        // Logic to take back energy
         public void ReleaseEnergy(int amount, IEnergyConsumer consumer)
         {
             currentLoad = Mathf.Max(0, currentLoad - amount);
@@ -150,14 +140,21 @@ namespace Economy
             OnStateChanged?.Invoke();
         }
 
-        public int GetAvailableEnergy() => maxCapacity - currentLoad;
-        public bool IsLocalGenerator() => isMobileGenerator;
-        public Vector3 GetPosition() => transform.position;
-        public IReadOnlyDictionary<IEnergyConsumer, int> GetOutputMap() => outputMap;
+        private void NotifyNearbyConsumers()
+        {
+            var hits = Physics.OverlapSphere(transform.position, broadcastRadius, consumerLayer);
+
+            foreach (var hit in hits)
+            {
+                var consumer = hit.GetComponent<IEnergyConsumer>();
+                
+                consumer?.RefreshConnection();
+            }
+        }
 
         private void GenerateRangeTrigger()
         {
-            if(transform.Find("EnergyField_Generated") != null) return;
+            if(transform.Find("EnergyField_Generated")) return;
 
             var fieldObj = new GameObject("EnergyField_Generated");
             fieldObj.transform.SetParent(transform);
@@ -170,6 +167,12 @@ namespace Economy
 
             var link = fieldObj.AddComponent<EnergyFieldLink>();
             link.Initialize(this);
+        }
+
+        private void OnDrawGizmosSelected()
+        {
+            Gizmos.color = new Color(0, 1, 1, 0.3f); 
+            Gizmos.DrawWireSphere(transform.position, broadcastRadius);
         }
     }
 }
