@@ -5,16 +5,16 @@ namespace Economy
     // Add this script automatically in EnergyProducer.GenerateRangeTrigger
     public class EnergyFieldLink : MonoBehaviour
     {
-        private IEnergyProducer mainProducer;
+        private IEnergyProducer _mainProducer;
 
         public void Initialize(IEnergyProducer producer)
         {
-            mainProducer = producer;
+            _mainProducer = producer;
         }
 
         public IEnergyProducer GetProducer()
         {
-            return mainProducer;
+            return _mainProducer;
         }
     }
 }

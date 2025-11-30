@@ -26,13 +26,13 @@ namespace Economy
         public LayerMask energylayer;
 
         // Intern
-        private readonly Dictionary<IEnergyProducer, int> energySources = new();
+        private readonly Dictionary<IEnergyProducer, int> _energySources = new();
         private bool _isPowered;
-        private Vector3 lastPosition;
+        private Vector3 _lastPosition;
 
         private void OnEnable()
         {
-            lastPosition = transform.position;
+            _lastPosition = transform.position;
             if (totalRequirement > 0) StartCoroutine(InitialConnectRoutine());
         }
 
@@ -94,8 +94,8 @@ namespace Economy
                 yield return wait;
 
                 // 1. Movement detection
-                var hasMoved = (transform.position - lastPosition).sqrMagnitude > 0.01f;
-                if (hasMoved) lastPosition = transform.position;
+                var hasMoved = (transform.position - _lastPosition).sqrMagnitude > 0.01f;
+                if (hasMoved) _lastPosition = transform.position;
 
                 // 2. Check valid sources (destroyed/disabled)
                 var connectionLost = ValidateExistingConnections();
@@ -107,29 +107,29 @@ namespace Economy
 
         private void DisconnectAll()
         {
-            foreach (var kvp in energySources)
+            foreach (var kvp in _energySources)
                 if (kvp.Key != null && !kvp.Key.Equals(null))
                     kvp.Key.ReleaseEnergy(kvp.Value, this);
 
-            energySources.Clear();
+            _energySources.Clear();
             IsPowered = false;
         }
 
         private bool ValidateExistingConnections()
         {
             var changed = false;
-            var producers = new List<IEnergyProducer>(energySources.Keys);
+            var producers = new List<IEnergyProducer>(_energySources.Keys);
 
             foreach (var producer in producers)
                 // If producer is null or disabled
-                if (producer == null || producer.Equals(null) || !(producer as MonoBehaviour).isActiveAndEnabled)
+                if (producer == null || producer.Equals(null) || !((MonoBehaviour)producer).isActiveAndEnabled)
                 {
-                    energySources.Remove(producer);
+                    _energySources.Remove(producer);
                     changed = true;
                 }
 
             // Let attempt connection handle checks
-            if (changed && energySources.Count == 0) IsPowered = false;
+            if (changed && _energySources.Count == 0) IsPowered = false;
             return changed;
         }
 
@@ -141,10 +141,10 @@ namespace Economy
 
             // 2. take a unique
             var allCandidates = hits
-                .Select(h => GetProducerFromCollider(h))
+                .Select(GetProducerFromCollider)
                 .Where(p => p != null && !p.Equals(null))
                 .Distinct()
-                .Where(p => (p as MonoBehaviour).isActiveAndEnabled)
+                .Where(p => ((MonoBehaviour)p).isActiveAndEnabled)
                 .ToList();
 
             // 3. Sort by priority: first local then by distance
@@ -165,7 +165,7 @@ namespace Economy
                 if (Vector3.Distance(transform.position, producer.GetPosition()) > producer.GetBroadcastRadius() + 1.0f)
                     continue;
 
-                var currentConsumption = energySources.ContainsKey(producer) ? energySources[producer] : 0;
+                var currentConsumption = _energySources.GetValueOrDefault(producer, 0);
                 var realAvailable = producer.GetAvailableEnergy() + currentConsumption;
 
                 if (realAvailable <= 0) continue;
@@ -194,57 +194,53 @@ namespace Economy
         private void ApplyConnectionPlan(Dictionary<IEnergyProducer, int> newPlan)
         {
             // A. Cleanup of old resources missing from old plan
-            var oldProducers = new List<IEnergyProducer>(energySources.Keys);
+            var oldProducers = new List<IEnergyProducer>(_energySources.Keys);
             foreach (var p in oldProducers)
                 if (!newPlan.ContainsKey(p))
                 {
                     // case 1 : Disconnets totally if we exited zone or there is better generator
-                    p.ReleaseEnergy(energySources[p], this);
-                    energySources.Remove(p);
+                    p.ReleaseEnergy(_energySources[p], this);
+                    _energySources.Remove(p);
                 }
-                else if (newPlan[p] < energySources[p])
+                else if (newPlan[p] < _energySources[p])
                 {
                     // Case 2 : Reduce charge
-                    var diff = energySources[p] - newPlan[p];
+                    var diff = _energySources[p] - newPlan[p];
                     p.ReleaseEnergy(diff, this);
-                    energySources[p] = newPlan[p];
+                    _energySources[p] = newPlan[p];
                 }
 
             // B. add or augmentation of sources
-            foreach (var kvp in newPlan)
-            {
-                var p = kvp.Key;
-                var targetAmount = kvp.Value;
-
-                if (!energySources.ContainsKey(p))
+            foreach (var (p, targetAmount) in newPlan)
+                if (!_energySources.ContainsKey(p))
                 {
                     // Case 3 : new connection
                     p.ConsumeUpTo(targetAmount, this);
-                    energySources.Add(p, targetAmount);
+                    _energySources.Add(p, targetAmount);
                 }
-                else if (energySources[p] < targetAmount)
+                else if (_energySources[p] < targetAmount)
                 {
                     // Case 4 : increase demand
-                    var diff = targetAmount - energySources[p];
+                    var diff = targetAmount - _energySources[p];
                     p.ConsumeUpTo(diff, this);
-                    energySources[p] = targetAmount;
+                    _energySources[p] = targetAmount;
                 }
-            }
 
             // C. Update final state
             var total = 0;
-            foreach (var v in energySources.Values) total += v;
+            foreach (var v in _energySources.Values) total += v;
 
             IsPowered = total >= totalRequirement;
         }
 
-        private IEnergyProducer GetProducerFromCollider(Collider h)
+        private static IEnergyProducer GetProducerFromCollider(Collider h)
         {
             var p = h.GetComponent<IEnergyProducer>();
+
             if (p == null)
             {
                 var link = h.GetComponent<EnergyFieldLink>();
-                if (link != null) p = link.GetProducer();
+                if (link) p = link.GetProducer();
             }
 
             return p;

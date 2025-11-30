@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Economy;
 using Towers.Architecture.Strategies;
 using Towers.TargetingStrategies;
 using UnityEngine;
@@ -9,54 +10,50 @@ namespace Towers
     public class TowerEntity : MonoBehaviour
     {
         #region --- Configuration ---
-       
+
         [SerializeField] private TowerBlueprintSo blueprint;
-        
-        [SerializeReference]
-        public ITargetingBehaviours targetingStrategy;
 
-        [SerializeReference] 
-        public IRotationStrategy rotationStrategy;
+        [SerializeReference] public ITargetingBehaviours targetingStrategy;
 
-        [SerializeReference] 
-        public IWeaponStrategy weaponStrategy;
+        [SerializeReference] public IRotationStrategy rotationStrategy;
+
+        [SerializeReference] public IWeaponStrategy weaponStrategy;
 
         #endregion
 
         #region --- Runtime Stats ---
 
-
-        public Stat damage = new Stat(10f);
-        public Stat range = new Stat(15f);
-        public Stat fireRate = new Stat(1f);
+        public Stat damage = new(10f);
+        public Stat range = new(15f);
+        public Stat fireRate = new(1f);
 
         #endregion
 
         #region --- Visuals & References ---
 
         public Transform firePoint;
-        
-        [Header("Pivots (For Rotation)")]
-        public Transform yPivot;
+
+        [Header("Pivots (For Rotation)")] public Transform yPivot;
+
         public Transform xPivot;
 
-        [Header("Feedback")]
-        [SerializeField] private AudioSource audioSource;
+        [Header("Feedback")] [SerializeField] private AudioSource audioSource;
+
         [SerializeField] private ParticleSystem muzzleFlash;
 
         #endregion
 
         #region --- State & Events ---
 
-        private bool _hasPower = true; // Default to true so it works if no power system exists
-        private Economy.IEnergyConsumer _powerSource;
-        
-        public readonly UpgradeProvider events = new UpgradeProvider();
+        private readonly bool _hasPower = true; // Default to true so it works if no power system exists
+        private IEnergyConsumer _powerSource;
+
+        public readonly UpgradeProvider events = new();
 
         public Transform currentTarget;
         public Vector3 aimPoint;
-        
-        public float fireTimer { get; set; }
+
+        public float FireTimer { get; set; }
 
         public bool isAligned;
 
@@ -64,7 +61,7 @@ namespace Towers
         public LayerMask EnemyLayer { get; private set; }
 
         // Active Upgrade Logic
-        private readonly List<IUpgradeInstance> _activeUpgrades = new List<IUpgradeInstance>();
+        private readonly List<IUpgradeInstance> _activeUpgrades = new();
 
         #endregion
 
@@ -77,43 +74,39 @@ namespace Towers
             targetingStrategy = new TargetClosest();
             rotationStrategy = new RotationDualAxis(90f, 90f, 5f);
             weaponStrategy = new WeaponShotgunRaycast();
-            
+
             InitializeStats();
         }
 
         private void Start()
         {
-            _powerSource = GetComponent<Economy.IEnergyConsumer>();
+            _powerSource = GetComponent<IEnergyConsumer>();
 
             if (_powerSource != null)
             {
                 // 2. SUBSCRIBE to the event
                 _powerSource.OnPowerChanged += HandlePowerChanged;
-            
+
                 // 3. SYNC initial state (in case we spawned late)
                 HandlePowerChanged(_powerSource.IsPowered);
             }
-        
+
             InitializeUpgrades();
         }
-        
+
         private void HandlePowerChanged(bool hasPower)
         {
-            this.enabled = hasPower; // Ou une variable privée _hasPower
+            enabled = hasPower; // Ou une variable privée _hasPower
             // Debug.Log($"Tower Power: {hasPower}");
         }
 
 
-        
         private void OnDisable()
         {
-            if (_powerSource != null)
-            {
-                _powerSource.OnPowerChanged -= HandlePowerChanged;
-            }
-            
+            if (_powerSource != null) _powerSource.OnPowerChanged -= HandlePowerChanged;
+
             // CLEANUP: Essential to stop Coroutines and prevent Memory Leaks
-            
+
             if (targetingStrategy != null)
             {
                 targetingStrategy.OnTargetAcquired -= HandleTargetAcquired;
@@ -121,7 +114,7 @@ namespace Towers
                 targetingStrategy.Dispose(this);
             }
 
-            if (rotationStrategy != null) rotationStrategy.Dispose(this);
+            rotationStrategy?.Dispose(this);
 
             if (weaponStrategy != null)
             {
@@ -145,12 +138,8 @@ namespace Towers
                 targetingStrategy.OnTargetLost += HandleTargetLost;
             }
 
-            if (rotationStrategy != null)
-            {
-                rotationStrategy.Initialize(this);
-                // Optional: Hook into rotation events
-            }
-
+            rotationStrategy?.Initialize(this);
+            // Optional: Hook into rotation events
             if (weaponStrategy != null)
             {
                 weaponStrategy.Initialize(this);
@@ -162,9 +151,9 @@ namespace Towers
         {
             // --- THE GATEKEEPER ---
             // If we have no power, we do nothing.
-            if (!_hasPower) return; 
+            if (!_hasPower) return;
 
-            float dt = Time.deltaTime;
+            var dt = Time.deltaTime;
 
             // 1. Update Rotation
             rotationStrategy?.UpdateRotation(this, dt);
@@ -173,7 +162,6 @@ namespace Towers
             weaponStrategy?.UpdateWeapon(this, dt);
         }
 
-
         #endregion
 
         #region --- Initialization Logic ---
@@ -181,19 +169,19 @@ namespace Towers
         // Called automatically by Odin via [OnValueChanged] or in Awake
         public void InitializeStats()
         {
-            if (blueprint == null) return;
+            if (!blueprint) return;
 
             // Reset stats to base values from SO
             damage = new Stat(blueprint.baseDamage);
             range = new Stat(blueprint.baseRange);
             fireRate = new Stat(blueprint.baseFireRate);
-            
+
             // Note: If you have existing modifiers, you might want to Reapply them here
         }
 
         private void InitializeUpgrades()
         {
-            if (blueprint == null) return;
+            if (!blueprint) return;
 
             // clear old list if pooling
             _activeUpgrades.Clear();
@@ -201,14 +189,14 @@ namespace Towers
 
         public void AddUpgrade(UpgradeSo upgradeSo)
         {
-            if (upgradeSo == null) return;
+            if (!upgradeSo) return;
 
             // Factory Pattern: Create the runtime logic for this specific upgrade
-            IUpgradeInstance instance = upgradeSo.CreateInstance(this);
-            
+            var instance = upgradeSo.CreateInstance(this);
+
             // This usually subscribes to 'events.onHit', 'events.onKill', etc.
             instance.Enable();
-            
+
             _activeUpgrades.Add(instance);
         }
 
@@ -248,7 +236,7 @@ namespace Towers
             var r = range?.Value ?? 10f;
             Gizmos.DrawWireSphere(transform.position, r);
 
-            if (currentTarget != null)
+            if (currentTarget)
             {
                 Gizmos.color = Color.red;
                 Gizmos.DrawLine(firePoint ? firePoint.position : transform.position, currentTarget.position);
@@ -259,14 +247,14 @@ namespace Towers
                 Gizmos.DrawWireSphere(aimPoint, 0.5f);
             }
         }
-        
+
         private void OnDrawGizmos()
         {
-            if (firePoint != null)
+            if (firePoint)
             {
                 Gizmos.color = Color.blue;
                 Gizmos.DrawRay(firePoint.position, firePoint.forward * 3f);
-        
+
                 Gizmos.color = Color.red;
                 Gizmos.DrawWireSphere(firePoint.position, 0.1f);
             }

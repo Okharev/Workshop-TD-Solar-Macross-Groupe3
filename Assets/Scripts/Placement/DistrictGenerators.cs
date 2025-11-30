@@ -23,23 +23,28 @@ namespace Placement
 
         private void GenerateDistricts()
         {
-            var angleStep = 360f / 3f;
+            // because we split in 3
+            const float angleStep = 360f / 3f;
 
             for (var i = 0; i < 3; i++)
             {
                 var startAngle = i * angleStep + rotationOffset;
 
-                var name = $"District_{i + 1}";
-                CreateDistrictSector(name, startAngle, angleStep);
+                var districtName = $"District_{i + 1}";
+                CreateDistrictSector(districtName, startAngle, angleStep);
             }
         }
 
-        private void CreateDistrictSector(string name, float startAngle, float totalAngle)
+        private void CreateDistrictSector(string districtName, float startAngle, float totalAngle)
         {
-            var sectorObj = new GameObject(name);
-            sectorObj.transform.parent = transform;
-            
-            sectorObj.transform.localPosition = Vector3.zero; 
+            var sectorObj = new GameObject(districtName)
+            {
+                transform =
+                {
+                    parent = transform,
+                    localPosition = Vector3.zero
+                }
+            };
 
             var layerIndex = 0;
             var layerValue = districtLayer.value;
@@ -62,8 +67,8 @@ namespace Placement
             var source = sectorObj.AddComponent<EnergyProducer>();
             source.maxCapacity = capacityPerDistrict;
             source.isMobileGenerator = false;
-            
-            source.broadcastRadius = mapRadius; 
+
+            source.broadcastRadius = mapRadius;
         }
 
         private Mesh GenerateSectorMesh(float startAngle, float totalAngle)
@@ -72,8 +77,8 @@ namespace Placement
             var segments = smoothness;
             var vertices = new Vector3[2 + (segments + 1) * 2];
 
-            vertices[0] = Vector3.zero; 
-            vertices[1] = new Vector3(0, height, 0); 
+            vertices[0] = Vector3.zero;
+            vertices[1] = new Vector3(0, height, 0);
 
             var angleIncrement = totalAngle / segments;
 
@@ -87,8 +92,8 @@ namespace Placement
 
                 var vertIndex = 2 + i * 2;
 
-                vertices[vertIndex] = new Vector3(x, 0, z); 
-                vertices[vertIndex + 1] = new Vector3(x, height, z); 
+                vertices[vertIndex] = new Vector3(x, 0, z);
+                vertices[vertIndex + 1] = new Vector3(x, height, z);
             }
 
             mesh.vertices = vertices;
@@ -100,20 +105,36 @@ namespace Placement
                 var baseIdx = 2 + i * 2;
                 var nextIdx = 2 + (i + 1) * 2;
 
-                tris.Add(0); tris.Add(nextIdx); tris.Add(baseIdx);
-                tris.Add(1); tris.Add(baseIdx + 1); tris.Add(nextIdx + 1);
+                tris.Add(0);
+                tris.Add(nextIdx);
+                tris.Add(baseIdx);
+                tris.Add(1);
+                tris.Add(baseIdx + 1);
+                tris.Add(nextIdx + 1);
 
-                tris.Add(baseIdx); tris.Add(nextIdx); tris.Add(nextIdx + 1);
-                tris.Add(baseIdx); tris.Add(nextIdx + 1); tris.Add(baseIdx + 1);
+                tris.Add(baseIdx);
+                tris.Add(nextIdx);
+                tris.Add(nextIdx + 1);
+                tris.Add(baseIdx);
+                tris.Add(nextIdx + 1);
+                tris.Add(baseIdx + 1);
             }
 
             var lastIdx = 2 + segments * 2;
 
-            tris.Add(0); tris.Add(2); tris.Add(3);
-            tris.Add(0); tris.Add(3); tris.Add(1);
+            tris.Add(0);
+            tris.Add(2);
+            tris.Add(3);
+            tris.Add(0);
+            tris.Add(3);
+            tris.Add(1);
 
-            tris.Add(0); tris.Add(lastIdx + 1); tris.Add(lastIdx);
-            tris.Add(0); tris.Add(1); tris.Add(lastIdx + 1);
+            tris.Add(0);
+            tris.Add(lastIdx + 1);
+            tris.Add(lastIdx);
+            tris.Add(0);
+            tris.Add(1);
+            tris.Add(lastIdx + 1);
 
             mesh.triangles = tris.ToArray();
             mesh.RecalculateNormals();

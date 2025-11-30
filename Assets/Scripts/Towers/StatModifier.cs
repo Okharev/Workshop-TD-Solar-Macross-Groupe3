@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 namespace Towers
 {
@@ -15,18 +14,17 @@ namespace Towers
     [Serializable]
     public class Stat
     {
-        [SerializeField]
-        private float baseValue;
+        [SerializeField] private float baseValue;
 
-        [SerializeField]
-        private bool isDirty = true; 
+        [SerializeField] private bool isDirty = true;
 
-        [SerializeField]
-        private float value;
+        [SerializeField] private float value;
 
         [SerializeField] private List<StatModifier> modifiers = new(4);
 
-        public Stat() { }
+        public Stat()
+        {
+        }
 
         public Stat(float baseValue)
         {
@@ -34,12 +32,12 @@ namespace Towers
             isDirty = true;
         }
 
-        [SerializeField] public float Value
+        public float Value
         {
             get
             {
                 if (!isDirty && (value != 0 || baseValue == 0)) return value;
-                
+
                 value = CalculateFinalValue();
                 isDirty = false;
                 return value;
@@ -49,13 +47,17 @@ namespace Towers
         public float BaseValue
         {
             get => baseValue;
-            set { baseValue = value; SetDirty(); }
+            set
+            {
+                baseValue = value;
+                SetDirty();
+            }
         }
 
         public void AddModifier(StatModifier mod)
         {
             modifiers ??= new List<StatModifier>();
-            
+
             isDirty = true;
             modifiers.Add(mod);
         }
@@ -65,22 +67,22 @@ namespace Towers
             if (modifiers == null) return false;
 
             if (!modifiers.Remove(mod)) return false;
-            
+
             isDirty = true;
             return true;
         }
-        
+
         public void RemoveAllModifiersFromSource(object source)
         {
             if (modifiers == null) return;
 
-            if (modifiers.RemoveAll(mod => mod.source == source) > 0)
-            {
-                isDirty = true;
-            }
+            if (modifiers.RemoveAll(mod => mod.source == source) > 0) isDirty = true;
         }
 
-        private void SetDirty() => isDirty = true;
+        private void SetDirty()
+        {
+            isDirty = true;
+        }
 
         private float CalculateFinalValue()
         {
@@ -90,7 +92,6 @@ namespace Towers
             float sumPercentAdd = 0;
 
             foreach (var mod in modifiers)
-            {
                 switch (mod.type)
                 {
                     case StatModType.Flat:
@@ -100,17 +101,12 @@ namespace Towers
                         sumPercentAdd += mod.value;
                         break;
                 }
-            }
 
             finalValue *= 1 + sumPercentAdd;
 
             foreach (var mod in modifiers)
-            {
                 if (mod.type == StatModType.PercentMult)
-                {
                     finalValue *= mod.value;
-                }
-            }
 
             return (float)Math.Round(finalValue, 4);
         }
@@ -121,7 +117,7 @@ namespace Towers
     {
         [SerializeField] public float value;
         [SerializeField] public StatModType type;
-        [SerializeField] public object source;
+        public object source;
 
         public StatModifier(float value, StatModType type, object source = null)
         {
