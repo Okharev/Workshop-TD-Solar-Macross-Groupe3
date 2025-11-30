@@ -397,7 +397,8 @@ namespace Pathing
                         var splineIndex = junction.splineIndex;
                         var splineOverride = GetSettings(splineIndex);
                         var t = junction.knotIndex == 0 ? 0f : 1f;
-                        _SplineSampler.SampleSplineWidth(splineIndex, t, splineOverride.RoadWidth, out var p1, out var p2);
+                        _SplineSampler.SampleSplineWidth(splineIndex, t, splineOverride.RoadWidth, out var p1,
+                            out var p2);
                         if (junction.knotIndex == 0)
                             junctionEdges.Add(new JunctionEdge(p2, p1));
                         else

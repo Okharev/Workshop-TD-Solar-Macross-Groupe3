@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using Economy;
 using UnityEngine;
@@ -19,31 +18,15 @@ namespace Towers
         SyncWithReload
     }
 
-    [Serializable]
-    public struct BuildingData
-    {
-        public string name;
-        public string description;
-        public Texture2D icon;
-        public int cost;
-        public int energyDrain;
-        public GameObject prefab;
-    }
-
     [RequireComponent(typeof(EnergyConsumer), typeof(Collider))]
     public abstract class BaseTower : MonoBehaviour
     {
         [SerializeField] protected EnergyConsumer powerSource;
+        [SerializeField] protected TowerBlueprintSo blueprint;
 
-        [SerializeField] public BuildingData buildingData;
-
-        [SerializeField] public float baseDamage = 10f;
-        [SerializeField] public float baseRange = 15f;
-        [SerializeField] public float baseFireRate = 1f;
-
-        [SerializeField] public Stat damage;
-        [SerializeField] public Stat range;
-        [SerializeField] public Stat fireRate;
+        public Stat damage;
+        public Stat range;
+        public Stat fireRate;
 
         [Header("Rotation")] [Tooltip("If true, rotation speed increases as Fire Rate increases.")] [SerializeField]
         protected bool scaleRotationWithFireRate = true;
@@ -73,9 +56,9 @@ namespace Towers
         [SerializeField]
         private float referenceTurnAngle = 120f;
 
-        [Header("Upgrades")] public readonly UpgradeProvider Events = new();
+        private List<IUpgradeInstance> activeUpgrades = new();
 
-        private List<IUpgradeInstance> _activeUpgrades = new();
+        [Header("Upgrades")] public UpgradeProvider events = new();
 
 
         protected virtual void Awake()
@@ -86,7 +69,7 @@ namespace Towers
             if (targetLayer == 0) targetLayer = LayerMask.GetMask("Enemy");
             if (visionBlockerLayer == 0) visionBlockerLayer = LayerMask.GetMask("Terrain", "PlacementBlockers");
 
-            ApplyBlueprintStats();
+            if (blueprint) ApplyBlueprintStats();
         }
 
         protected virtual void Start()
@@ -113,13 +96,14 @@ namespace Towers
             if (isAligned && fireCountdown <= 0f)
             {
                 Fire();
-                fireCountdown = 1f / (fireRate.Value <= 0 ? 0.1f : fireRate.Value);
+                var rate = fireRate?.Value ?? 1f;
+                fireCountdown = 1f / (rate <= 0 ? 0.1f : rate);
             }
         }
 
         private void OnDrawGizmosSelected()
         {
-            Gizmos.DrawWireSphere(transform.position, fireRate.Value);
+            Gizmos.DrawWireSphere(transform.position, range.Value);
 
 
             if (currentTarget) Gizmos.DrawWireSphere(currentTarget.transform.position, 1.0f);
@@ -136,8 +120,8 @@ namespace Towers
 
         protected float GetCurrentRotationSpeed(float baseInspectorSpeed)
         {
-            var ratee = fireRate.Value;
-            if (ratee <= 0) ratee = 0.1f;
+            var rate = fireRate?.Value ?? 1f;
+            if (rate <= 0) rate = 0.1f;
 
             switch (rotationMode)
             {
@@ -145,11 +129,11 @@ namespace Towers
                     return baseInspectorSpeed;
 
                 case RotationMode.ScaledWithStats:
-                    return baseInspectorSpeed * Mathf.Max(1f, ratee);
+                    return baseInspectorSpeed * Mathf.Max(1f, rate);
 
                 case RotationMode.SyncWithReload:
 
-                    return referenceTurnAngle * ratee;
+                    return referenceTurnAngle * rate;
 
                 default:
                     return baseInspectorSpeed;
@@ -217,13 +201,10 @@ namespace Towers
 
         private void ApplyBlueprintStats()
         {
-            damage = new Stat(baseDamage);
-            range = new Stat(baseRange);
-            fireRate = new Stat(baseFireRate);
-
-            damage.Initialize();
-            range.Initialize();
-            fireRate.Initialize();
+            if (!blueprint) return;
+            damage = new Stat(blueprint.baseDamage);
+            range = new Stat(blueprint.baseRange);
+            fireRate = new Stat(blueprint.baseFireRate);
         }
 
         protected abstract void Fire();

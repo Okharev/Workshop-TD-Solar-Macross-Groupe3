@@ -12,7 +12,7 @@ namespace Economy
         private float verticalOffset = 2.0f;
 
         [Header("Line Renderer Settings")] [SerializeField]
-        private LineRenderer linePrefab; 
+        private LineRenderer linePrefab;
 
         [Header("Dynamic Visuals")] [Tooltip("Width when providing 0% (or very low) of needs.")] [SerializeField]
         private float minWidth = 0.05f;
@@ -27,17 +27,17 @@ namespace Economy
         private Color strongColor = new(0, 1, 1, 1.0f);
 
         // Object Pool
-        private readonly List<LineRenderer> linePool = new();
+        private readonly List<LineRenderer> _linePool = new();
 
         // Tracking Data
-        private readonly List<EnergyProducer> registeredProducers = new();
+        private readonly List<EnergyProducer> _registeredProducers = new();
 
         // Singleton Instance
         public static ElectricityVisualizer Instance { get; private set; }
 
         private void Awake()
         {
-            if (Instance != null && Instance != this)
+            if (Instance && Instance != this)
             {
                 Destroy(gameObject);
                 return;
@@ -54,12 +54,12 @@ namespace Economy
 
         public void RegisterProducer(EnergyProducer producer)
         {
-            if (!registeredProducers.Contains(producer)) registeredProducers.Add(producer);
+            if (!_registeredProducers.Contains(producer)) _registeredProducers.Add(producer);
         }
 
         public void UnregisterProducer(EnergyProducer producer)
         {
-            if (registeredProducers.Contains(producer)) registeredProducers.Remove(producer);
+            if (_registeredProducers.Contains(producer)) _registeredProducers.Remove(producer);
         }
 
         public void ToggleVisibility(bool state)
@@ -75,29 +75,22 @@ namespace Economy
             // Iterate through every producer 
             // We use a backwards loop or Copy if we were modifying, but here we just read.
             // However, we must handle the case where the list changes during iteration if threaded (unlikely here)
-            for (int i = 0; i < registeredProducers.Count; i++)
+            foreach (var producer in _registeredProducers)
             {
-                var producer = registeredProducers[i];
-
-                if (producer == null || !producer.isActiveAndEnabled) continue;
+                if (!producer || !producer.isActiveAndEnabled) continue;
 
                 var outputs = producer.GetOutputMap();
 
-                foreach (var kvp in outputs)
+                foreach (var (consumer, amountProvided) in outputs)
                 {
-                    var consumer = kvp.Key;
-                    var amountProvided = kvp.Value;
-
                     var consumerMono = consumer as MonoBehaviour;
 
                     // If it is null (destroyed) OR it is simply disabled/inactive...
-                    if (consumerMono == null || !consumerMono.isActiveAndEnabled) 
-                    {
+                    if (!consumerMono || !consumerMono.isActiveAndEnabled)
                         // Skip drawing this line. 
                         // The Logic in EnergyProducer should remove this entry shortly, 
                         // but the visualizer shouldn't wait for that.
-                        continue; 
-                    }
+                        continue;
 
                     float totalNeeded = consumer.GetEnergyRequirement();
                     var ratio = 0f;
@@ -118,7 +111,7 @@ namespace Economy
                 }
             }
 
-            for (var i = lineIndex; i < linePool.Count; i++) linePool[i].gameObject.SetActive(false);
+            for (var i = lineIndex; i < _linePool.Count; i++) _linePool[i].gameObject.SetActive(false);
         }
 
         private void UpdateLineVisuals(LineRenderer line, float ratio)
@@ -135,19 +128,19 @@ namespace Economy
 
         private LineRenderer GetLineFromPool(int index)
         {
-            if (index >= linePool.Count)
+            if (index >= _linePool.Count)
             {
                 var newLine = Instantiate(linePrefab, transform);
                 newLine.gameObject.SetActive(false);
-                linePool.Add(newLine);
+                _linePool.Add(newLine);
             }
 
-            return linePool[index];
+            return _linePool[index];
         }
 
         private void HideAllLines()
         {
-            foreach (var line in linePool) line.gameObject.SetActive(false);
+            foreach (var line in _linePool) line.gameObject.SetActive(false);
         }
     }
 }

@@ -6,9 +6,9 @@ namespace Towers.ProjectileDerived
     public class MortarBomb : BaseProjectile
     {
         public Rigidbody rigidbody;
-        private float _explosionRange;
+        private float explosionRange;
 
-        private bool _hasExploded;
+        private bool hasExploded;
 
         private void Awake()
         {
@@ -18,17 +18,17 @@ namespace Towers.ProjectileDerived
 
         public void Initialize(BaseTower tower, float damageRange)
         {
-            _explosionRange = damageRange;
+            explosionRange = damageRange;
             source = tower;
-            _hasExploded = false;
+            hasExploded = false;
         }
 
         protected override void HandleImpact(Collider other)
         {
-            if (_hasExploded) return;
-            _hasExploded = true;
+            if (hasExploded) return;
+            hasExploded = true;
 
-            var hits = Physics.OverlapSphereNonAlloc(transform.position, _explosionRange, collidersCache,
+            var hits = Physics.OverlapSphereNonAlloc(transform.position, explosionRange, collidersCache,
                 source.targetLayer);
 
             Debug.Log($"Hit enemy count: {hits}");

@@ -12,7 +12,7 @@ namespace Towers.TargetingStrategies
         event Action<Transform> OnTargetAcquired;
         event Action OnTargetLost;
     }
-    
+
     public interface IWeaponStrategy
     {
         void Initialize(TowerEntity tower);
@@ -31,6 +31,6 @@ namespace Towers.TargetingStrategies
         void UpdateRotation(TowerEntity tower, float deltaTime);
 
 
-        event Action<bool> OnAlignmentStatusChanged; 
+        event Action<bool> OnAlignmentStatusChanged;
     }
 }

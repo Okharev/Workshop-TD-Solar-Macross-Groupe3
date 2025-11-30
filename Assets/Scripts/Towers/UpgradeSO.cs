@@ -27,7 +27,7 @@ namespace Towers
         public float stackDuration = 3f;
         public float tickRate = 0.5f;
         public int damagePerStack = 5;
-        
+
         public override IUpgradeInstance CreateInstance(TowerEntity tower)
         {
             return new BleedInstance(this, tower);
@@ -241,7 +241,7 @@ namespace Towers
                 if (config.explosionDelay > 0)
                     yield return new WaitForSeconds(config.explosionDelay);
                 else
-                    yield return null; 
+                    yield return null;
 
                 // VFXManager.Instance.Spawn(config.impactEffect, center, Quaternion.identity);
 
@@ -433,7 +433,7 @@ namespace Towers
                 while (Time.time < expirationTime)
                 {
                     yield return waiter;
-                    
+
                     if (Time.time > expirationTime + 0.1f) yield break;
 
                     if (!target) yield break;

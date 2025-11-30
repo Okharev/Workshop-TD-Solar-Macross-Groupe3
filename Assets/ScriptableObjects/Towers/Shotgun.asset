@@ -15,9 +15,9 @@ MonoBehaviour:
   name: Shotgun Tower
   description: Test
   icon: {fileID: 0}
-  cost: 120
+  cost: 150
   energyDrain: 50
-  prefab: {fileID: 0}
+  prefab: {fileID: 7615454975634943867, guid: 30de2c1208847ac41a7893492ced7dfe, type: 3}
   baseDamage: 10
   baseRange: 100
   baseFireRate: 1

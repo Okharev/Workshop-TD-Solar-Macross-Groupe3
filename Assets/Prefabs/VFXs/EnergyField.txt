@@ -18,9 +18,10 @@ Shader "Economy/EnergyProjector_Texture"
     SubShader
     {
         Tags { "Queue"="Transparent+100" "RenderType"="Transparent" "RenderPipeline" = "UniversalPipeline" }
+        
         Blend SrcAlpha OneMinusSrcAlpha
         ZWrite Off
-        Cull Front 
+        Cull Front // Render inside of volume
         ZTest LEqual
 
         Pass

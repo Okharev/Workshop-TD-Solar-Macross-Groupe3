@@ -1,7 +1,7 @@
 ﻿using System;
-using UnityEngine;
-
 using Towers.TargetingStrategies;
+using UnityEngine;
+using Object = UnityEngine.Object;
 using Random = UnityEngine.Random;
 
 namespace Towers.Architecture.Strategies
@@ -9,75 +9,73 @@ namespace Towers.Architecture.Strategies
     [Serializable]
     public class WeaponShotgunRaycast : IWeaponStrategy
     {
-        [Header("Shotgun Config")]
-        [SerializeField] private int pelletCount = 6;
+        [Header("Shotgun Config")] [SerializeField]
+        private int pelletCount = 6;
+
         [SerializeField] [Range(0f, 45f)] private float spreadAngle = 10f;
-        
+
         [Header("Debug")]
         [Tooltip("Draws debug lines in the Scene view to show where rays are actually going.")]
-        [SerializeField] private bool showDebugRays = true;
+        [SerializeField]
+        private bool showDebugRays = true;
+
         [SerializeField] private float debugDuration = 2f; // How long lines stay visible
 
-        [Header("Damage Logic")]
-        [SerializeField] private bool splitDamage = true;
+        [Header("Damage Logic")] [SerializeField]
+        private bool splitDamage = true;
 
-        [Header("Visuals")]
-        [SerializeField] private GameObject tracerPrefab;
+        [Header("Visuals")] [SerializeField] private GameObject tracerPrefab;
+
         [SerializeField] private GameObject impactVfx;
+
+        private bool _isReloading;
 
         // Events
         public event Action OnFired;
         public event Action OnReloadStart;
         public event Action OnReloadComplete;
 
-        private bool _isReloading;
-
-        public void Initialize(TowerEntity tower) 
-        { 
-            _isReloading = false; 
+        public void Initialize(TowerEntity tower)
+        {
+            _isReloading = false;
         }
 
-        public void Dispose(TowerEntity tower) { }
+        public void Dispose(TowerEntity tower)
+        {
+        }
 
         public void UpdateWeapon(TowerEntity tower, float deltaTime)
         {
-            if (tower.fireTimer > 0)
+            if (tower.FireTimer > 0)
             {
-                tower.fireTimer -= deltaTime;
-                if (tower.fireTimer <= 0 && _isReloading)
+                tower.FireTimer -= deltaTime;
+                if (tower.FireTimer <= 0 && _isReloading)
                 {
                     _isReloading = false;
                     OnReloadComplete?.Invoke();
                 }
             }
 
-            if (tower.currentTarget != null && tower.fireTimer <= 0)
-            {
+            if (tower.currentTarget != null && tower.FireTimer <= 0)
                 if (tower.isAligned)
-                {
                     Fire(tower);
-                }
-            }
         }
 
         private void Fire(TowerEntity tower)
         {
-            float totalDamage = tower.damage.Value;
-            float damagePerPellet = splitDamage ? (totalDamage / pelletCount) : totalDamage;
-            
-            tower.events.onFire?.Invoke(new UpgradeProvider.OnFireData 
-            { 
-                origin = tower.gameObject, 
-                target = tower.currentTarget.gameObject 
+            var totalDamage = tower.damage.Value;
+            var damagePerPellet = splitDamage ? totalDamage / pelletCount : totalDamage;
+
+            tower.events.onFire?.Invoke(new UpgradeProvider.OnFireData
+            {
+                origin = tower.gameObject,
+                target = tower.currentTarget.gameObject
             });
 
-            for (int i = 0; i < pelletCount; i++)
-            {
-                FireSingleRay(tower, damagePerPellet);
-            }
+            for (var i = 0; i < pelletCount; i++) FireSingleRay(tower, damagePerPellet);
 
-            float rate = tower.fireRate.Value > 0 ? tower.fireRate.Value : 0.5f;
-            tower.fireTimer = 1f / rate;
+            var rate = tower.fireRate.Value > 0 ? tower.fireRate.Value : 0.5f;
+            tower.FireTimer = 1f / rate;
             _isReloading = true;
 
             OnFired?.Invoke();
@@ -86,23 +84,23 @@ namespace Towers.Architecture.Strategies
 
         private void FireSingleRay(TowerEntity tower, float dmg)
         {
-            Transform fp = tower.firePoint;
-            float range = tower.range.Value;
+            var fp = tower.firePoint;
+            var range = tower.range.Value;
 
             // 1. Calculate Spread
-            Vector2 randomCircle = Random.insideUnitCircle * spreadAngle;
-            Quaternion spreadRot = Quaternion.Euler(randomCircle.x, randomCircle.y, 0);
-            Vector3 shootDir = fp.rotation * spreadRot * Vector3.forward;
+            var randomCircle = Random.insideUnitCircle * spreadAngle;
+            var spreadRot = Quaternion.Euler(randomCircle.x, randomCircle.y, 0);
+            var shootDir = fp.rotation * spreadRot * Vector3.forward;
 
             // 2. Physics Raycast
-            bool hitSomething = Physics.Raycast(fp.position, shootDir, out RaycastHit hit, range, tower.EnemyLayer);
-            
+            var hitSomething = Physics.Raycast(fp.position, shootDir, out var hit, range, tower.EnemyLayer);
+
             // 3. DEBUG DRAWING (Scene View)
             if (showDebugRays)
             {
-                Vector3 endPoint = hitSomething ? hit.point : (fp.position + shootDir * range);
-                Color color = hitSomething ? Color.green : Color.red;
-                
+                var endPoint = hitSomething ? hit.point : fp.position + shootDir * range;
+                var color = hitSomething ? Color.green : Color.red;
+
                 // Draw a line from the FirePoint to exactly where the calculation went
                 Debug.DrawLine(fp.position, endPoint, color, debugDuration);
             }
@@ -110,9 +108,9 @@ namespace Towers.Architecture.Strategies
             // 4. Visuals (Game View Tracers)
             if (tracerPrefab)
             {
-                Vector3 visualEndPoint = hitSomething ? hit.point : (fp.position + shootDir * range);
-                var tracerObj = UnityEngine.Object.Instantiate(tracerPrefab, fp.position, Quaternion.LookRotation(shootDir));
-                
+                var visualEndPoint = hitSomething ? hit.point : fp.position + shootDir * range;
+                var tracerObj = Object.Instantiate(tracerPrefab, fp.position, Quaternion.LookRotation(shootDir));
+
                 // if (tracerObj.TryGetComponent<Towers.Visuals.ShotgunTracerVisual>(out var tracerScript))
                 // {
                 //     tracerScript.Setup(fp.position, visualEndPoint);
@@ -121,32 +119,30 @@ namespace Towers.Architecture.Strategies
 
             // 5. Hit Logic
             if (hitSomething)
-            {
-                if (impactVfx) UnityEngine.Object.Instantiate(impactVfx, hit.point, Quaternion.LookRotation(hit.normal));
-
-                // if (hit.collider.TryGetComponent<HealthComponent>(out var health))
-                // {
-                //     tower.events.onHit?.Invoke(new UpgradeProvider.OnHitData
-                //     {
-                //         origin = tower.gameObject,
-                //         target = hit.collider.gameObject,
-                //         damage = dmg,
-                //         damageType = UpgradeProvider.DamageType.Direct
-                //     });
-                //
-                //     bool isDead = health.TakeDamage((int)dmg);
-                //
-                //     if (isDead)
-                //     {
-                //         tower.events.onKill?.Invoke(new UpgradeProvider.OnKillData
-                //         {
-                //             origin = tower.gameObject,
-                //             target = hit.collider.gameObject,
-                //             damage = dmg
-                //         });
-                //     }
-                // }
-            }
+                if (impactVfx)
+                    Object.Instantiate(impactVfx, hit.point, Quaternion.LookRotation(hit.normal));
+            // if (hit.collider.TryGetComponent<HealthComponent>(out var health))
+            // {
+            //     tower.events.onHit?.Invoke(new UpgradeProvider.OnHitData
+            //     {
+            //         origin = tower.gameObject,
+            //         target = hit.collider.gameObject,
+            //         damage = dmg,
+            //         damageType = UpgradeProvider.DamageType.Direct
+            //     });
+            //
+            //     bool isDead = health.TakeDamage((int)dmg);
+            //
+            //     if (isDead)
+            //     {
+            //         tower.events.onKill?.Invoke(new UpgradeProvider.OnKillData
+            //         {
+            //             origin = tower.gameObject,
+            //             target = hit.collider.gameObject,
+            //             damage = dmg
+            //         });
+            //     }
+            // }
         }
     }
 }

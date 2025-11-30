@@ -31,13 +31,13 @@ namespace Towers
 
         [SerializeField] private float wobbleFrequency = 4f;
 
-        private readonly Queue<Vector3> _flightPath = new();
-
         // Internal State
         private MissileState _currentState;
         private Vector3 _currentWaypoint;
         private int _enemyLayer;
         private Transform _finalTarget;
+
+        private readonly Queue<Vector3> _flightPath = new();
 
         private float _lifetimeTimer;
         private float _perlinSeedX, _perlinSeedY;
@@ -123,7 +123,7 @@ namespace Towers
                 if (_finalTarget) transform.LookAt(_finalTarget);
             }
         }
-
+        
         protected override bool IsValidHit(Collider hitObject)
         {
             return true;

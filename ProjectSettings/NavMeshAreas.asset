@@ -12,9 +12,9 @@ NavMeshProjectSettings:
   - name: Jump
     cost: 2
   - name: RoadEdge
-    cost: 10
+    cost: 5
   - name: 
-    cost: 0
+    cost: 1
   - name: 
     cost: 1
   - name: 

@@ -11,41 +11,36 @@ namespace Economy
         int GetAvailableEnergy();
         bool IsLocalGenerator();
         Vector3 GetPosition();
-        float GetBroadcastRadius(); 
+        float GetBroadcastRadius();
     }
 
     public class EnergyProducer : MonoBehaviour, IEnergyProducer
     {
         [Header("Configuration")]
         [Tooltip("Is this a placed building (Generator) or a map sector (District)?")]
-        [SerializeField] public bool isMobileGenerator = true;
+        [SerializeField]
+        public bool isMobileGenerator = true;
+
         [SerializeField] public int maxCapacity = 100;
 
-        [Header("Generator Settings")] 
-        [Tooltip("Radius of power provided.")] 
-        [SerializeField] public float broadcastRadius = 15f;
-        
+        [Header("Generator Settings")] [Tooltip("Radius of power provided.")] [SerializeField]
+        public float broadcastRadius = 15f;
+
         [SerializeField] private LayerMask consumerLayer;
+        [SerializeField] public int currentLoad;
 
         // State Tracking
-        private readonly Dictionary<IEnergyConsumer, int> outputMap = new();
-        [SerializeField] public int currentLoad;
-        public event Action OnStateChanged;
-        
-        private Vector3 lastPos;
-        
+        private readonly Dictionary<IEnergyConsumer, int> _outputMap = new();
+
+        private Vector3 _lastPos;
+
         // Helpers
-        private int powerGridLayerIndex;
-        public float GetBroadcastRadius() => broadcastRadius;
-        public int GetAvailableEnergy() => maxCapacity - currentLoad;
-        public bool IsLocalGenerator() => isMobileGenerator;
-        public Vector3 GetPosition() => transform.position;
-        public IReadOnlyDictionary<IEnergyConsumer, int> GetOutputMap() => outputMap;
+        private int _powerGridLayerIndex;
 
         private void Awake()
         {
-            powerGridLayerIndex = LayerMask.NameToLayer("PowerGrid");
-            if (powerGridLayerIndex == -1) powerGridLayerIndex = 0; 
+            _powerGridLayerIndex = LayerMask.NameToLayer("PowerGrid");
+            if (_powerGridLayerIndex == -1) _powerGridLayerIndex = 0;
 
             // Auto-detect layer if not set
             if (consumerLayer == 0)
@@ -54,12 +49,27 @@ namespace Economy
                 if (blockerIndex != -1) consumerLayer = 1 << blockerIndex;
             }
         }
-        
+
         private void Start()
         {
-            lastPos = transform.position;
+            _lastPos = transform.position;
             if (isMobileGenerator) GenerateRangeTrigger();
             ElectricityVisualizer.Instance?.RegisterProducer(this);
+        }
+
+        private void Update()
+        {
+            // If we havent moved, do nothing
+            if (!transform.hasChanged) return;
+
+            // if we moved beyond a threshold we launch check
+            if (!((transform.position - _lastPos).sqrMagnitude > 0.01f)) return;
+
+            NotifyNearbyConsumers();
+            _lastPos = transform.position;
+
+            // If we want to avoid delay
+            transform.hasChanged = false;
         }
 
         private void OnEnable()
@@ -73,39 +83,48 @@ namespace Economy
             ElectricityVisualizer.Instance?.UnregisterProducer(this);
 
             // Force disconnect everyone gracefully
-            var consumers = new List<IEnergyConsumer>(outputMap.Keys);
+            var consumers = new List<IEnergyConsumer>(_outputMap.Keys);
             foreach (var consumer in consumers)
-            {
                 // This triggers the Consumer to look for power elsewhere
-                consumer.OnPowerLost(); 
-            }
+                consumer.OnPowerLost();
 
-            outputMap.Clear();
+            _outputMap.Clear();
             currentLoad = 0;
             OnStateChanged?.Invoke();
         }
-        
+
         private void OnDestroy()
         {
             ElectricityVisualizer.Instance?.UnregisterProducer(this);
-            outputMap.Clear();
+            _outputMap.Clear();
         }
 
-        private void Update()
+        private void OnDrawGizmosSelected()
         {
-            // If we havent moved, do nothing
-            if (!transform.hasChanged) return;
-
-            // if we moved beyond a threshold we launch check
-            if (!((transform.position - lastPos).sqrMagnitude > 0.01f)) return;
-            
-            NotifyNearbyConsumers();
-            lastPos = transform.position;
-                
-            // If we want to avoid delay
-            transform.hasChanged = false;
+            Gizmos.color = new Color(0, 1, 1, 0.3f);
+            Gizmos.DrawWireSphere(transform.position, broadcastRadius);
         }
-        
+
+        public float GetBroadcastRadius()
+        {
+            return broadcastRadius;
+        }
+
+        public int GetAvailableEnergy()
+        {
+            return maxCapacity - currentLoad;
+        }
+
+        public bool IsLocalGenerator()
+        {
+            return isMobileGenerator;
+        }
+
+        public Vector3 GetPosition()
+        {
+            return transform.position;
+        }
+
         // Logic to give energy
         public int ConsumeUpTo(int amount, IEnergyConsumer consumer)
         {
@@ -117,8 +136,8 @@ namespace Economy
             if (amountToGive > 0)
             {
                 currentLoad += amountToGive;
-                if (!outputMap.TryAdd(consumer, amountToGive))
-                    outputMap[consumer] += amountToGive;
+                if (!_outputMap.TryAdd(consumer, amountToGive))
+                    _outputMap[consumer] += amountToGive;
 
                 OnStateChanged?.Invoke();
             }
@@ -131,13 +150,20 @@ namespace Economy
         {
             currentLoad = Mathf.Max(0, currentLoad - amount);
 
-            if (outputMap.ContainsKey(consumer))
+            if (_outputMap.ContainsKey(consumer))
             {
-                outputMap[consumer] -= amount;
-                if (outputMap[consumer] <= 0) outputMap.Remove(consumer);
+                _outputMap[consumer] -= amount;
+                if (_outputMap[consumer] <= 0) _outputMap.Remove(consumer);
             }
 
             OnStateChanged?.Invoke();
+        }
+
+        public event Action OnStateChanged;
+
+        public IReadOnlyDictionary<IEnergyConsumer, int> GetOutputMap()
+        {
+            return _outputMap;
         }
 
         private void NotifyNearbyConsumers()
@@ -147,19 +173,19 @@ namespace Economy
             foreach (var hit in hits)
             {
                 var consumer = hit.GetComponent<IEnergyConsumer>();
-                
+
                 consumer?.RefreshConnection();
             }
         }
 
         private void GenerateRangeTrigger()
         {
-            if(transform.Find("EnergyField_Generated")) return;
+            if (transform.Find("EnergyField_Generated")) return;
 
             var fieldObj = new GameObject("EnergyField_Generated");
             fieldObj.transform.SetParent(transform);
             fieldObj.transform.localPosition = Vector3.zero;
-            fieldObj.layer = powerGridLayerIndex;
+            fieldObj.layer = _powerGridLayerIndex;
 
             var col = fieldObj.AddComponent<SphereCollider>();
             col.isTrigger = true;
@@ -167,12 +193,6 @@ namespace Economy
 
             var link = fieldObj.AddComponent<EnergyFieldLink>();
             link.Initialize(this);
-        }
-
-        private void OnDrawGizmosSelected()
-        {
-            Gizmos.color = new Color(0, 1, 1, 0.3f); 
-            Gizmos.DrawWireSphere(transform.position, broadcastRadius);
         }
     }
 }

@@ -5,6 +5,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using Object = UnityEngine.Object;
+
 // Required for Energy sorting
 
 namespace Placement
@@ -13,17 +14,17 @@ namespace Placement
 
     public struct ValidationResult
     {
-        public bool IsValid;
-        public string Message;
+        public bool isValid;
+        public string message;
 
         public static ValidationResult Success()
         {
-            return new ValidationResult { IsValid = true };
+            return new ValidationResult { isValid = true };
         }
 
         public static ValidationResult Fail(string msg)
         {
-            return new ValidationResult { IsValid = false, Message = msg };
+            return new ValidationResult { isValid = false, message = msg };
         }
     }
 
@@ -35,14 +36,14 @@ namespace Placement
     // 1. Composite (Holds other validators)
     public class CompositeValidator : IPlacementValidator
     {
-        private readonly List<IPlacementValidator> validators = new();
+        private readonly List<IPlacementValidator> _validators = new();
 
         public ValidationResult Validate(Vector3 p, Quaternion r, BuildingSo d)
         {
-            foreach (var v in validators)
+            foreach (var v in _validators)
             {
                 var result = v.Validate(p, r, d);
-                if (!result.IsValid) return result;
+                if (!result.isValid) return result;
             }
 
             return ValidationResult.Success();
@@ -50,21 +51,21 @@ namespace Placement
 
         public void AddValidator(IPlacementValidator v)
         {
-            validators.Add(v);
+            _validators.Add(v);
         }
     }
 
     // 2. Physics (Existing Logic)
     public class PhysicsValidator : IPlacementValidator
     {
-        private readonly Collider[] cache = new Collider[1];
-        private readonly LayerMask mask;
-        private readonly float padding;
+        private readonly Collider[] _cache = new Collider[1];
+        private readonly LayerMask _mask;
+        private readonly float _padding;
 
         public PhysicsValidator(LayerMask mask, float padding)
         {
-            this.mask = mask;
-            this.padding = padding;
+            this._mask = mask;
+            this._padding = padding;
         }
 
         public ValidationResult Validate(Vector3 pos, Quaternion rot, BuildingSo data)
@@ -73,12 +74,12 @@ namespace Placement
             var refCol = data.prefab.GetComponent<BoxCollider>();
             if (!refCol) refCol = data.prefab.GetComponentInChildren<BoxCollider>();
 
-            if (refCol == null) return ValidationResult.Success(); // No collider to check
+            if (!refCol) return ValidationResult.Success(); // No collider to check
 
             var center = pos + rot * refCol.center;
-            var halfExtents = refCol.size * (0.5f * padding);
+            var halfExtents = refCol.size * (0.5f * _padding);
 
-            if (Physics.OverlapBoxNonAlloc(center, halfExtents, cache, rot, mask) > 0)
+            if (Physics.OverlapBoxNonAlloc(center, halfExtents, _cache, rot, _mask) > 0)
                 return ValidationResult.Fail("Obstacle detected");
             return ValidationResult.Success();
         }
@@ -100,18 +101,18 @@ namespace Placement
     // 4. Energy (New Logic - Additive)
     public class AdditiveEnergyValidator : IPlacementValidator
     {
-        private readonly LayerMask energyLayer;
+        private readonly LayerMask _energyLayer;
 
         public AdditiveEnergyValidator(LayerMask layer)
         {
-            energyLayer = layer;
+            _energyLayer = layer;
         }
 
         public ValidationResult Validate(Vector3 pos, Quaternion rot, BuildingSo data)
         {
-            var hits = Physics.OverlapSphere(pos, 0.5f, energyLayer);
+            var hits = Physics.OverlapSphere(pos, 0.5f, _energyLayer);
             var totalAvailable = 0;
-            
+
             // HashSet to prevent double counting the same generator
             var checkedProducers = new HashSet<IEnergyProducer>();
 
@@ -126,19 +127,17 @@ namespace Placement
                 if (provider == null)
                 {
                     var link = hit.GetComponent<EnergyFieldLink>();
-                    if (link != null) provider = link.GetProducer();
+                    if (link) provider = link.GetProducer();
                 }
 
                 // 3. Add unique energy
                 if (provider != null)
-                {
                     // If we haven't counted this specific producer yet...
                     if (!checkedProducers.Contains(provider))
                     {
                         totalAvailable += provider.GetAvailableEnergy();
                         checkedProducers.Add(provider);
                     }
-                }
             }
 
             if (totalAvailable < data.energyDrain)
@@ -173,25 +172,25 @@ namespace Placement
         [SerializeField] private Material invalidPreviewMat;
 
         // State
-        private BuildingSo currentBuilding;
-        private float currentRotationY;
+        private BuildingSo _currentBuilding;
+        private float _currentRotationY;
 
         // Dependencies (Helpers)
-        private PlacementGhost ghostHelper;
-        private bool isPlacementMode;
-        private UnityEngine.Camera mainCamera;
-        private IPlacementValidator validator; // The Strategy Pattern
+        private PlacementGhost _ghostHelper;
+        private bool _isPlacementMode;
+        private UnityEngine.Camera _mainCamera;
+        private IPlacementValidator _validator; // The Strategy Pattern
 
         private void Awake()
         {
-            mainCamera = UnityEngine.Camera.main;
+            _mainCamera = UnityEngine.Camera.main;
 
             energyLayerMask = LayerMask.GetMask("PowerGrid");
             obstacleLayerMask = LayerMask.GetMask("PlacementBlockers", "Roads");
-            terrainLayerMask = LayerMask.GetMask("Terrain"); 
-            
+            terrainLayerMask = LayerMask.GetMask("Terrain");
+
             // Initialize Ghost Helper
-            ghostHelper = new PlacementGhost(validPreviewMat, invalidPreviewMat);
+            _ghostHelper = new PlacementGhost(validPreviewMat, invalidPreviewMat);
 
             // Setup Validation Strategy (Composite)
             var composite = new CompositeValidator();
@@ -205,7 +204,7 @@ namespace Placement
             // 3. Check if we have Power (Energy)
             composite.AddValidator(new AdditiveEnergyValidator(energyLayerMask));
 
-            validator = composite;
+            _validator = composite;
         }
 
         // Events for UI
@@ -217,43 +216,44 @@ namespace Placement
 
         public void StartPlacement(BuildingSo blueprint)
         {
-            if (blueprint == null) return;
-            StopPlacement(); 
+            if (!blueprint) return;
+            StopPlacement();
 
-            currentBuilding = blueprint;
-            isPlacementMode = true;
+            _currentBuilding = blueprint;
+            _isPlacementMode = true;
 
-            ghostHelper.CreateGhost(blueprint.prefab.gameObject);
-            
+            _ghostHelper.CreateGhost(blueprint.prefab.gameObject);
+
             // Enable Heatmap if the building needs power ---
             if (blueprint.energyDrain > 0)
             {
                 // EnergyHeatmapSystem.Instance?.ToggleHeatmap(true);
             }
-        
+
             OnPlacementStarted?.Invoke();
         }
 
 
         public void StopPlacement()
         {
-            isPlacementMode = false;
-            currentBuilding = null;
-            ghostHelper.ClearGhost();
-            
+            _isPlacementMode = false;
+            _currentBuilding = null;
+            _ghostHelper.ClearGhost();
+
             // --- Hide Heatmap ---
             // EnergyHeatmapSystem.Instance?.ToggleHeatmap(false);
             // -------------------------
-        
+
             OnPlacementEnded?.Invoke();
         }
+
         #endregion
 
         #region Core Loop
 
         private void Update()
         {
-            if (!isPlacementMode || currentBuilding == null) return;
+            if (!_isPlacementMode || !_currentBuilding) return;
 
             HandleInput();
 
@@ -263,28 +263,28 @@ namespace Placement
             if (targetPos.HasValue)
             {
                 var position = targetPos.Value;
-                var rotation = Quaternion.Euler(0, currentRotationY, 0);
+                var rotation = Quaternion.Euler(0, _currentRotationY, 0);
 
                 // 2. Update Ghost Position
-                ghostHelper.UpdatePosition(position, rotation);
+                _ghostHelper.UpdatePosition(position, rotation);
 
                 // 3. Validate
-                var result = validator.Validate(position, rotation, currentBuilding);
-                ghostHelper.SetState(result.IsValid);
+                var result = _validator.Validate(position, rotation, _currentBuilding);
+                _ghostHelper.SetState(result.isValid);
 
                 // 4. Place Logic (Left Click)
                 if (Mouse.current.leftButton.wasPressedThisFrame && !IsPointerOverUI())
                 {
-                    if (result.IsValid)
+                    if (result.isValid)
                         PlaceTower(position, rotation);
                     else
-                        Debug.Log($"Placement Failed: {result.Message}");
+                        Debug.Log($"Placement Failed: {result.message}");
                     // Optional: Play Error Sound or Shake Camera
                 }
             }
             else
             {
-                ghostHelper.Hide();
+                _ghostHelper.Hide();
             }
         }
 
@@ -298,7 +298,7 @@ namespace Placement
 
             // Rotation
             var scrollDelta = Mouse.current.scroll.ReadValue().y;
-            if (Mathf.Abs(scrollDelta) > 0.1f) currentRotationY += Mathf.Sign(scrollDelta) * rotationSpeed;
+            if (Mathf.Abs(scrollDelta) > 0.1f) _currentRotationY += Mathf.Sign(scrollDelta) * rotationSpeed;
         }
 
         private void PlaceTower(Vector3 position, Quaternion rotation)
@@ -309,16 +309,16 @@ namespace Placement
             // (Commented out until you link your CurrencySystem)
 
             // 2. Instantiate Real Object
-            var newObj = Instantiate(currentBuilding.prefab.gameObject, position, rotation);
+            var newObj = Instantiate(_currentBuilding.prefab.gameObject, position, rotation);
 
             // 3. Connect Energy (The Consumer Logic)
             // If the building has an EnergyConsumer component, it needs to register with the grid.
             // Note: If EnergyConsumer uses Start(), this happens automatically. 
             // If we need to "Pre-Deduct" energy from the grid logic we discussed earlier:
-            ConsumeEnergyResources(position, currentBuilding, newObj);
+            ConsumeEnergyResources(position, _currentBuilding, newObj);
 
-            Debug.Log($"Placed {currentBuilding.name}");
-            OnBuildingPlaced?.Invoke(currentBuilding.cost);
+            Debug.Log($"Placed {_currentBuilding.name}");
+            OnBuildingPlaced?.Invoke(_currentBuilding.cost);
 
             // Optional: Continue placement (Shift key logic) or Stop
             // StopPlacement();
@@ -331,7 +331,7 @@ namespace Placement
         private Vector3? GetMouseWorldPosition()
         {
             var mousePos = Mouse.current.position.ReadValue();
-            var ray = mainCamera.ScreenPointToRay(mousePos);
+            var ray = _mainCamera.ScreenPointToRay(mousePos);
 
             if (Physics.Raycast(ray, out var hit, 1000f, terrainLayerMask)) return hit.point;
             return null;
@@ -366,26 +366,26 @@ namespace Placement
 
     #region Helper Classes (Ghost)
 
-
     public class PlacementGhost
     {
+        private readonly Material _invalidMaterial;
+
         // Settings
-        private readonly Material validMaterial;
-        private readonly Material invalidMaterial;
+        private readonly Material _validMaterial;
 
         // State
-        private GameObject ghostObject;
-        private Renderer[] renderers;
-        private bool lastValidityState = true;
+        private GameObject _ghostObject;
+        private bool _lastValidityState = true;
+        private Renderer[] _renderers;
 
         public PlacementGhost(Material validMat, Material invalidMat)
         {
-            this.validMaterial = validMat;
-            this.invalidMaterial = invalidMat;
+            _validMaterial = validMat;
+            _invalidMaterial = invalidMat;
         }
 
         /// <summary>
-        /// The "Fabric" method: Creates the visual representation and strips logic.
+        ///     The "Fabric" method: Creates the visual representation and strips logic.
         /// </summary>
         public void CreateGhost(GameObject prefab)
         {
@@ -393,16 +393,16 @@ namespace Placement
             ClearGhost();
 
             // 2. Instantiate
-            ghostObject = Object.Instantiate(prefab);
-            ghostObject.name = "PlacementGhost";
+            _ghostObject = Object.Instantiate(prefab);
+            _ghostObject.name = "PlacementGhost";
 
             // 3. STRIPPING: Remove functional components
             // We don't want the ghost to collide with the mouse raycast
-            var colliders = ghostObject.GetComponentsInChildren<Collider>();
+            var colliders = _ghostObject.GetComponentsInChildren<Collider>();
             foreach (var c in colliders) Object.Destroy(c);
 
             // We don't want the ghost to run logic (like shooting or consuming energy)
-            var scripts = ghostObject.GetComponentsInChildren<MonoBehaviour>();
+            var scripts = _ghostObject.GetComponentsInChildren<MonoBehaviour>();
             foreach (var s in scripts) Object.Destroy(s);
 
             // If you use NavMesh, remove obstacles too
@@ -410,7 +410,7 @@ namespace Placement
             // foreach (var n in navObstacles) Object.Destroy(n);
 
             // 4. Cache Renderers for performance
-            renderers = ghostObject.GetComponentsInChildren<Renderer>();
+            _renderers = _ghostObject.GetComponentsInChildren<Renderer>();
 
             // 5. Initialize Color
             SetState(true, true); // Force update
@@ -418,53 +418,51 @@ namespace Placement
 
         public void UpdatePosition(Vector3 position, Quaternion rotation)
         {
-            if (ghostObject == null) return;
+            if (!_ghostObject) return;
 
-            ghostObject.transform.position = position;
-            ghostObject.transform.rotation = rotation;
+            _ghostObject.transform.position = position;
+            _ghostObject.transform.rotation = rotation;
 
-            if (!ghostObject.activeSelf) ghostObject.SetActive(true);
+            if (!_ghostObject.activeSelf) _ghostObject.SetActive(true);
         }
 
         public void SetState(bool isValid, bool forceUpdate = false)
         {
-            if (ghostObject == null || renderers == null) return;
-            
+            if (!_ghostObject || _renderers == null) return;
+
             // Optimization: Don't change materials if state hasn't changed
-            if (!forceUpdate && isValid == lastValidityState) return;
+            if (!forceUpdate && isValid == _lastValidityState) return;
 
-            lastValidityState = isValid;
-            Material targetMat = isValid ? validMaterial : invalidMaterial;
+            _lastValidityState = isValid;
+            var targetMat = isValid ? _validMaterial : _invalidMaterial;
 
-            foreach (var r in renderers)
+            foreach (var r in _renderers)
             {
-                if (r == null) continue;
+                if (!r) continue;
 
                 // Handle objects with multiple sub-meshes (materials)
                 // We need to create a new array matching the length of the original
-                Material[] newMats = new Material[r.sharedMaterials.Length];
-                for (int i = 0; i < newMats.Length; i++)
-                {
-                    newMats[i] = targetMat;
-                }
+                var newMats = new Material[r.sharedMaterials.Length];
+                for (var i = 0; i < newMats.Length; i++) newMats[i] = targetMat;
                 r.materials = newMats;
             }
         }
 
         public void Hide()
         {
-            if (ghostObject != null) ghostObject.SetActive(false);
+            if (_ghostObject) _ghostObject.SetActive(false);
         }
 
         public void ClearGhost()
         {
-            if (ghostObject != null)
+            if (_ghostObject)
             {
-                Object.Destroy(ghostObject);
-                ghostObject = null;
-                renderers = null;
+                Object.Destroy(_ghostObject);
+                _ghostObject = null;
+                _renderers = null;
             }
         }
     }
 }
-    #endregion
+
+#endregion

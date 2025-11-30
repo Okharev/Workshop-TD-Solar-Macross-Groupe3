@@ -6,19 +6,20 @@ namespace Towers.TargetingStrategies
 {
     public class DensestPackTargeting
     {
-        [Header("Cluster Settings")]
-        [Tooltip("Rayon d'explosion du mortier (pour vérifier la densité)")]
-        [SerializeField] private float explosionRadius = 3f;
-        [SerializeField] private float scanInterval = 0.5f;
+        private readonly Collider[] _candidates = new Collider[32];
+        private readonly Collider[] _neighbors = new Collider[16];
+
+        [Header("Cluster Settings")] [Tooltip("Rayon d'explosion du mortier (pour vérifier la densité)")]
+        private readonly float explosionRadius = 3f;
+
+        private readonly float scanInterval = 0.5f;
+
+        private Coroutine _coroutine;
         [SerializeField] private LayerMask enemyLayer;
 
         // Events
         public event Action<Transform> OnTargetAcquired;
         public event Action OnTargetLost;
-
-        private Coroutine _coroutine;
-        private readonly Collider[] _candidates = new Collider[32];
-        private readonly Collider[] _neighbors = new Collider[16];
 
         public void Initialize(TowerEntity tower)
         {
@@ -43,8 +44,9 @@ namespace Towers.TargetingStrategies
 
         private void CalculateBestCluster(TowerEntity tower)
         {
-            int count = Physics.OverlapSphereNonAlloc(tower.transform.position, tower.range.Value, _candidates, enemyLayer);
-            
+            var count = Physics.OverlapSphereNonAlloc(tower.transform.position, tower.range.Value, _candidates,
+                enemyLayer);
+
             if (count == 0)
             {
                 tower.currentTarget = null;
@@ -52,33 +54,31 @@ namespace Towers.TargetingStrategies
                 return;
             }
 
-            Vector3 bestClusterCenter = Vector3.zero;
-            int maxNeighbors = -1;
+            var bestClusterCenter = Vector3.zero;
+            var maxNeighbors = -1;
             Transform bestRefTarget = null;
 
 
-            for (int i = 0; i < count; i++)
+            for (var i = 0; i < count; i++)
             {
                 var candidate = _candidates[i].transform;
-                
-                int neighborCount = Physics.OverlapSphereNonAlloc(candidate.position, explosionRadius, _neighbors, enemyLayer);
-                
+
+                var neighborCount =
+                    Physics.OverlapSphereNonAlloc(candidate.position, explosionRadius, _neighbors, enemyLayer);
+
                 if (neighborCount > maxNeighbors)
                 {
                     maxNeighbors = neighborCount;
                     bestRefTarget = candidate;
-                    
-                    Vector3 centroidSum = Vector3.zero;
-                    for (int n = 0; n < neighborCount; n++)
-                    {
-                        centroidSum += _neighbors[n].transform.position;
-                    }
+
+                    var centroidSum = Vector3.zero;
+                    for (var n = 0; n < neighborCount; n++) centroidSum += _neighbors[n].transform.position;
                     bestClusterCenter = centroidSum / neighborCount;
                 }
             }
 
             tower.aimPoint = bestClusterCenter;
-            
+
             if (tower.currentTarget != bestRefTarget)
             {
                 tower.currentTarget = bestRefTarget;

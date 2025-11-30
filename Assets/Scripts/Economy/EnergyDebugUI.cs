@@ -5,21 +5,21 @@ namespace Economy
 {
     public class EnergyDebugUI : MonoBehaviour
     {
-        [Header("Settings")] 
-        public bool showDebug = true;
+        [Header("Settings")] public bool showDebug = true;
+
         public KeyCode toggleKey = KeyCode.F3;
         public float verticalOffset = 2.5f;
 
-        [Header("Update Frequency")]
-        [Tooltip("How often to refresh the list of buildings (seconds)")]
+        [Header("Update Frequency")] [Tooltip("How often to refresh the list of buildings (seconds)")]
         public float refreshRate = 0.5f;
+
+        private EnergyConsumer[] consumers = new EnergyConsumer[0];
+        private UnityEngine.Camera mainCam;
 
         // Cache
         private EnergyProducer[] producers = new EnergyProducer[0];
-        private EnergyConsumer[] consumers = new EnergyConsumer[0];
-        private UnityEngine.Camera mainCam;
-        private GUIStyle styleProducer;
         private GUIStyle styleConsumer;
+        private GUIStyle styleProducer;
 
         private void Awake()
         {
@@ -30,6 +30,16 @@ namespace Economy
         private void Update()
         {
             if (Input.GetKeyDown(toggleKey)) showDebug = !showDebug;
+        }
+
+        private void OnGUI()
+        {
+            if (!showDebug || mainCam == null) return;
+
+            if (styleProducer == null) SetupStyles();
+
+            DrawProducers();
+            DrawConsumers();
         }
 
         private IEnumerator CacheObjectsRoutine()
@@ -44,18 +54,9 @@ namespace Economy
                     producers = FindObjectsByType<EnergyProducer>(FindObjectsSortMode.None);
                     consumers = FindObjectsByType<EnergyConsumer>(FindObjectsSortMode.None);
                 }
+
                 yield return wait;
             }
-        }
-
-        private void OnGUI()
-        {
-            if (!showDebug || mainCam == null) return;
-
-            if (styleProducer == null) SetupStyles();
-
-            DrawProducers();
-            DrawConsumers();
         }
 
         private void DrawProducers()
@@ -64,16 +65,16 @@ namespace Economy
             {
                 if (p == null || !p.isActiveAndEnabled) continue;
 
-                Vector3 screenPos = GetScreenPosition(p.transform.position);
-                if (screenPos.z < 0) continue; 
+                var screenPos = GetScreenPosition(p.transform.position);
+                if (screenPos.z < 0) continue;
 
-                int current = p.currentLoad; 
-                int available = p.GetAvailableEnergy();
-                int total = current + available;
+                var current = p.currentLoad;
+                var available = p.GetAvailableEnergy();
+                var total = current + available;
 
-                string text = p.isMobileGenerator ? "GENERATOR" : "DISTRICT";
+                var text = p.isMobileGenerator ? "GENERATOR" : "DISTRICT";
                 text += $"\nLoad: {current}/{total}";
-            
+
                 GUI.color = available == 0 ? Color.red : Color.cyan;
 
                 DrawLabel(screenPos, text, styleProducer);
@@ -86,13 +87,13 @@ namespace Economy
             {
                 if (c == null || !c.isActiveAndEnabled) continue;
 
-                Vector3 screenPos = GetScreenPosition(c.transform.position);
+                var screenPos = GetScreenPosition(c.transform.position);
                 if (screenPos.z < 0) continue;
 
-                bool isPowered = c.IsPowered; 
-                int req = c.GetEnergyRequirement();
+                var isPowered = c.IsPowered;
+                var req = c.GetEnergyRequirement();
 
-                string text = isPowered ? "POWERED" : "NO POWER";
+                var text = isPowered ? "POWERED" : "NO POWER";
                 text += $"\nReq: {req}";
 
                 GUI.color = isPowered ? Color.green : Color.red;
@@ -103,10 +104,10 @@ namespace Economy
 
         private void DrawLabel(Vector3 screenPos, string text, GUIStyle style)
         {
-            float width = 100f;
-            float height = 50f;
+            var width = 100f;
+            var height = 50f;
             // Invert Y for GUI coordinates
-            Rect rect = new Rect(screenPos.x - (width / 2), Screen.height - screenPos.y - (height / 2), width, height);
+            var rect = new Rect(screenPos.x - width / 2, Screen.height - screenPos.y - height / 2, width, height);
 
             GUI.Box(rect, GUIContent.none);
             GUI.Label(rect, text, style);

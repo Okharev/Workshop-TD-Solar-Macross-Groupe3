@@ -14,7 +14,8 @@ namespace Towers
 
             HandleImpact(other);
         }
-        
+
+
         protected abstract void HandleImpact(Collider other);
 
         protected abstract bool IsValidHit(Collider hitObject);
