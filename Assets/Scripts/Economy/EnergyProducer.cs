@@ -1,154 +1,128 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using ObservableCollections;
-using R3;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace Economy
 {
-    public interface IReactiveEnergyProducer
+    public class EnergyProducer : MonoBehaviour
     {
-        // State
-        ReadOnlyReactiveProperty<int> CurrentLoad { get; }
-        ReadOnlyReactiveProperty<int> MaxCapacity { get; }
-        ReadOnlyReactiveProperty<int> AvailableEnergy { get; } // Computed
-        
-        // Capabilities
-        float BroadcastRadius { get; }
-        bool IsLocalGenerator { get; }
-        Vector3 Position { get; }
+        [Header("Configuration")] public bool isMobileGenerator = true;
 
-        // Logic
-        int ConsumeUpTo(int amount, IReactiveEnergyConsumer consumer);
-        void ReleaseEnergy(int amount, IReactiveEnergyConsumer consumer);
-        
-        // For Visuals (Observed by Visualizer)
-        ObservableList<(IReactiveEnergyConsumer consumer, int amount)> ActiveConnections { get; }
-    }
-    
+        // Reactive Properties
+        [SerializeField] private ReactiveInt maxCapacity = new(100);
+        [SerializeField] private ReactiveFloat broadcastRadius = new(15f);
 
-        public class EnergyProducer : MonoBehaviour, IReactiveEnergyProducer
-    {
-        [Header("Configuration")]
-        [SerializeField] private bool _isMobileGenerator = true;
-        [SerializeField] private float _broadcastRadius = 15f;
-        
-        [Header("Capacity")]
-        [SerializeField] private int _initialCapacity = 100;
+        // Internal
+        private Vector3 _lastPos;
+        private SphereCollider _rangeCollider; // Reference to update size dynamically
 
-        // Reactive State
-        public ReactiveProperty<int> Capacity { get; private set; }
-        public ReactiveProperty<int> Load { get; private set; }
-        public ReadOnlyReactiveProperty<int> CurrentLoad => Load;
-        public ReadOnlyReactiveProperty<int> MaxCapacity => Capacity;
-        
-        // Computed Property (The "Stream" of availability)
-        public ReadOnlyReactiveProperty<int> AvailableEnergy { get; private set; }
+        public ReactiveInt MaxCapacity => maxCapacity;
+        public ReactiveFloat BroadcastRadius => broadcastRadius;
 
-        // Connection Tracking (Visualizer observes this directly)
-        public ObservableList<(IReactiveEnergyConsumer consumer, int amount)> ActiveConnections { get; } 
-            = new();
+        // Runtime State (Read Only for public, Writable by Manager)
+        public int CurrentLoad { get; private set; }
 
-        // Interface Properties
-        public float BroadcastRadius => _broadcastRadius;
-        public bool IsLocalGenerator => _isMobileGenerator;
-        public Vector3 Position => transform.position;
-
-        private void Awake()
+        private void Start()
         {
-            Capacity = new ReactiveProperty<int>(_initialCapacity);
-            Load = new ReactiveProperty<int>(0);
-
-            // Combine Capacity and Load to auto-calculate Availability
-            AvailableEnergy = Capacity
-                .CombineLatest(Load, (cap, load) => cap - load)
-                .ToReadOnlyReactiveProperty();
-
-            // Register self to static registry (if you keep a global manager)
-            ElectricityVisualizer.Instance?.RegisterProducer(this);
+            // Physics/Manager registration setup
+            _lastPos = transform.position;
+            if (isMobileGenerator) GenerateRangeTrigger();
+            // Registering with Manager is handled in OnEnable now
         }
 
-        private void OnDestroy()
+        private void Update()
         {
-            // Disconnect everyone gracefully
-            foreach (var (consumer, amount) in ActiveConnections.ToArray())
+            // Detect movement to dirty the grid
+            if ((transform.position - _lastPos).sqrMagnitude > 0.01f)
             {
-                consumer.ForceRefresh(); // Tell them to find power elsewhere
+                _lastPos = transform.position;
+                EnergyGridManager.Instance.MarkDirty();
             }
-            
-            ActiveConnections.Clear();
-            ElectricityVisualizer.Instance?.UnregisterProducer(this);
-            
-            Capacity.Dispose();
-            Load.Dispose();
         }
 
-        public int ConsumeUpTo(int amount, IReactiveEnergyConsumer consumer)
+        private void OnEnable()
         {
-            if (!isActiveAndEnabled) return 0;
+            EnergyGridManager.Instance?.Register(this);
 
-            int currentAvailable = AvailableEnergy.CurrentValue;
-            int take = Mathf.Min(currentAvailable, amount);
-
-            if (take > 0)
-            {
-                // Update internal load
-                Load.Value += take;
-
-                // Update connection list for Visualizer
-                // Check if connection exists to update amount, or add new
-                var existingIndex = -1;
-                for(int i=0; i<ActiveConnections.Count; i++) {
-                    if (ActiveConnections[i].consumer == consumer) { existingIndex = i; break; }
-                }
-
-                if (existingIndex >= 0)
-                {
-                    var oldAmt = ActiveConnections[existingIndex].amount;
-                    ActiveConnections[existingIndex] = (consumer, oldAmt + take);
-                }
-                else
-                {
-                    ActiveConnections.Add((consumer, take));
-                }
-            }
-
-            return take;
+            BroadcastRadius.Subscribe(OnRadiusChanged).AddTo(this);
+            MaxCapacity.Subscribe(OnStatsChanged_Int).AddTo(this);
         }
 
-        public void ReleaseEnergy(int amount, IReactiveEnergyConsumer consumer)
+        private void OnDisable()
         {
-            Load.Value = Mathf.Max(0, Load.Value - amount);
-
-            // Update list
-            var existingIndex = -1;
-            for(int i=0; i<ActiveConnections.Count; i++) {
-                if (ActiveConnections[i].consumer == consumer) { existingIndex = i; break; }
-            }
-
-            if (existingIndex >= 0)
-            {
-                var oldAmt = ActiveConnections[existingIndex].amount;
-                int newAmt = oldAmt - amount;
-
-                if (newAmt <= 0)
-                {
-                    ActiveConnections.RemoveAt(existingIndex);
-                }
-                else
-                {
-                    ActiveConnections[existingIndex] = (consumer, newAmt);
-                }
-            }
+            EnergyGridManager.Instance?.Unregister(this);
         }
-        
-        // Helper for Visualizer/Gizmos
+
         private void OnDrawGizmosSelected()
         {
-            Gizmos.color = Color.cyan;
-            Gizmos.DrawWireSphere(transform.position, _broadcastRadius);
+            Gizmos.color = new Color(0, 1, 1, 0.4f);
+            Gizmos.DrawWireSphere(transform.position, BroadcastRadius.Value);
+        }
+
+        // Named methods make debugging easier than Lambdas
+        private void OnStatsChanged_Int(int _)
+        {
+            EnergyGridManager.Instance?.MarkDirty();
+        }
+
+        private void OnRadiusChanged(float newRadius)
+        {
+            UpdateRangeCollider(newRadius);
+            EnergyGridManager.Instance?.MarkDirty();
+        }
+
+        // --- Logic Helper ---
+        public int GetAvailable()
+        {
+            return Mathf.Max(0, MaxCapacity.Value - CurrentLoad);
+        }
+
+        // --- Manager Interface ---
+        public void ResetLoad()
+        {
+            CurrentLoad = 0;
+        }
+
+        public void AddLoad(int amount)
+        {
+            CurrentLoad += amount;
+        }
+
+        public void RemoveLoad(int amount)
+        {
+            CurrentLoad -= amount;
+        }
+
+        // --- Physics / Placement Helpers ---
+        private void GenerateRangeTrigger()
+        {
+            // Check if it already exists (e.g. from prefab)
+            var existing = transform.Find("EnergyField_Generated");
+            if (existing)
+            {
+                _rangeCollider = existing.GetComponent<SphereCollider>();
+                return;
+            }
+
+            var fieldObj = new GameObject("EnergyField_Generated");
+            fieldObj.transform.SetParent(transform);
+            fieldObj.transform.localPosition = Vector3.zero;
+
+            // Set Layer to "PowerGrid" or fallback to Default
+            var powerLayer = LayerMask.NameToLayer("PowerGrid");
+            if (powerLayer != -1) fieldObj.layer = powerLayer;
+
+            _rangeCollider = fieldObj.AddComponent<SphereCollider>();
+            _rangeCollider.isTrigger = true;
+            _rangeCollider.radius = BroadcastRadius.Value;
+
+            // Add the Link script so Raycasts know who owns this trigger
+            var link = fieldObj.AddComponent<EnergyFieldLink>();
+            link.Initialize(this);
+        }
+
+        private void UpdateRangeCollider(float newRadius)
+        {
+            if (_rangeCollider != null)
+                _rangeCollider.radius = newRadius;
         }
     }
-    
 }

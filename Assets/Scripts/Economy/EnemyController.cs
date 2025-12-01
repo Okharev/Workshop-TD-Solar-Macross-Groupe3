@@ -1,6 +1,4 @@
-﻿using System;
-using R3;
-using Towers;
+﻿using Towers;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -15,11 +13,11 @@ namespace Economy
         [SerializeField] public float baseHealth = 100f;
         [SerializeField] public float baseSpeed = 2f;
 
-        [SerializeField] public ReactiveStat damage;
-        [SerializeField] public ReactiveStat range;
-        [SerializeField] public ReactiveStat fireRate;
-        [SerializeField] public ReactiveStat health;
-        [SerializeField] public ReactiveStat speed;
+        [SerializeField] public Stat damage;
+        [SerializeField] public Stat range;
+        [SerializeField] public Stat fireRate;
+        [SerializeField] public Stat health;
+        [SerializeField] public Stat speed;
 
         private NavMeshAgent _agent;
 
@@ -28,34 +26,28 @@ namespace Economy
             InitializeReactiveStats();
 
             _agent = GetComponent<NavMeshAgent>();
-            
-            
-            speed.Value.Subscribe(newSpeed =>
+
+            speed.Subscribe(newSpeed =>
                 {
                     _agent.speed = Mathf.Max(0, newSpeed);
                     Debug.Log($"Enemy Speed Updated: {_agent.speed}");
                 })
                 .AddTo(this);
         }
-        
+
         public void InitializeReactiveStats()
         {
-            damage = new ReactiveStat(baseDamage);
-            range = new ReactiveStat(baseRange);
-            fireRate = new ReactiveStat(baseFireRate);
-            health = new ReactiveStat(baseHealth);
-            speed = new ReactiveStat(baseSpeed);
-            
+            damage = new Stat(baseDamage);
+            range = new Stat(baseRange);
+            fireRate = new Stat(baseFireRate);
+            health = new Stat(baseHealth);
+            speed = new Stat(baseSpeed);
+
             damage.Initialize();
             range.Initialize();
             fireRate.Initialize();
             health.Initialize();
             speed.Initialize();
-        }
-        
-        private void OnDestroy()
-        {
-            speed.Dispose();
         }
     }
 }

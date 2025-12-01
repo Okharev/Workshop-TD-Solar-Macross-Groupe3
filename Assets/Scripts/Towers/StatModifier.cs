@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Linq;
+using System.Collections.Generic;
 using UnityEngine;
-using R3;
-using ObservableCollections; // Required for ObservableList
 
 namespace Towers
 {
@@ -16,123 +14,143 @@ namespace Towers
     [Serializable]
     public class StatModifier
     {
-        public readonly float Value;
-        public readonly StatModType Type;
         public readonly object Source;
+        public readonly StatModType Type;
+        public readonly float Value;
 
         public StatModifier(float value, StatModType type, object source = null)
         {
-            this.Value = value;
-            this.Type = type;
-            this.Source = source;
+            Value = value;
+            Type = type;
+            Source = source;
         }
     }
 
     [Serializable]
-    public class ReactiveStat : IDisposable
+    public class Stat
     {
-        // 1. Base Value (Editable in Inspector if wrapper used, otherwise set in code)
-        [SerializeField] private SerializableReactiveProperty<float> baseValue;
+        // 1. Base Value: Editable in Inspector, triggers updates via ReactivePropertyDrawer
+        [SerializeField] private ReactiveFloat _baseValue;
 
-        // 2. The High-Performance Observable Collection
-        // We use ObservableList from Cysharp/ObservableCollections
-        public ObservableList<StatModifier> Modifiers { get; } = new();
+        // 2. Modifiers: Standard list, accessed via methods to ensure dirty flagging
+        private readonly List<StatModifier> _modifiers = new();
 
-        // 3. The Output Stream
-        public ReadOnlyReactiveProperty<float> Value { get; private set; }
+        // 3. Output: Private ReactiveFloat to handle caching and event firing
+        // We do not Serialize this, as it is a runtime computed value
+        private ReactiveFloat _value = new(0);
 
-        private CompositeDisposable _disposables = new();
-
-        public ReactiveStat(float initialBaseValue = 0)
+        public Stat(float initialBaseValue = 0)
         {
-            baseValue = new SerializableReactiveProperty<float>(initialBaseValue);
+            _baseValue = new ReactiveFloat(initialBaseValue);
+            _value = new ReactiveFloat(initialBaseValue);
+            Initialize();
         }
 
-        public void Initialize()
-        {
-            _disposables.Dispose(); 
-            _disposables = new CompositeDisposable();
+        // --- Public API ---
 
-            // Monitor Base Value
-            var baseStream = baseValue.AsUnitObservable();
-
-            // Monitor Collection Changes using ObservableCollections.R3 extensions
-            // We merge all relevant events into a single "Something Changed" signal
-            var listStream = Observable.Merge(
-                Modifiers.ObserveAdd().AsUnitObservable(),
-                Modifiers.ObserveRemove().AsUnitObservable(),
-                Modifiers.ObserveReplace().AsUnitObservable(),
-                Modifiers.ObserveReset().AsUnitObservable()
-            );
-
-            // Merge triggers -> Recalculate -> Cache result
-            Value = Observable.Merge(baseStream, listStream)
-                .Select(_ => CalculateFinalValue())
-                .ToReadOnlyReactiveProperty(CalculateFinalValue())
-                .AddTo(_disposables);
-        }
-
-        // --- Standard Accessors ---
+        // Public Read-Only access to the calculated value
+        public float Value => _value.Value;
 
         public float BaseValue
         {
-            get => baseValue.Value;
-            set => baseValue.Value = value;
+            get => _baseValue.Value;
+            set => _baseValue.Value = value;
         }
 
-        public void AddModifier(StatModifier mod) => Modifiers.Add(mod);
+        // Event for when the FINAL calculated value changes
+        public event Action<float> OnValueChanged
+        {
+            add => _value.OnValueChanged += value;
+            remove => _value.OnValueChanged -= value;
+        }
 
-        public bool RemoveModifier(StatModifier mod) => Modifiers.Remove(mod);
+        /// <summary>
+        ///     Call this in Awake() or Start() of the owning MonoBehaviour.
+        ///     Ensures internal listeners are hooked up.
+        /// </summary>
+        public void Initialize()
+        {
+            // Ensure we don't double subscribe if Initialize is called multiple times
+            _baseValue.OnValueChanged -= OnBaseValueChanged;
+            _baseValue.OnValueChanged += OnBaseValueChanged;
+
+            // Initial Calculation
+            Recalculate();
+        }
+
+        private void OnBaseValueChanged(float newVal)
+        {
+            Recalculate();
+        }
+
+        // --- Modifier Management ---
+
+        public void AddModifier(StatModifier mod)
+        {
+            _modifiers.Add(mod);
+            Recalculate();
+        }
+
+        public bool RemoveModifier(StatModifier mod)
+        {
+            var removed = _modifiers.Remove(mod);
+            if (removed) Recalculate();
+            return removed;
+        }
 
         public void RemoveAllModifiersFromSource(object source)
         {
-            // Iterate backwards to safely remove
-            for (int i = Modifiers.Count - 1; i >= 0; i--)
-            {
-                if (Modifiers[i].Source == source)
+            var changed = false;
+            for (var i = _modifiers.Count - 1; i >= 0; i--)
+                if (_modifiers[i].Source == source)
                 {
-                    Modifiers.RemoveAt(i);
+                    _modifiers.RemoveAt(i);
+                    changed = true;
                 }
+
+            if (changed) Recalculate();
+        }
+
+        public void ClearModifiers()
+        {
+            if (_modifiers.Count > 0)
+            {
+                _modifiers.Clear();
+                Recalculate();
             }
         }
 
-        private float CalculateFinalValue()
-        {
-            float finalValue = baseValue.Value;
-            float sumPercentAdd = 0;
+        // --- Calculation Logic ---
 
-            // Direct iteration over ObservableList is zero-allocation and fast
-            foreach (var mod in Modifiers)
+        private void Recalculate()
+        {
+            var finalValue = _baseValue.Value;
+            float sumPercentAdd = 0;
+            var totalPercentMult = 1f;
+
+            // Iterate list once? Or multiple times? 
+            // Splitting loops usually easier to read and statistically insignificant performance hit here.
+
+            // 1. Flat & Percent Add
+            for (var i = 0; i < _modifiers.Count; i++)
             {
-                switch (mod.Type)
-                {
-                    case StatModType.Flat:
-                        finalValue += mod.Value;
-                        break;
-                    case StatModType.PercentAdd:
-                        sumPercentAdd += mod.Value;
-                        break;
-                }
+                var mod = _modifiers[i];
+                if (mod.Type == StatModType.Flat)
+                    finalValue += mod.Value;
+                else if (mod.Type == StatModType.PercentAdd)
+                    sumPercentAdd += mod.Value;
+                else if (mod.Type == StatModType.PercentMult) totalPercentMult *= mod.Value;
             }
 
+            // 2. Apply Percent Add
             finalValue *= 1 + sumPercentAdd;
 
-            foreach (var mod in Modifiers)
-            {
-                if (mod.Type == StatModType.PercentMult)
-                    finalValue *= mod.Value;
-            }
+            // 3. Apply Percent Mult
+            finalValue *= totalPercentMult;
 
-            return (float)Math.Round(finalValue, 4);
-        }
-
-        public void Dispose()
-        {
-            baseValue?.Dispose();
-            _disposables?.Dispose();
-            // ObservableList does not strictly require Dispose unless you use Views, 
-            // but clearing it handles references.
-            Modifiers.Clear(); 
+            // 4. Update the Output ReactiveProperty
+            // The ReactiveProperty internal check ensures OnValueChanged only fires if the result is actually different
+            _value.Value = (float)Math.Round(finalValue, 4);
         }
     }
 }

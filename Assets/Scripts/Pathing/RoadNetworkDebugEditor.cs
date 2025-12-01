@@ -11,10 +11,10 @@ namespace Pathing
     public class RoadNetworkDebugEditor : Editor
     {
         // Settings for the debug view
-        private static bool _showIds = true;
-        private static float _labelSize = 1.0f;
-        private static Color _labelColor = Color.cyan;
-        private static readonly Color ConnectionColor = Color.yellow;
+        private static bool showIds = true;
+        private static float labelSize = 1.0f;
+        private static Color labelColor = Color.cyan;
+        private static Color connectionColor = Color.yellow;
 
         public override void OnInspectorGUI()
         {
@@ -26,12 +26,12 @@ namespace Pathing
 
             // Toggle for Scene View Labels
             EditorGUI.BeginChangeCheck();
-            _showIds = EditorGUILayout.Toggle("Show Road IDs", _showIds);
+            showIds = EditorGUILayout.Toggle("Show Road IDs", showIds);
             
-            if (_showIds)
+            if (showIds)
             {
-                _labelSize = EditorGUILayout.Slider("Label Scale", _labelSize, 0.5f, 3.0f);
-                _labelColor = EditorGUILayout.ColorField("Label Color", _labelColor);
+                labelSize = EditorGUILayout.Slider("Label Scale", labelSize, 0.5f, 3.0f);
+                labelColor = EditorGUILayout.ColorField("Label Color", labelColor);
             }
 
             if (EditorGUI.EndChangeCheck())
@@ -49,17 +49,17 @@ namespace Pathing
 
         private void OnSceneGUI()
         {
-            if (!_showIds) return;
+            if (!showIds) return;
 
             var generator = (RoadNetworkGenerator)target;
             var container = generator.GetComponent<SplineContainer>();
 
-            if (!container) return;
+            if (container == null) return;
 
             // Setup Style
             var style = new GUIStyle(EditorStyles.boldLabel);
-            style.normal.textColor = _labelColor;
-            style.fontSize = Mathf.RoundToInt(12 * _labelSize);
+            style.normal.textColor = labelColor;
+            style.fontSize = Mathf.RoundToInt(12 * labelSize);
             style.alignment = TextAnchor.MiddleCenter;
 
             // Iterate all splines to draw IDs
@@ -79,12 +79,12 @@ namespace Pathing
                 Handles.Label(worldPos, $"Road ID: {i}", style);
 
                 // 3. Draw a small dot or sphere to anchor it visually
-                Handles.color = _labelColor;
+                Handles.color = labelColor;
                 Handles.SphereHandleCap(0, worldPos - Vector3.up * 0.5f, Quaternion.identity, 0.5f, EventType.Repaint);
 
                 // Optional: Draw Direction Arrow to know which way is Forward
                 Vector3 forward = Vector3.Normalize(generator.transform.TransformDirection(spline.EvaluateTangent(midT)));
-                Handles.color = ConnectionColor;
+                Handles.color = connectionColor;
                 Handles.ArrowHandleCap(0, worldPos, Quaternion.LookRotation(forward), 2.0f, EventType.Repaint);
             }
         }

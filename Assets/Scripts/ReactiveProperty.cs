@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [Serializable]
-// CHANGE: Now implements the interface
-public class ReactiveProperty<T> : IReadOnlyReactiveProperty<T>
+public class ReactiveProperty<T>
 {
+    // Protected so the Editor Drawer can find it
     [SerializeField] protected T _value;
 
     public ReactiveProperty(T initialValue = default)
@@ -18,6 +18,7 @@ public class ReactiveProperty<T> : IReadOnlyReactiveProperty<T>
         get => _value;
         set
         {
+            // Standard check: don't fire if nothing changed
             if (EqualityComparer<T>.Default.Equals(_value, value)) return;
             _value = value;
             OnValueChanged?.Invoke(_value);
@@ -26,6 +27,7 @@ public class ReactiveProperty<T> : IReadOnlyReactiveProperty<T>
 
     public event Action<T> OnValueChanged;
 
+    // FIX: Allows the Editor to trigger the update even if _value was already set by Serialization
     public void Notify()
     {
         OnValueChanged?.Invoke(_value);
@@ -35,35 +37,28 @@ public class ReactiveProperty<T> : IReadOnlyReactiveProperty<T>
     {
         return p.Value;
     }
-
-    public override string ToString()
-    {
-        return _value != null ? _value.ToString() : "null";
-    }
 }
-
-public interface IReadOnlyReactiveProperty<T>
-{
-    T Value { get; }
-    event Action<T> OnValueChanged;
-}
-
-// --- Concrete Classes for Unity Inspector Serialization ---
 
 [Serializable]
 public class ReactiveInt : ReactiveProperty<int>
 {
-    public ReactiveInt(int v) : base(v) { }
+    public ReactiveInt(int v) : base(v)
+    {
+    }
 }
 
 [Serializable]
 public class ReactiveFloat : ReactiveProperty<float>
 {
-    public ReactiveFloat(float v) : base(v) { }
+    public ReactiveFloat(float v) : base(v)
+    {
+    }
 }
 
 [Serializable]
 public class ReactiveBool : ReactiveProperty<bool>
 {
-    public ReactiveBool(bool v) : base(v) { }
+    public ReactiveBool(bool v) : base(v)
+    {
+    }
 }

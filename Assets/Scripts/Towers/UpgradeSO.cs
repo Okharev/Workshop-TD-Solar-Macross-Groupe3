@@ -41,8 +41,8 @@ namespace Towers
 
             public BleedInstance(BleedUpgradeSo config, BaseTower tower)
             {
-                this._config = config;
-                this._tower = tower;
+                _config = config;
+                _tower = tower;
             }
 
             public void Enable()
@@ -81,9 +81,9 @@ namespace Towers
 
             public BleedStatus(BleedUpgradeSo config, BaseTower sourceTower, GameObject target)
             {
-                this._config = config;
-                this._sourceTower = sourceTower;
-                this._target = target;
+                _config = config;
+                _sourceTower = sourceTower;
+                _target = target;
             }
 
             public void OnApply(StatusHandler host)
@@ -213,8 +213,8 @@ namespace Towers
 
             public ExplosionInstance(ExplosionUpgradeSo config, BaseTower tower)
             {
-                this._config = config;
-                this._tower = tower;
+                _config = config;
+                _tower = tower;
             }
 
             public void Enable()
@@ -297,8 +297,8 @@ namespace Towers
 
             public ExecuteInstance(ExecuteUpgradeSo config, BaseTower tower)
             {
-                this._config = config;
-                this._tower = tower;
+                _config = config;
+                _tower = tower;
             }
 
             public void Enable()
@@ -366,8 +366,8 @@ namespace Towers
 
             public PoisonInstance(PoisonUpgradeSo config, BaseTower tower)
             {
-                this._config = config;
-                this._tower = tower;
+                _config = config;
+                _tower = tower;
             }
 
             public void Enable()
@@ -405,9 +405,9 @@ namespace Towers
 
             public PoisonStatus(PoisonUpgradeSo config, BaseTower sourceTower, GameObject target)
             {
-                this._config = config;
-                this._sourceTower = sourceTower;
-                this._target = target;
+                _config = config;
+                _sourceTower = sourceTower;
+                _target = target;
             }
 
             public void OnApply(StatusHandler host)

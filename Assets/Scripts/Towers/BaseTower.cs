@@ -36,14 +36,14 @@ namespace Towers
         [SerializeField] protected EnergyConsumer powerSource;
 
         [SerializeField] public BuildingData buildingData;
-        
+
         [SerializeField] public float baseDamage = 10f;
         [SerializeField] public float baseRange = 15f;
         [SerializeField] public float baseFireRate = 1f;
 
-        [SerializeField] public ReactiveStat damage;
-        [SerializeField] public ReactiveStat range;
-        [SerializeField] public ReactiveStat fireRate;
+        [SerializeField] public Stat damage;
+        [SerializeField] public Stat range;
+        [SerializeField] public Stat fireRate;
 
         [Header("Rotation")] [Tooltip("If true, rotation speed increases as Fire Rate increases.")] [SerializeField]
         protected bool scaleRotationWithFireRate = true;
@@ -73,9 +73,9 @@ namespace Towers
         [SerializeField]
         private float referenceTurnAngle = 120f;
 
-        private List<IUpgradeInstance> _activeUpgrades = new();
-
         [Header("Upgrades")] public readonly UpgradeProvider Events = new();
+
+        private List<IUpgradeInstance> _activeUpgrades = new();
 
 
         protected virtual void Awake()
@@ -97,7 +97,7 @@ namespace Towers
         protected virtual void Update()
         {
             // 1. Economy Check
-            if (!powerSource.IsPowered.CurrentValue) return;
+            if (!powerSource.IsPowered) return;
 
             // 2. Busy Check (e.g. Missile Salvo in progress)
             if (isBusy) return;
@@ -113,14 +113,14 @@ namespace Towers
             if (isAligned && fireCountdown <= 0f)
             {
                 Fire();
-                var rate = fireRate.Value.CurrentValue;
+                var rate = fireRate.Value;
                 fireCountdown = 1f / (rate <= 0 ? 0.1f : rate);
             }
         }
 
         private void OnDrawGizmosSelected()
         {
-            Gizmos.DrawWireSphere(transform.position, fireRate.Value.CurrentValue);
+            Gizmos.DrawWireSphere(transform.position, fireRate.Value);
 
 
             if (currentTarget) Gizmos.DrawWireSphere(currentTarget.transform.position, 1.0f);
@@ -132,12 +132,12 @@ namespace Towers
         {
             if (!scaleRotationWithFireRate || fireRate == null) return baseSpeed;
 
-            return baseSpeed * Mathf.Max(1f, fireRate.Value.CurrentValue);
+            return baseSpeed * Mathf.Max(1f, fireRate.Value);
         }
-    
+
         protected float GetCurrentRotationSpeed(float baseInspectorSpeed)
         {
-            var rate = fireRate.Value.CurrentValue;
+            var rate = fireRate.Value;
             if (rate <= 0) rate = 0.1f;
 
             switch (rotationMode)
@@ -163,7 +163,7 @@ namespace Towers
 
             while (true)
             {
-                if (powerSource.IsPowered.CurrentValue && !isBusy) AcquireTarget();
+                if (powerSource.IsPowered && !isBusy) AcquireTarget();
                 yield return waiter;
             }
         }
@@ -218,10 +218,10 @@ namespace Towers
 
         private void ApplyBlueprintStats()
         {
-            damage = new ReactiveStat(baseDamage);
-            range = new ReactiveStat(baseRange);
-            fireRate = new ReactiveStat(baseFireRate);
-            
+            damage = new Stat(baseDamage);
+            range = new Stat(baseRange);
+            fireRate = new Stat(baseFireRate);
+
             damage.Initialize();
             range.Initialize();
             fireRate.Initialize();
@@ -231,6 +231,8 @@ namespace Towers
 
         protected abstract void AcquireTarget();
 
-        protected virtual void OnDrawGizmosTower() {}
+        protected virtual void OnDrawGizmosTower()
+        {
+        }
     }
 }
