@@ -65,7 +65,7 @@ namespace Placement
             col.isTrigger = true;
 
             var source = sectorObj.AddComponent<EnergyProducer>();
-            source.maxCapacity = capacityPerDistrict;
+            source.MaxCapacity.Va = capacityPerDistrict;
             source.isMobileGenerator = false;
 
             source.broadcastRadius = mapRadius;

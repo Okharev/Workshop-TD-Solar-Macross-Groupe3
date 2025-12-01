@@ -9,7 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 214805952494002057}
-  - component: {fileID: 1203964823446562788}
+  - component: {fileID: 1673999907746293650}
   m_Layer: 0
   m_Name: Blocker
   m_TagString: Untagged
@@ -33,7 +33,7 @@ Transform:
   - {fileID: 7154848713429163303}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!208 &1203964823446562788
+--- !u!208 &1673999907746293650
 NavMeshObstacle:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -43,7 +43,7 @@ NavMeshObstacle:
   m_Enabled: 1
   serializedVersion: 3
   m_Shape: 1
-  m_Extents: {x: 7, y: 2, z: 0.5}
+  m_Extents: {x: 7.5, y: 3, z: 3}
   m_MoveThreshold: 0.1
   m_Carve: 1
   m_CarveOnlyStationary: 1
@@ -60,7 +60,6 @@ GameObject:
   - component: {fileID: 7154848713429163303}
   - component: {fileID: 3230012269680684271}
   - component: {fileID: 8687127604103592084}
-  - component: {fileID: 2812522887332108720}
   m_Layer: 0
   m_Name: Wall
   m_TagString: Untagged
@@ -139,24 +138,3 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!65 &2812522887332108720
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8277036801363643165}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 1, y: 1, z: 1}
-  m_Center: {x: 0, y: 0, z: 0}

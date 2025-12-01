@@ -401,8 +401,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 59633b8dcd384b42a84005c4df8b8c89, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Economy.EnergyConsumer
-  _initialRequirement: 100
-  _producerLayer:
+  totalRequirement: 100
+  checkInterval: 0.25
+  energylayer:
     serializedVersion: 2
     m_Bits: 512
 --- !u!114 &-6290923537206660371
@@ -429,14 +430,20 @@ MonoBehaviour:
   baseRange: 15
   baseFireRate: 1
   damage:
-    baseValue:
-      value: 0
+    baseValue: 0
+    isDirty: 1
+    value: 0
+    modifiers: []
   range:
-    baseValue:
-      value: 0
+    baseValue: 0
+    isDirty: 0
+    value: 0
+    modifiers: []
   fireRate:
-    baseValue:
-      value: 0
+    baseValue: 0
+    isDirty: 1
+    value: 0
+    modifiers: []
   scaleRotationWithFireRate: 1
   yPivot: {fileID: 0}
   xPivot: {fileID: 0}

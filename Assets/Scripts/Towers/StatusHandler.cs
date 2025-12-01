@@ -7,8 +7,8 @@ namespace Towers
 {
     public class StatusHandler : MonoBehaviour
     {
-        private readonly Dictionary<Type, IStatusEffect> activeEffects = new();
-        private readonly Dictionary<Type, Coroutine> activeRoutines = new();
+        private readonly Dictionary<Type, IStatusEffect> _activeEffects = new();
+        private readonly Dictionary<Type, Coroutine> _activeRoutines = new();
 
         public event Action<IStatusEffect> OnStatusAdded;
         public event Action<IStatusEffect> OnStatusUpdated;
@@ -18,7 +18,7 @@ namespace Towers
         {
             var type = effect.GetType();
 
-            if (activeEffects.TryGetValue(type, out var existingEffect))
+            if (_activeEffects.TryGetValue(type, out var existingEffect))
             {
                 existingEffect.Reapply(effect);
 
@@ -26,11 +26,11 @@ namespace Towers
             }
             else
             {
-                activeEffects.Add(type, effect);
+                _activeEffects.Add(type, effect);
                 effect.OnApply(this);
 
                 var routine = StartCoroutine(RunEffectRoutine(effect));
-                activeRoutines.Add(type, routine);
+                _activeRoutines.Add(type, routine);
 
                 OnStatusAdded?.Invoke(effect);
             }
@@ -38,17 +38,17 @@ namespace Towers
 
         public void RemoveStatus(Type type)
         {
-            if (activeEffects.TryGetValue(type, out var effect))
+            if (_activeEffects.TryGetValue(type, out var effect))
             {
                 effect.OnEnd();
 
-                if (activeRoutines.TryGetValue(type, out var routine))
+                if (_activeRoutines.TryGetValue(type, out var routine))
                 {
                     StopCoroutine(routine);
-                    activeRoutines.Remove(type);
+                    _activeRoutines.Remove(type);
                 }
 
-                activeEffects.Remove(type);
+                _activeEffects.Remove(type);
 
                 OnStatusRemoved?.Invoke(type);
             }

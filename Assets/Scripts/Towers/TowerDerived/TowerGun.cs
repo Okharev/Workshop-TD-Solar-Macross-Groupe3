@@ -1,96 +1,49 @@
 ﻿using System;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 namespace Towers.TowerDerived
 {
     public class TowerGun : BaseTower
     {
-        [Header("Gun Config")] 
-        [Tooltip("Half-size of the projectile box. 0.1 means a box of 0.2x0.2 size.")]
-        public float projectileThickness = 0.1f;
-        
         private readonly Collider[] _colliderCache = new Collider[32];
 
         protected override void Fire()
         {
-            Events.OnFire?.Invoke(new UpgradeProvider.OnFireData
-            {
-                Origin = gameObject,
-                Target = currentTarget ? currentTarget.gameObject : null
-            });
-
-            FireSingleBoxProjectile();
-        }
-
-        private void FireSingleBoxProjectile()
-        {
-            float currentRange = range.Value;
-            float damageAmount = damage.Value;
-            
-            Vector3 halfExtents = new Vector3(projectileThickness, projectileThickness, projectileThickness);
-            
-            Vector3 shootDirection = firePoint.forward;
-            Quaternion orientation = firePoint.rotation;
-            
-            bool hasHit = Physics.BoxCast(
-                center: firePoint.position,
-                halfExtents: halfExtents,
-                direction: shootDirection,
-                hitInfo: out RaycastHit hit,
-                orientation: orientation,
-                maxDistance: currentRange,
-                layerMask: targetLayer
-            );
-
-            if (hasHit)
-            {
+            if (Physics.Raycast(firePoint.position, currentTarget.transform.position, out var hit, range.Value.CurrentValue, targetLayer))
                 Debug.DrawLine(firePoint.position, hit.point, Color.green, 0.2f);
-
-                /* Do damage
+            // Assuming you have an IDamageable or similar interface
+            /*
                 if (hit.collider.TryGetComponent<IDamageable>(out var victim))
                 {
-                    victim.TakeDamage(damageAmount)
+                    victim.TakeDamage(dmg);
                 }
                 */
-            }
-            else
-            {
-                Debug.DrawRay(firePoint.position, shootDirection * currentRange, Color.red, 0.2f);
-            }
         }
 
         protected override void AcquireTarget()
         {
-            var hits = Physics.OverlapSphereNonAlloc(transform.position, range.Value, _colliderCache, targetLayer);
+            var hits = Physics.OverlapSphereNonAlloc(transform.position, range.Value.CurrentValue, _colliderCache, targetLayer);
             Transform bestTarget = null;
             var bestDist = float.MaxValue;
 
             foreach (var hit in _colliderCache.AsSpan(0, hits))
             {
-                if (hit) continue;
-
                 if (Physics.Linecast(firePoint.position, hit.transform.position, visionBlockerLayer))
-                    continue;
+                    if (hit.gameObject != gameObject)
+                    {
+                        continue;
+                    }
 
                 var dist = (hit.transform.position - transform.position).sqrMagnitude;
 
-                if (dist < bestDist)
-                {
-                    bestTarget = hit.transform;
-                    bestDist = dist;
-                }
+                if (!(dist < bestDist)) continue;
+
+                bestTarget = hit.transform;
+                bestDist = dist;
             }
 
             currentTarget = bestTarget;
-        }
-        
-        private void OnDrawGizmosSelected()
-        {
-            if (!firePoint) return;
-            
-            Gizmos.color = Color.cyan;
-            Gizmos.matrix = Matrix4x4.TRS(firePoint.position + firePoint.forward * 1f, firePoint.rotation, Vector3.one);
-            Gizmos.DrawWireCube(Vector3.zero, new Vector3(projectileThickness * 2, projectileThickness * 2, projectileThickness * 2));
         }
     }
 }

@@ -114,14 +114,14 @@ namespace Placement
             var totalAvailable = 0;
 
             // HashSet to prevent double counting the same generator
-            var checkedProducers = new HashSet<IEnergyProducer>();
+            var checkedProducers = new HashSet<IReactiveEnergyProducer>();
 
             foreach (var hit in hits)
             {
-                IEnergyProducer provider = null;
+                IReactiveEnergyProducer provider = null;
 
                 // 1. Direct check
-                provider = hit.GetComponent<IEnergyProducer>();
+                provider = hit.GetComponent<IReactiveEnergyProducer>();
 
                 // 2. Link check
                 if (provider == null)
@@ -135,7 +135,7 @@ namespace Placement
                     // If we haven't counted this specific producer yet...
                     if (!checkedProducers.Contains(provider))
                     {
-                        totalAvailable += provider.GetAvailableEnergy();
+                        totalAvailable += provider.AvailableEnergy.CurrentValue;
                         checkedProducers.Add(provider);
                     }
             }
@@ -353,7 +353,7 @@ namespace Placement
             // If it's a consumer, the component on the instantiated object handles the connection
             // inside its Start() method naturally.
             // However, if we want to force an immediate update:
-            var consumer = instance.GetComponent<IEnergyConsumer>();
+            var consumer = instance.GetComponent<IReactiveEnergyConsumer>();
             // consumer?.ConnectToPower(); // Assuming you made this public
         }
 

@@ -6,7 +6,7 @@ namespace Towers
     public abstract class BaseProjectile : MonoBehaviour
     {
         public BaseTower source;
-        private protected readonly Collider[] collidersCache = new Collider[16];
+        private protected readonly Collider[] CollidersCache = new Collider[16];
 
         protected virtual void OnTriggerEnter(Collider other)
         {

@@ -9,7 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5695444759371025651}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: GameObject (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -45,7 +45,7 @@ GameObject:
   - component: {fileID: 8826609468256639006}
   - component: {fileID: 3562179074995436068}
   - component: {fileID: 6795290205332455951}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Cube (2)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -401,7 +401,7 @@ GameObject:
   - component: {fileID: 5170624176111179548}
   - component: {fileID: 2468168549607314087}
   - component: {fileID: 5175568014001733630}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Cube (3)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -758,9 +758,9 @@ GameObject:
   - component: {fileID: 8987942396502628012}
   - component: {fileID: 8506183719910781864}
   - component: {fileID: 2416886466139490654}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: TowerMissile
-  m_TagString: Untagged
+  m_TagString: Tower
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -796,7 +796,7 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
@@ -832,7 +832,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Towers.TowerDerived.MissileTower
   powerSource: {fileID: 8506183719910781864}
-  blueprint: {fileID: 11400000, guid: d498ff25fa052f746acb5097a7e1ba99, type: 2}
+  buildingData:
+    name: 
+    description: 
+    icon: {fileID: 0}
+    cost: 0
+    energyDrain: 0
+    prefab: {fileID: 0}
+  baseDamage: 10
+  baseRange: 15
+  baseFireRate: 1
   damage:
     baseValue: 0
     isDirty: 1
@@ -866,6 +875,8 @@ MonoBehaviour:
   currentTarget: {fileID: 0}
   fireCountdown: 0
   isBusy: 0
+  rotationMode: 1
+  referenceTurnAngle: 120
   missilePrefab: {fileID: 7303159094743476213, guid: ed903675cecb39244a27cbbdca1ecafb, type: 3}
   launchPoints:
   - {fileID: 5695444759371025651}
@@ -891,7 +902,7 @@ GameObject:
   - component: {fileID: 3025835336930965723}
   - component: {fileID: 8771798403638013589}
   - component: {fileID: 1476184109066082580}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Cube (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1242,7 +1253,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4384883914027469455}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: GameObject (3)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1273,7 +1284,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 298901580182546302}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: GameObject (2)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1309,7 +1320,7 @@ GameObject:
   - component: {fileID: 8418029455095276300}
   - component: {fileID: 2962952375467445343}
   - component: {fileID: 5790037519038817206}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Cube
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1660,7 +1671,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2513257680694880479}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: GameObject (4)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
