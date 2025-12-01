@@ -133,8 +133,8 @@ namespace Towers
         {
             // 1. AoE Damage Logic
             var hitCount =
-                Physics.OverlapSphereNonAlloc(transform.position, explosionRange, collidersCache, _enemyLayer);
-            var validHits = collidersCache.AsSpan(0, hitCount);
+                Physics.OverlapSphereNonAlloc(transform.position, explosionRange, CollidersCache, _enemyLayer);
+            var validHits = CollidersCache.AsSpan(0, hitCount);
 
             foreach (var col in validHits)
             {
@@ -224,12 +224,12 @@ namespace Towers
             if (_timeSinceLastRetargetCheck < retargetingCooldown) return false;
             _timeSinceLastRetargetCheck = 0f;
 
-            var hitCount = Physics.OverlapSphereNonAlloc(_rb.position, retargetingRange, collidersCache, _enemyLayer);
+            var hitCount = Physics.OverlapSphereNonAlloc(_rb.position, retargetingRange, CollidersCache, _enemyLayer);
             if (hitCount == 0) return false;
 
             Transform closest = null;
             var closestDist = float.MaxValue;
-            var hits = collidersCache.AsSpan(0, hitCount);
+            var hits = CollidersCache.AsSpan(0, hitCount);
 
             foreach (var hit in hits)
             {

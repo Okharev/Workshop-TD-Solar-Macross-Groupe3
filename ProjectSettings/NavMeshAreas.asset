@@ -13,8 +13,8 @@ NavMeshProjectSettings:
     cost: 2
   - name: RoadEdge
     cost: 5
-  - name: 
-    cost: 1
+  - name: Blocked
+    cost: 100000
   - name: 
     cost: 1
   - name: 

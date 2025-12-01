@@ -1,104 +1,104 @@
-﻿using System.Collections;
+﻿using ObservableCollections;
+using R3;
+using R3.Collections;
 using UnityEngine;
 
 namespace Economy
 {
     public class EnergyDebugUI : MonoBehaviour
     {
-        [Header("Settings")] public bool showDebug = true;
-
+        [Header("Settings")] 
+        public bool showDebug = true;
         public KeyCode toggleKey = KeyCode.F3;
         public float verticalOffset = 2.5f;
 
-        [Header("Update Frequency")] [Tooltip("How often to refresh the list of buildings (seconds)")]
-        public float refreshRate = 0.5f;
+        // Singleton for easy access
+        public static EnergyDebugUI Instance { get; private set; }
 
-        private EnergyConsumer[] consumers = new EnergyConsumer[0];
-        private UnityEngine.Camera mainCam;
-
-        // Cache
-        private EnergyProducer[] producers = new EnergyProducer[0];
-        private GUIStyle styleConsumer;
-        private GUIStyle styleProducer;
+        private readonly ObservableList<IReactiveEnergyProducer> _producers = new();
+        private readonly ObservableList<IReactiveEnergyConsumer> _consumers = new();
+        
+        private UnityEngine.Camera _mainCam;
+        private GUIStyle _styleConsumer;
+        private GUIStyle _styleProducer;
+        private CompositeDisposable _disposables = new();
 
         private void Awake()
         {
-            mainCam = UnityEngine.Camera.main;
-            StartCoroutine(CacheObjectsRoutine());
+            if (Instance && Instance != this) { Destroy(gameObject); return; }
+            Instance = this;
+            
+            _mainCam = UnityEngine.Camera.main;
+            
+            // Toggle Logic using R3
+            Observable.EveryUpdate()
+                .Where(_ => Input.GetKeyDown(toggleKey))
+                .Subscribe(_ => showDebug = !showDebug)
+                .AddTo(_disposables);
         }
 
-        private void Update()
+        private void OnDestroy()
         {
-            if (Input.GetKeyDown(toggleKey)) showDebug = !showDebug;
+            _disposables.Dispose();
         }
+
+        // Registration Methods called by entities
+        public void RegisterProducer(IReactiveEnergyProducer p) => _producers.Add(p);
+        public void UnregisterProducer(IReactiveEnergyProducer p) => _producers.Remove(p);
+        public void RegisterConsumer(IReactiveEnergyConsumer c) => _consumers.Add(c);
+        public void UnregisterConsumer(IReactiveEnergyConsumer c) => _consumers.Remove(c);
 
         private void OnGUI()
         {
-            if (!showDebug || mainCam == null) return;
-
-            if (styleProducer == null) SetupStyles();
+            if (!showDebug || _mainCam == null) return;
+            if (_styleProducer == null) SetupStyles();
 
             DrawProducers();
             DrawConsumers();
         }
 
-        private IEnumerator CacheObjectsRoutine()
-        {
-            var wait = new WaitForSeconds(refreshRate);
-            while (true)
-            {
-                if (showDebug)
-                {
-                    // FindObjectsByType automatically excludes inactive objects by default,
-                    // but we still need the runtime checks in OnGUI for the time between refreshes.
-                    producers = FindObjectsByType<EnergyProducer>(FindObjectsSortMode.None);
-                    consumers = FindObjectsByType<EnergyConsumer>(FindObjectsSortMode.None);
-                }
-
-                yield return wait;
-            }
-        }
-
         private void DrawProducers()
         {
-            foreach (var p in producers)
+            // Iterate ObservableList directly
+            foreach (var p in _producers)
             {
-                if (p == null || !p.isActiveAndEnabled) continue;
+                if (p == null || p.Equals(null)) continue;
+                if (p is MonoBehaviour mono && !mono.isActiveAndEnabled) continue;
 
-                var screenPos = GetScreenPosition(p.transform.position);
+                var screenPos = GetScreenPosition(p.Position);
                 if (screenPos.z < 0) continue;
 
-                var current = p.currentLoad;
-                var available = p.GetAvailableEnergy();
-                var total = current + available;
+                // Reactive Access: Get CurrentValue directly
+                var current = p.CurrentLoad.CurrentValue;
+                var total = p.MaxCapacity.CurrentValue;
+                var available = p.AvailableEnergy.CurrentValue;
 
-                var text = p.isMobileGenerator ? "GENERATOR" : "DISTRICT";
+                var text = p.IsLocalGenerator ? "GENERATOR" : "DISTRICT";
                 text += $"\nLoad: {current}/{total}";
 
-                GUI.color = available == 0 ? Color.red : Color.cyan;
-
-                DrawLabel(screenPos, text, styleProducer);
+                GUI.color = available <= 0 ? Color.red : Color.cyan;
+                DrawLabel(screenPos, text, _styleProducer);
             }
         }
 
         private void DrawConsumers()
         {
-            foreach (var c in consumers)
+            foreach (var c in _consumers)
             {
-                if (c == null || !c.isActiveAndEnabled) continue;
+                if (c == null || c.Equals(null)) continue;
+                if (c is MonoBehaviour mono && !mono.isActiveAndEnabled) continue;
 
-                var screenPos = GetScreenPosition(c.transform.position);
+                var screenPos = GetScreenPosition(c.Position);
                 if (screenPos.z < 0) continue;
 
-                var isPowered = c.IsPowered;
-                var req = c.GetEnergyRequirement();
+                var isPowered = c.IsPowered.CurrentValue;
+                var req = c.EnergyRequirement.CurrentValue;
 
                 var text = isPowered ? "POWERED" : "NO POWER";
                 text += $"\nReq: {req}";
 
                 GUI.color = isPowered ? Color.green : Color.red;
-
-                DrawLabel(screenPos, text, styleConsumer);
+                DrawLabel(screenPos, text, _styleConsumer);
             }
         }
 
@@ -115,17 +115,17 @@ namespace Economy
 
         private Vector3 GetScreenPosition(Vector3 worldPos)
         {
-            return mainCam.WorldToScreenPoint(worldPos + Vector3.up * verticalOffset);
+            return _mainCam.WorldToScreenPoint(worldPos + Vector3.up * verticalOffset);
         }
 
         private void SetupStyles()
         {
-            styleProducer = new GUIStyle(GUI.skin.label);
-            styleProducer.alignment = TextAnchor.MiddleCenter;
-            styleProducer.fontStyle = FontStyle.Bold;
-            styleProducer.fontSize = 12;
+            _styleProducer = new GUIStyle(GUI.skin.label);
+            _styleProducer.alignment = TextAnchor.MiddleCenter;
+            _styleProducer.fontStyle = FontStyle.Bold;
+            _styleProducer.fontSize = 12;
 
-            styleConsumer = new GUIStyle(styleProducer);
+            _styleConsumer = new GUIStyle(_styleProducer);
         }
     }
 }

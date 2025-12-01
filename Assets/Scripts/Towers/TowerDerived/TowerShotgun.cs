@@ -14,31 +14,31 @@ namespace Towers.TowerDerived
         [Tooltip("Vertical spread multiplier (0.0 = flat line, 1.0 = circle)")] [Range(0f, 1f)]
         public float verticalSpreadFactor = 0.2f;
 
-        private readonly Collider[] colliderCache = new Collider[32];
+        private readonly Collider[] _colliderCache = new Collider[32];
 
         protected override void Fire()
         {
-            var totalDamage = damage.Value;
+            var totalDamage = damage.Value.CurrentValue;
             var damagePerPellet = totalDamage / pelletCount;
 
-            events.onFire?.Invoke(new UpgradeProvider.OnFireData
+            Events.OnFire?.Invoke(new UpgradeProvider.OnFireData
             {
-                origin = gameObject,
-                target = currentTarget.gameObject
+                Origin = gameObject,
+                Target = currentTarget.gameObject
             });
 
             for (var i = 0; i < pelletCount; i++) FireSingleRay(damagePerPellet);
 
-            var rate = fireRate.Value > 0 ? fireRate.Value : 0.5f;
+            var rate = fireRate.Value.CurrentValue > 0 ? fireRate.Value.CurrentValue : 0.5f;
         }
 
         protected override void AcquireTarget()
         {
-            var hits = Physics.OverlapSphereNonAlloc(transform.position, range.Value, colliderCache, targetLayer);
+            var hits = Physics.OverlapSphereNonAlloc(transform.position, range.Value.CurrentValue, _colliderCache, targetLayer);
             Transform bestTarget = null;
             var bestDist = float.MaxValue;
 
-            foreach (var hit in colliderCache.AsSpan(0, hits))
+            foreach (var hit in _colliderCache.AsSpan(0, hits))
             {
                 // If there is a blocker to the closest target
                 if (Physics.Linecast(firePoint.position, hit.transform.position, visionBlockerLayer))
@@ -77,7 +77,7 @@ namespace Towers.TowerDerived
 
             var shootDir = fp.rotation * spreadRot * Vector3.forward;
             
-            if (Physics.Raycast(fp.position, shootDir, out var hit, range.Value, targetLayer))
+            if (Physics.Raycast(fp.position, shootDir, out var hit, range.Value.CurrentValue, targetLayer))
                 Debug.DrawLine(fp.position, hit.point, Color.green, 0.2f);
             // Assuming you have an IDamageable or similar interface
             /*
@@ -87,7 +87,7 @@ namespace Towers.TowerDerived
                 }
                 */
             else
-                Debug.DrawRay(fp.position, shootDir * range.Value, Color.red, 0.2f);
+                Debug.DrawRay(fp.position, shootDir * range.Value.CurrentValue, Color.red, 0.2f);
         }
     }
 }

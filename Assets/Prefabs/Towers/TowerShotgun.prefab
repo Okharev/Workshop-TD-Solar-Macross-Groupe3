@@ -81,7 +81,7 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
@@ -117,7 +117,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Towers.TowerDerived.TowerShotgun
   powerSource: {fileID: 762822935104049358}
-  blueprint: {fileID: 11400000, guid: d498ff25fa052f746acb5097a7e1ba99, type: 2}
+  buildingData:
+    name: 
+    description: 
+    icon: {fileID: 0}
+    cost: 0
+    energyDrain: 0
+    prefab: {fileID: 0}
+  baseDamage: 10
+  baseRange: 15
+  baseFireRate: 1
   damage:
     baseValue: 0
     isDirty: 1
@@ -133,6 +142,7 @@ MonoBehaviour:
     isDirty: 1
     value: 0
     modifiers: []
+  scaleRotationWithFireRate: 1
   yPivot: {fileID: 4151466260295540900}
   xPivot: {fileID: 2917381104366024351}
   yPivotSpeed: 120
@@ -150,6 +160,8 @@ MonoBehaviour:
   currentTarget: {fileID: 0}
   fireCountdown: 0
   isBusy: 0
+  rotationMode: 1
+  referenceTurnAngle: 120
   pelletCount: 6
   horizontalSpreadAngle: 30
   verticalSpreadFactor: 0.2

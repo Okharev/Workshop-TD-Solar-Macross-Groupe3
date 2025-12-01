@@ -50,7 +50,7 @@ namespace Towers
         protected override void AcquireTarget()
         {
             // Standard logic: Find closest target just to orient the turret
-            var hitCount = Physics.OverlapSphereNonAlloc(transform.position, range.Value, _targetBuffer, targetLayer);
+            var hitCount = Physics.OverlapSphereNonAlloc(transform.position, range.Value.CurrentValue, _targetBuffer, targetLayer);
             if (hitCount == 0)
             {
                 currentTarget = null;
@@ -111,7 +111,7 @@ namespace Towers
             var missile = Instantiate(missilePrefab, tube.position, tube.rotation);
 
             // 3. Stats Setup
-            missile.damage = Mathf.RoundToInt(damage.Value);
+            missile.damage = Mathf.RoundToInt(damage.Value.CurrentValue);
             missile.Setup(this);
 
             // 4. Calculate Flight Path (The Javelin Arc)
@@ -141,7 +141,7 @@ namespace Towers
         private void RefreshSalvoTargets()
         {
             _lockedTargets.Clear();
-            var hitCount = Physics.OverlapSphereNonAlloc(transform.position, range.Value, _targetBuffer, targetLayer);
+            var hitCount = Physics.OverlapSphereNonAlloc(transform.position, range.Value.CurrentValue, _targetBuffer, targetLayer);
             if (hitCount == 0) return;
 
             // Simple Logic: just grab the first N targets found. 

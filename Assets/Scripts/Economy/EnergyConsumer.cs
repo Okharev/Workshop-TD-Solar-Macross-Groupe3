@@ -1,249 +1,174 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using R3; // Core R3
 using UnityEngine;
 
 namespace Economy
 {
-    public interface IEnergyConsumer
+    public interface IReactiveEnergyConsumer
     {
-        bool IsPowered { get; }
-        int GetEnergyRequirement();
-        Vector3 GetPosition();
-
-        event Action<bool> OnPowerChanged;
-
-        void RefreshConnection();
-        void OnPowerLost();
+        ReadOnlyReactiveProperty<bool> IsPowered { get; }
+        ReactiveProperty<int> EnergyRequirement { get; }
+        Vector3 Position { get; }
+        
+        // Signals that this consumer needs a grid refresh (e.g. source died)
+        void ForceRefresh();
     }
-
-    public class EnergyConsumer : MonoBehaviour, IEnergyConsumer
+    
+        public class EnergyConsumer : MonoBehaviour, IReactiveEnergyConsumer
     {
-        [Header("Settings")] [SerializeField] private int totalRequirement = 100;
+        [Header("Settings")] 
+        [SerializeField] private int _initialRequirement = 100;
+        [SerializeField] private LayerMask _producerLayer;
+        
+        public ReactiveProperty<int> EnergyRequirement { get; private set; }
+        
+        // IsPowered is ReadOnly for the outside, but writable internally
+        private readonly ReactiveProperty<bool> _isPowered = new(false);
+        public ReadOnlyReactiveProperty<bool> IsPowered => _isPowered;
 
-        [SerializeField] private float checkInterval = 0.25f;
-        public LayerMask energylayer;
+        public Vector3 Position => transform.position;
 
-        // Intern
-        private readonly Dictionary<IEnergyProducer, int> _energySources = new();
-        private bool _isPowered;
-        private Vector3 _lastPosition;
+        // Internal State
+        private readonly Dictionary<IReactiveEnergyProducer, int> _currentSources = new();
+        private readonly Subject<Unit> _refreshTrigger = new();
 
-        private void OnEnable()
+        
+        private void Awake()
         {
-            _lastPosition = transform.position;
-            if (totalRequirement > 0) StartCoroutine(InitialConnectRoutine());
+            EnergyRequirement = new ReactiveProperty<int>(_initialRequirement);
+        }
+
+        private void Start()
+        {
+            Vector3 lastPos = transform.position;
+            
+            // ---------------------------------------------------------
+            // 1. MOVEMENT DETECTION (The R3 Way)
+            // ---------------------------------------------------------
+            var moveTrigger = Observable
+                // Use EveryUpdate with the FixedUpdate provider
+                .EveryUpdate(UnityFrameProvider.FixedUpdate)
+                .Select(_ => transform.position)
+                // DistinctUntilChanged with predicate: returns true if "equal" (no change)
+                .Where(currentPos => 
+                {
+                    // Calculate distance
+                    float dist = (currentPos - lastPos).sqrMagnitude;
+            
+                    // If moved significantly
+                    if (dist > 0.01f) 
+                    {
+                        lastPos = currentPos; // Update local state
+                        return true; // Allow event to pass
+                    }
+                    return false; // Block event
+                })
+                .ThrottleFirst(TimeSpan.FromSeconds(0.2f))
+                    .Select(_ => Unit.Default);
+
+            // ---------------------------------------------------------
+            // 2. REQUIREMENT CHANGES
+            // ---------------------------------------------------------
+            var requirementChanged = EnergyRequirement
+                .Skip(1) // Skip the initial value set in Awake
+                .Select(_ => Unit.Default);
+
+            // ---------------------------------------------------------
+            // 3. MERGE & SUBSCRIBE
+            // ---------------------------------------------------------
+            Observable
+                .Merge(moveTrigger, _refreshTrigger, requirementChanged)
+                .Subscribe(_ => AttemptConnection())
+                .AddTo(this);
+            
+            // Initial attempt
+            AttemptConnection();
         }
 
         private void OnDisable()
         {
-            StopAllCoroutines();
             DisconnectAll();
         }
 
-        // EVENTS & STATE
-        public event Action<bool> OnPowerChanged;
-
-        public bool IsPowered
+        public void ForceRefresh()
         {
-            get => _isPowered;
-            private set
+            _refreshTrigger.OnNext(Unit.Default);
+        }
+
+        private void AttemptConnection()
+        {
+            CleanupInvalidSources();
+
+            int currentPower = _currentSources.Values.Sum();
+            int needed = EnergyRequirement.Value - currentPower;
+
+            // If we are fully powered, do nothing (or add logic to release excess)
+            if (needed <= 0)
             {
-                if (_isPowered != value)
+                _isPowered.Value = true;
+                return;
+            }
+
+            // 1. Scan for candidates
+            var hits = Physics.OverlapSphere(transform.position, 15f, _producerLayer);
+            
+            var candidates = hits
+                .Select(h => h.GetComponent<IReactiveEnergyProducer>() ?? h.GetComponentInParent<IReactiveEnergyProducer>())
+                .Where(p => p != null && !p.Equals(null))
+                .Distinct()
+                .OrderBy(p => Vector3.Distance(transform.position, p.Position))
+                .ToList();
+
+            // 2. Consume
+            foreach (var p in candidates)
+            {
+                if (Vector3.Distance(transform.position, p.Position) > p.BroadcastRadius) continue;
+
+                int available = p.AvailableEnergy.CurrentValue;
+                if (available <= 0) continue;
+
+                int take = Mathf.Min(needed, available);
+                int actuallyTaken = p.ConsumeUpTo(take, this);
+
+                if (actuallyTaken > 0)
                 {
-                    _isPowered = value;
-                    OnPowerChanged?.Invoke(_isPowered);
+                    if (!_currentSources.TryAdd(p, actuallyTaken)) _currentSources[p] += actuallyTaken;
+
+                    needed -= actuallyTaken;
                 }
+
+                if (needed <= 0) break;
             }
+
+            _isPowered.Value = (EnergyRequirement.Value - needed) <= 0;
         }
 
-        public void OnPowerLost()
+        private void CleanupInvalidSources()
         {
-            DisconnectAll();
-        }
+            var invalid = _currentSources.Keys
+                .Where(k => k == null || k.Equals(null) || (k as MonoBehaviour) == null || !(k as MonoBehaviour).isActiveAndEnabled)
+                .ToList();
 
-        public void RefreshConnection()
-        {
-            if (!enabled || !gameObject.activeInHierarchy) return;
-            AttemptConnection();
-        }
-
-        public int GetEnergyRequirement()
-        {
-            return totalRequirement;
-        }
-
-        public Vector3 GetPosition()
-        {
-            return transform.position;
-        }
-
-        private IEnumerator InitialConnectRoutine()
-        {
-            yield return new WaitForFixedUpdate();
-            if (enabled) AttemptConnection();
-            StartCoroutine(MonitorConnectionsRoutine());
-        }
-
-        private IEnumerator MonitorConnectionsRoutine()
-        {
-            var wait = new WaitForSeconds(checkInterval);
-            while (enabled)
-            {
-                yield return wait;
-
-                // 1. Movement detection
-                var hasMoved = (transform.position - _lastPosition).sqrMagnitude > 0.01f;
-                if (hasMoved) _lastPosition = transform.position;
-
-                // 2. Check valid sources (destroyed/disabled)
-                var connectionLost = ValidateExistingConnections();
-
-                // 3. if we moved, lost a source, or not enough power -> Full scan
-                if (hasMoved || connectionLost || !IsPowered) AttemptConnection();
-            }
+            foreach (var p in invalid) _currentSources.Remove(p);
+            
+            // Re-check power status after cleanup
+            int currentTotal = _currentSources.Values.Sum();
+            if (currentTotal < EnergyRequirement.Value) _isPowered.Value = false;
         }
 
         private void DisconnectAll()
         {
-            foreach (var kvp in _energySources)
+            foreach (var kvp in _currentSources)
+            {
                 if (kvp.Key != null && !kvp.Key.Equals(null))
+                {
                     kvp.Key.ReleaseEnergy(kvp.Value, this);
-
-            _energySources.Clear();
-            IsPowered = false;
-        }
-
-        private bool ValidateExistingConnections()
-        {
-            var changed = false;
-            var producers = new List<IEnergyProducer>(_energySources.Keys);
-
-            foreach (var producer in producers)
-                // If producer is null or disabled
-                if (producer == null || producer.Equals(null) || !((MonoBehaviour)producer).isActiveAndEnabled)
-                {
-                    _energySources.Remove(producer);
-                    changed = true;
                 }
-
-            // Let attempt connection handle checks
-            if (changed && _energySources.Count == 0) IsPowered = false;
-            return changed;
-        }
-
-        public void AttemptConnection()
-        {
-            // 1. SCAN : search surrounding
-            var center = transform.position + Vector3.up * 0.5f;
-            var hits = Physics.OverlapSphere(center, 0.5f, energylayer);
-
-            // 2. take a unique
-            var allCandidates = hits
-                .Select(GetProducerFromCollider)
-                .Where(p => p != null && !p.Equals(null))
-                .Distinct()
-                .Where(p => ((MonoBehaviour)p).isActiveAndEnabled)
-                .ToList();
-
-            // 3. Sort by priority: first local then by distance
-            var sortedProducers = allCandidates
-                .OrderByDescending(p => p.IsLocalGenerator())
-                .ThenBy(p => Vector3.Distance(transform.position, p.GetPosition()))
-                .ToList();
-
-            // 4. plan
-            var stillNeeded = totalRequirement;
-            var newPlan = new Dictionary<IEnergyProducer, int>();
-
-            // count how many we found
-            var totalFound = 0;
-
-            foreach (var producer in sortedProducers)
-            {
-                if (Vector3.Distance(transform.position, producer.GetPosition()) > producer.GetBroadcastRadius() + 1.0f)
-                    continue;
-
-                var currentConsumption = _energySources.GetValueOrDefault(producer, 0);
-                var realAvailable = producer.GetAvailableEnergy() + currentConsumption;
-
-                if (realAvailable <= 0) continue;
-
-                var take = Mathf.Min(realAvailable, stillNeeded);
-
-                if (take > 0)
-                {
-                    newPlan.Add(producer, take);
-                    stillNeeded -= take;
-                    totalFound += take; // Cumulation of what we found
-                }
-
-                if (stillNeeded <= 0) break;
             }
-
-            // All or nothing
-            if (totalFound < totalRequirement)
-                newPlan.Clear();
-
-            // 5. if new plan is empty (no sources, or not enough power)
-            // ApplyConnectionPlan disconnects everything
-            ApplyConnectionPlan(newPlan);
-        }
-
-        private void ApplyConnectionPlan(Dictionary<IEnergyProducer, int> newPlan)
-        {
-            // A. Cleanup of old resources missing from old plan
-            var oldProducers = new List<IEnergyProducer>(_energySources.Keys);
-            foreach (var p in oldProducers)
-                if (!newPlan.ContainsKey(p))
-                {
-                    // case 1 : Disconnets totally if we exited zone or there is better generator
-                    p.ReleaseEnergy(_energySources[p], this);
-                    _energySources.Remove(p);
-                }
-                else if (newPlan[p] < _energySources[p])
-                {
-                    // Case 2 : Reduce charge
-                    var diff = _energySources[p] - newPlan[p];
-                    p.ReleaseEnergy(diff, this);
-                    _energySources[p] = newPlan[p];
-                }
-
-            // B. add or augmentation of sources
-            foreach (var (p, targetAmount) in newPlan)
-                if (!_energySources.ContainsKey(p))
-                {
-                    // Case 3 : new connection
-                    p.ConsumeUpTo(targetAmount, this);
-                    _energySources.Add(p, targetAmount);
-                }
-                else if (_energySources[p] < targetAmount)
-                {
-                    // Case 4 : increase demand
-                    var diff = targetAmount - _energySources[p];
-                    p.ConsumeUpTo(diff, this);
-                    _energySources[p] = targetAmount;
-                }
-
-            // C. Update final state
-            var total = 0;
-            foreach (var v in _energySources.Values) total += v;
-
-            IsPowered = total >= totalRequirement;
-        }
-
-        private static IEnergyProducer GetProducerFromCollider(Collider h)
-        {
-            var p = h.GetComponent<IEnergyProducer>();
-
-            if (p == null)
-            {
-                var link = h.GetComponent<EnergyFieldLink>();
-                if (link) p = link.GetProducer();
-            }
-
-            return p;
+            _currentSources.Clear();
+            _isPowered.Value = false;
         }
     }
 }

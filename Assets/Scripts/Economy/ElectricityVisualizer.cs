@@ -1,146 +1,123 @@
 ﻿using System.Collections.Generic;
+using ObservableCollections;
+using R3;
+using R3.Collections;
 using UnityEngine;
 
 namespace Economy
 {
     public class ElectricityVisualizer : MonoBehaviour
     {
-        [Header("Configuration")] [Tooltip("If false, lines are hidden.")] [SerializeField]
-        private bool showConnections = true;
-
-        [Tooltip("Height offset so lines don't clip through the ground.")] [SerializeField]
-        private float verticalOffset = 2.0f;
-
-        [Header("Line Renderer Settings")] [SerializeField]
-        private LineRenderer linePrefab;
-
-        [Header("Dynamic Visuals")] [Tooltip("Width when providing 0% (or very low) of needs.")] [SerializeField]
-        private float minWidth = 0.05f;
-
-        [Tooltip("Width when providing 100% of needs.")] [SerializeField]
-        private float maxWidth = 0.4f;
-
-        [Tooltip("Color for low power transfer (e.g., dark/transparent).")] [SerializeField]
-        private Color weakColor = new(0, 1, 1, 0.2f);
-
-        [Tooltip("Color for high power transfer (e.g., bright/glowing).")] [SerializeField]
-        private Color strongColor = new(0, 1, 1, 1.0f);
-
-        // Object Pool
-        private readonly List<LineRenderer> _linePool = new();
-
-        // Tracking Data
-        private readonly List<EnergyProducer> _registeredProducers = new();
-
-        // Singleton Instance
+        [SerializeField] private LineRenderer _linePrefab;
+        [SerializeField] private float _verticalOffset = 2.0f;
+        
+        // Singleton
         public static ElectricityVisualizer Instance { get; private set; }
+
+        private readonly ObservableList<IReactiveEnergyProducer> _producers = new();
+        
+        // Map a specific connection (Producer -> Consumer) to a LineRenderer
+        private readonly Dictionary<(IReactiveEnergyProducer, IReactiveEnergyConsumer), LineRenderer> _activeLines = new();
+        private readonly Queue<LineRenderer> _linePool = new();
 
         private void Awake()
         {
-            if (Instance && Instance != this)
-            {
-                Destroy(gameObject);
-                return;
-            }
-
             Instance = this;
+
+            // Reactive Logic: When a producer is added...
+            _producers.ObserveAdd()
+                .Subscribe(e =>
+                {
+                    // ... Subscribe to THAT producer's connection list
+                    // We use a CompositeDisposable to clean up this inner subscription if the producer is removed
+                    var disposable = new CompositeDisposable();
+                    
+                    // Listen to connections added
+                    e.Value.ActiveConnections.ObserveAdd()
+                        .Subscribe(conn => CreateLine(e.Value, conn.Value.consumer, conn.Value.amount))
+                        .AddTo(disposable);
+
+                    // Listen to connections removed
+                    e.Value.ActiveConnections.ObserveRemove()
+                        .Subscribe(conn => RemoveLine(e.Value, conn.Value.consumer))
+                        .AddTo(disposable);
+                    
+                    // Listen to connections updated (amount change) - visual width update
+                    e.Value.ActiveConnections.ObserveReplace()
+                        .Subscribe(conn => UpdateLineVisuals(e.Value, conn.NewValue.consumer, conn.NewValue.amount))
+                        .AddTo(disposable);
+
+                    // If producer is removed from global list, dispose these listeners
+                    _producers.ObserveRemove()
+                        .Where(x => x.Value == e.Value)
+                        .Subscribe(_ => disposable.Dispose())
+                        .AddTo(this);
+                })
+                .AddTo(this);
         }
 
         private void LateUpdate()
         {
-            if (!showConnections) return;
-            DrawConnections();
-        }
-
-        public void RegisterProducer(EnergyProducer producer)
-        {
-            if (!_registeredProducers.Contains(producer)) _registeredProducers.Add(producer);
-        }
-
-        public void UnregisterProducer(EnergyProducer producer)
-        {
-            if (_registeredProducers.Contains(producer)) _registeredProducers.Remove(producer);
-        }
-
-        public void ToggleVisibility(bool state)
-        {
-            showConnections = state;
-            if (!showConnections) HideAllLines();
-        }
-
-        private void DrawConnections()
-        {
-            var lineIndex = 0;
-
-            // Iterate through every producer 
-            // We use a backwards loop or Copy if we were modifying, but here we just read.
-            // However, we must handle the case where the list changes during iteration if threaded (unlikely here)
-            foreach (var producer in _registeredProducers)
+            // Only update positions of active lines
+            foreach (var kvp in _activeLines)
             {
-                if (!producer || !producer.isActiveAndEnabled) continue;
+                var (producer, consumer) = kvp.Key;
+                var line = kvp.Value;
 
-                var outputs = producer.GetOutputMap();
+                // Safety check
+                if (producer == null || consumer == null || line == null) continue;
 
-                foreach (var (consumer, amountProvided) in outputs)
-                {
-                    var consumerMono = consumer as MonoBehaviour;
+                line.SetPosition(0, producer.Position + Vector3.up * _verticalOffset);
+                line.SetPosition(1, consumer.Position + Vector3.up * _verticalOffset);
+            }
+        }
 
-                    // If it is null (destroyed) OR it is simply disabled/inactive...
-                    if (!consumerMono || !consumerMono.isActiveAndEnabled)
-                        // Skip drawing this line. 
-                        // The Logic in EnergyProducer should remove this entry shortly, 
-                        // but the visualizer shouldn't wait for that.
-                        continue;
+        public void RegisterProducer(EnergyProducer p) => _producers.Add(p);
+        public void UnregisterProducer(EnergyProducer p) => _producers.Remove(p);
 
-                    float totalNeeded = consumer.GetEnergyRequirement();
-                    var ratio = 0f;
+        private void CreateLine(IReactiveEnergyProducer p, IReactiveEnergyConsumer c, int amount)
+        {
+            var key = (p, c);
+            if (_activeLines.ContainsKey(key)) return;
 
-                    if (totalNeeded > 0) ratio = Mathf.Clamp01(amountProvided / totalNeeded);
-
-                    var line = GetLineFromPool(lineIndex);
-                    lineIndex++;
-
-                    var startPos = producer.GetPosition() + Vector3.up * verticalOffset;
-                    var endPos = consumer.GetPosition() + Vector3.up * verticalOffset;
-
-                    line.gameObject.SetActive(true);
-                    line.SetPosition(0, startPos);
-                    line.SetPosition(1, endPos);
-
-                    UpdateLineVisuals(line, ratio);
-                }
+            LineRenderer line;
+            if (_linePool.Count > 0)
+            {
+                line = _linePool.Dequeue();
+                line.gameObject.SetActive(true);
+            }
+            else
+            {
+                line = Instantiate(_linePrefab, transform);
             }
 
-            for (var i = lineIndex; i < _linePool.Count; i++) _linePool[i].gameObject.SetActive(false);
+            _activeLines.Add(key, line);
+            UpdateLineVisuals(p, c, amount);
         }
 
-        private void UpdateLineVisuals(LineRenderer line, float ratio)
+        private void RemoveLine(IReactiveEnergyProducer p, IReactiveEnergyConsumer c)
         {
-            var width = Mathf.Lerp(minWidth, maxWidth, ratio);
-            line.startWidth = width;
-            line.endWidth = width;
-
-            var c = Color.Lerp(weakColor, strongColor, ratio);
-
-            line.startColor = c;
-            line.endColor = c;
-        }
-
-        private LineRenderer GetLineFromPool(int index)
-        {
-            if (index >= _linePool.Count)
+            var key = (p, c);
+            if (_activeLines.TryGetValue(key, out var line))
             {
-                var newLine = Instantiate(linePrefab, transform);
-                newLine.gameObject.SetActive(false);
-                _linePool.Add(newLine);
+                line.gameObject.SetActive(false);
+                _linePool.Enqueue(line);
+                _activeLines.Remove(key);
             }
-
-            return _linePool[index];
         }
 
-        private void HideAllLines()
+        private void UpdateLineVisuals(IReactiveEnergyProducer p, IReactiveEnergyConsumer c, int amount)
         {
-            foreach (var line in _linePool) line.gameObject.SetActive(false);
+            var key = (p, c);
+            if (_activeLines.TryGetValue(key, out var line))
+            {
+                float ratio = Mathf.Clamp01((float)amount / c.EnergyRequirement.Value);
+                float width = Mathf.Lerp(0.05f, 0.4f, ratio);
+                line.startWidth = width;
+                line.endWidth = width;
+                
+                // You could also animate colors here based on ratio
+            }
         }
     }
 }

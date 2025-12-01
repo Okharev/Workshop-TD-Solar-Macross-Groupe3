@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using Economy;
 using UnityEngine;
@@ -18,15 +19,31 @@ namespace Towers
         SyncWithReload
     }
 
+    [Serializable]
+    public struct BuildingData
+    {
+        public string name;
+        public string description;
+        public Texture2D icon;
+        public int cost;
+        public int energyDrain;
+        public GameObject prefab;
+    }
+
     [RequireComponent(typeof(EnergyConsumer), typeof(Collider))]
     public abstract class BaseTower : MonoBehaviour
     {
         [SerializeField] protected EnergyConsumer powerSource;
-        [SerializeField] protected TowerBlueprintSo blueprint;
 
-        public Stat damage;
-        public Stat range;
-        public Stat fireRate;
+        [SerializeField] public BuildingData buildingData;
+        
+        [SerializeField] public float baseDamage = 10f;
+        [SerializeField] public float baseRange = 15f;
+        [SerializeField] public float baseFireRate = 1f;
+
+        [SerializeField] public ReactiveStat damage;
+        [SerializeField] public ReactiveStat range;
+        [SerializeField] public ReactiveStat fireRate;
 
         [Header("Rotation")] [Tooltip("If true, rotation speed increases as Fire Rate increases.")] [SerializeField]
         protected bool scaleRotationWithFireRate = true;
@@ -56,9 +73,9 @@ namespace Towers
         [SerializeField]
         private float referenceTurnAngle = 120f;
 
-        private List<IUpgradeInstance> activeUpgrades = new();
+        private List<IUpgradeInstance> _activeUpgrades = new();
 
-        [Header("Upgrades")] public UpgradeProvider events = new();
+        [Header("Upgrades")] public readonly UpgradeProvider Events = new();
 
 
         protected virtual void Awake()
@@ -69,7 +86,7 @@ namespace Towers
             if (targetLayer == 0) targetLayer = LayerMask.GetMask("Enemy");
             if (visionBlockerLayer == 0) visionBlockerLayer = LayerMask.GetMask("Terrain", "PlacementBlockers");
 
-            if (blueprint) ApplyBlueprintStats();
+            ApplyBlueprintStats();
         }
 
         protected virtual void Start()
@@ -80,7 +97,7 @@ namespace Towers
         protected virtual void Update()
         {
             // 1. Economy Check
-            if (!powerSource.IsPowered) return;
+            if (!powerSource.IsPowered.CurrentValue) return;
 
             // 2. Busy Check (e.g. Missile Salvo in progress)
             if (isBusy) return;
@@ -96,14 +113,14 @@ namespace Towers
             if (isAligned && fireCountdown <= 0f)
             {
                 Fire();
-                var rate = fireRate?.Value ?? 1f;
+                var rate = fireRate.Value.CurrentValue;
                 fireCountdown = 1f / (rate <= 0 ? 0.1f : rate);
             }
         }
 
         private void OnDrawGizmosSelected()
         {
-            Gizmos.DrawWireSphere(transform.position, range.Value);
+            Gizmos.DrawWireSphere(transform.position, fireRate.Value.CurrentValue);
 
 
             if (currentTarget) Gizmos.DrawWireSphere(currentTarget.transform.position, 1.0f);
@@ -115,12 +132,12 @@ namespace Towers
         {
             if (!scaleRotationWithFireRate || fireRate == null) return baseSpeed;
 
-            return baseSpeed * Mathf.Max(1f, fireRate.Value);
+            return baseSpeed * Mathf.Max(1f, fireRate.Value.CurrentValue);
         }
-
+    
         protected float GetCurrentRotationSpeed(float baseInspectorSpeed)
         {
-            var rate = fireRate?.Value ?? 1f;
+            var rate = fireRate.Value.CurrentValue;
             if (rate <= 0) rate = 0.1f;
 
             switch (rotationMode)
@@ -146,7 +163,7 @@ namespace Towers
 
             while (true)
             {
-                if (powerSource.IsPowered && !isBusy) AcquireTarget();
+                if (powerSource.IsPowered.CurrentValue && !isBusy) AcquireTarget();
                 yield return waiter;
             }
         }
@@ -201,18 +218,19 @@ namespace Towers
 
         private void ApplyBlueprintStats()
         {
-            if (!blueprint) return;
-            damage = new Stat(blueprint.baseDamage);
-            range = new Stat(blueprint.baseRange);
-            fireRate = new Stat(blueprint.baseFireRate);
+            damage = new ReactiveStat(baseDamage);
+            range = new ReactiveStat(baseRange);
+            fireRate = new ReactiveStat(baseFireRate);
+            
+            damage.Initialize();
+            range.Initialize();
+            fireRate.Initialize();
         }
 
         protected abstract void Fire();
 
         protected abstract void AcquireTarget();
 
-        protected virtual void OnDrawGizmosTower()
-        {
-        }
+        protected virtual void OnDrawGizmosTower() {}
     }
 }

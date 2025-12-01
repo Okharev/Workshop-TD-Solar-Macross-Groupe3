@@ -1,6 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
+using R3;
+using ObservableCollections; // Required for ObservableList
 
 namespace Towers
 {
@@ -12,118 +14,125 @@ namespace Towers
     }
 
     [Serializable]
-    public class Stat
+    public class StatModifier
     {
-        [SerializeField] private float baseValue;
+        public readonly float Value;
+        public readonly StatModType Type;
+        public readonly object Source;
 
-        [SerializeField] private bool isDirty = true;
-
-        [SerializeField] private float value;
-
-        [SerializeField] private List<StatModifier> modifiers = new(4);
-
-        public Stat()
+        public StatModifier(float value, StatModType type, object source = null)
         {
-        }
-
-        public Stat(float baseValue)
-        {
-            this.baseValue = baseValue;
-            isDirty = true;
-        }
-
-        public float Value
-        {
-            get
-            {
-                if (!isDirty && (value != 0 || baseValue == 0)) return value;
-
-                value = CalculateFinalValue();
-                isDirty = false;
-                return value;
-            }
-        }
-
-        public float BaseValue
-        {
-            get => baseValue;
-            set
-            {
-                baseValue = value;
-                SetDirty();
-            }
-        }
-
-        public void AddModifier(StatModifier mod)
-        {
-            modifiers ??= new List<StatModifier>();
-
-            isDirty = true;
-            modifiers.Add(mod);
-        }
-
-        public bool RemoveModifier(StatModifier mod)
-        {
-            if (modifiers == null) return false;
-
-            if (!modifiers.Remove(mod)) return false;
-
-            isDirty = true;
-            return true;
-        }
-
-        public void RemoveAllModifiersFromSource(object source)
-        {
-            if (modifiers == null) return;
-
-            if (modifiers.RemoveAll(mod => mod.source == source) > 0) isDirty = true;
-        }
-
-        private void SetDirty()
-        {
-            isDirty = true;
-        }
-
-        private float CalculateFinalValue()
-        {
-            modifiers ??= new List<StatModifier>();
-
-            var finalValue = baseValue;
-            float sumPercentAdd = 0;
-
-            foreach (var mod in modifiers)
-                switch (mod.type)
-                {
-                    case StatModType.Flat:
-                        finalValue += mod.value;
-                        break;
-                    case StatModType.PercentAdd:
-                        sumPercentAdd += mod.value;
-                        break;
-                }
-
-            finalValue *= 1 + sumPercentAdd;
-
-            foreach (var mod in modifiers)
-                if (mod.type == StatModType.PercentMult)
-                    finalValue *= mod.value;
-
-            return (float)Math.Round(finalValue, 4);
+            this.Value = value;
+            this.Type = type;
+            this.Source = source;
         }
     }
 
     [Serializable]
-    public class StatModifier
+    public class ReactiveStat : IDisposable
     {
-        [SerializeField] public float value;
-        [SerializeField] public StatModType type;
-        public object source;
+        // 1. Base Value (Editable in Inspector if wrapper used, otherwise set in code)
+        [SerializeField] private SerializableReactiveProperty<float> baseValue;
 
-        public StatModifier(float value, StatModType type, object source = null)
+        // 2. The High-Performance Observable Collection
+        // We use ObservableList from Cysharp/ObservableCollections
+        public ObservableList<StatModifier> Modifiers { get; } = new();
+
+        // 3. The Output Stream
+        public ReadOnlyReactiveProperty<float> Value { get; private set; }
+
+        private CompositeDisposable _disposables = new();
+
+        public ReactiveStat(float initialBaseValue = 0)
         {
-            this.value = value;
-            this.type = type;
-            this.source = source;
+            baseValue = new SerializableReactiveProperty<float>(initialBaseValue);
+        }
+
+        public void Initialize()
+        {
+            _disposables.Dispose(); 
+            _disposables = new CompositeDisposable();
+
+            // Monitor Base Value
+            var baseStream = baseValue.AsUnitObservable();
+
+            // Monitor Collection Changes using ObservableCollections.R3 extensions
+            // We merge all relevant events into a single "Something Changed" signal
+            var listStream = Observable.Merge(
+                Modifiers.ObserveAdd().AsUnitObservable(),
+                Modifiers.ObserveRemove().AsUnitObservable(),
+                Modifiers.ObserveReplace().AsUnitObservable(),
+                Modifiers.ObserveReset().AsUnitObservable()
+            );
+
+            // Merge triggers -> Recalculate -> Cache result
+            Value = Observable.Merge(baseStream, listStream)
+                .Select(_ => CalculateFinalValue())
+                .ToReadOnlyReactiveProperty(CalculateFinalValue())
+                .AddTo(_disposables);
+        }
+
+        // --- Standard Accessors ---
+
+        public float BaseValue
+        {
+            get => baseValue.Value;
+            set => baseValue.Value = value;
+        }
+
+        public void AddModifier(StatModifier mod) => Modifiers.Add(mod);
+
+        public bool RemoveModifier(StatModifier mod) => Modifiers.Remove(mod);
+
+        public void RemoveAllModifiersFromSource(object source)
+        {
+            // Iterate backwards to safely remove
+            for (int i = Modifiers.Count - 1; i >= 0; i--)
+            {
+                if (Modifiers[i].Source == source)
+                {
+                    Modifiers.RemoveAt(i);
+                }
+            }
+        }
+
+        private float CalculateFinalValue()
+        {
+            float finalValue = baseValue.Value;
+            float sumPercentAdd = 0;
+
+            // Direct iteration over ObservableList is zero-allocation and fast
+            foreach (var mod in Modifiers)
+            {
+                switch (mod.Type)
+                {
+                    case StatModType.Flat:
+                        finalValue += mod.Value;
+                        break;
+                    case StatModType.PercentAdd:
+                        sumPercentAdd += mod.Value;
+                        break;
+                }
+            }
+
+            finalValue *= 1 + sumPercentAdd;
+
+            foreach (var mod in Modifiers)
+            {
+                if (mod.Type == StatModType.PercentMult)
+                    finalValue *= mod.Value;
+            }
+
+            return (float)Math.Round(finalValue, 4);
+        }
+
+        public void Dispose()
+        {
+            baseValue?.Dispose();
+            _disposables?.Dispose();
+            // ObservableList does not strictly require Dispose unless you use Views, 
+            // but clearing it handles references.
+            Modifiers.Clear(); 
         }
     }
 }

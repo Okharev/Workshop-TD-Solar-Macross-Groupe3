@@ -1,198 +1,154 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using ObservableCollections;
+using R3;
 using UnityEngine;
 
 namespace Economy
 {
-    public interface IEnergyProducer
+    public interface IReactiveEnergyProducer
     {
-        int ConsumeUpTo(int amount, IEnergyConsumer consumer);
-        void ReleaseEnergy(int amount, IEnergyConsumer consumer);
-        int GetAvailableEnergy();
-        bool IsLocalGenerator();
-        Vector3 GetPosition();
-        float GetBroadcastRadius();
-    }
+        // State
+        ReadOnlyReactiveProperty<int> CurrentLoad { get; }
+        ReadOnlyReactiveProperty<int> MaxCapacity { get; }
+        ReadOnlyReactiveProperty<int> AvailableEnergy { get; } // Computed
+        
+        // Capabilities
+        float BroadcastRadius { get; }
+        bool IsLocalGenerator { get; }
+        Vector3 Position { get; }
 
-    public class EnergyProducer : MonoBehaviour, IEnergyProducer
+        // Logic
+        int ConsumeUpTo(int amount, IReactiveEnergyConsumer consumer);
+        void ReleaseEnergy(int amount, IReactiveEnergyConsumer consumer);
+        
+        // For Visuals (Observed by Visualizer)
+        ObservableList<(IReactiveEnergyConsumer consumer, int amount)> ActiveConnections { get; }
+    }
+    
+
+        public class EnergyProducer : MonoBehaviour, IReactiveEnergyProducer
     {
         [Header("Configuration")]
-        [Tooltip("Is this a placed building (Generator) or a map sector (District)?")]
-        [SerializeField]
-        public bool isMobileGenerator = true;
+        [SerializeField] private bool _isMobileGenerator = true;
+        [SerializeField] private float _broadcastRadius = 15f;
+        
+        [Header("Capacity")]
+        [SerializeField] private int _initialCapacity = 100;
 
-        [SerializeField] public int maxCapacity = 100;
+        // Reactive State
+        public ReactiveProperty<int> Capacity { get; private set; }
+        public ReactiveProperty<int> Load { get; private set; }
+        public ReadOnlyReactiveProperty<int> CurrentLoad => Load;
+        public ReadOnlyReactiveProperty<int> MaxCapacity => Capacity;
+        
+        // Computed Property (The "Stream" of availability)
+        public ReadOnlyReactiveProperty<int> AvailableEnergy { get; private set; }
 
-        [Header("Generator Settings")] [Tooltip("Radius of power provided.")] [SerializeField]
-        public float broadcastRadius = 15f;
+        // Connection Tracking (Visualizer observes this directly)
+        public ObservableList<(IReactiveEnergyConsumer consumer, int amount)> ActiveConnections { get; } 
+            = new();
 
-        [SerializeField] private LayerMask consumerLayer;
-        [SerializeField] public int currentLoad;
-
-        // State Tracking
-        private readonly Dictionary<IEnergyConsumer, int> _outputMap = new();
-
-        private Vector3 _lastPos;
-
-        // Helpers
-        private int _powerGridLayerIndex;
+        // Interface Properties
+        public float BroadcastRadius => _broadcastRadius;
+        public bool IsLocalGenerator => _isMobileGenerator;
+        public Vector3 Position => transform.position;
 
         private void Awake()
         {
-            _powerGridLayerIndex = LayerMask.NameToLayer("PowerGrid");
-            if (_powerGridLayerIndex == -1) _powerGridLayerIndex = 0;
+            Capacity = new ReactiveProperty<int>(_initialCapacity);
+            Load = new ReactiveProperty<int>(0);
 
-            // Auto-detect layer if not set
-            if (consumerLayer == 0)
-            {
-                var blockerIndex = LayerMask.NameToLayer("PlacementBlockers");
-                if (blockerIndex != -1) consumerLayer = 1 << blockerIndex;
-            }
-        }
+            // Combine Capacity and Load to auto-calculate Availability
+            AvailableEnergy = Capacity
+                .CombineLatest(Load, (cap, load) => cap - load)
+                .ToReadOnlyReactiveProperty();
 
-        private void Start()
-        {
-            _lastPos = transform.position;
-            if (isMobileGenerator) GenerateRangeTrigger();
+            // Register self to static registry (if you keep a global manager)
             ElectricityVisualizer.Instance?.RegisterProducer(this);
-        }
-
-        private void Update()
-        {
-            // If we havent moved, do nothing
-            if (!transform.hasChanged) return;
-
-            // if we moved beyond a threshold we launch check
-            if (!((transform.position - _lastPos).sqrMagnitude > 0.01f)) return;
-
-            NotifyNearbyConsumers();
-            _lastPos = transform.position;
-
-            // If we want to avoid delay
-            transform.hasChanged = false;
-        }
-
-        private void OnEnable()
-        {
-            ElectricityVisualizer.Instance?.RegisterProducer(this);
-            NotifyNearbyConsumers();
-        }
-
-        private void OnDisable()
-        {
-            ElectricityVisualizer.Instance?.UnregisterProducer(this);
-
-            // Force disconnect everyone gracefully
-            var consumers = new List<IEnergyConsumer>(_outputMap.Keys);
-            foreach (var consumer in consumers)
-                // This triggers the Consumer to look for power elsewhere
-                consumer.OnPowerLost();
-
-            _outputMap.Clear();
-            currentLoad = 0;
-            OnStateChanged?.Invoke();
         }
 
         private void OnDestroy()
         {
+            // Disconnect everyone gracefully
+            foreach (var (consumer, amount) in ActiveConnections.ToArray())
+            {
+                consumer.ForceRefresh(); // Tell them to find power elsewhere
+            }
+            
+            ActiveConnections.Clear();
             ElectricityVisualizer.Instance?.UnregisterProducer(this);
-            _outputMap.Clear();
+            
+            Capacity.Dispose();
+            Load.Dispose();
         }
 
-        private void OnDrawGizmosSelected()
-        {
-            Gizmos.color = new Color(0, 1, 1, 0.3f);
-            Gizmos.DrawWireSphere(transform.position, broadcastRadius);
-        }
-
-        public float GetBroadcastRadius()
-        {
-            return broadcastRadius;
-        }
-
-        public int GetAvailableEnergy()
-        {
-            return maxCapacity - currentLoad;
-        }
-
-        public bool IsLocalGenerator()
-        {
-            return isMobileGenerator;
-        }
-
-        public Vector3 GetPosition()
-        {
-            return transform.position;
-        }
-
-        // Logic to give energy
-        public int ConsumeUpTo(int amount, IEnergyConsumer consumer)
+        public int ConsumeUpTo(int amount, IReactiveEnergyConsumer consumer)
         {
             if (!isActiveAndEnabled) return 0;
 
-            var available = maxCapacity - currentLoad;
-            var amountToGive = Mathf.Min(available, amount);
+            int currentAvailable = AvailableEnergy.CurrentValue;
+            int take = Mathf.Min(currentAvailable, amount);
 
-            if (amountToGive > 0)
+            if (take > 0)
             {
-                currentLoad += amountToGive;
-                if (!_outputMap.TryAdd(consumer, amountToGive))
-                    _outputMap[consumer] += amountToGive;
+                // Update internal load
+                Load.Value += take;
 
-                OnStateChanged?.Invoke();
+                // Update connection list for Visualizer
+                // Check if connection exists to update amount, or add new
+                var existingIndex = -1;
+                for(int i=0; i<ActiveConnections.Count; i++) {
+                    if (ActiveConnections[i].consumer == consumer) { existingIndex = i; break; }
+                }
+
+                if (existingIndex >= 0)
+                {
+                    var oldAmt = ActiveConnections[existingIndex].amount;
+                    ActiveConnections[existingIndex] = (consumer, oldAmt + take);
+                }
+                else
+                {
+                    ActiveConnections.Add((consumer, take));
+                }
             }
 
-            return amountToGive;
+            return take;
         }
 
-        // Logic to take back energy
-        public void ReleaseEnergy(int amount, IEnergyConsumer consumer)
+        public void ReleaseEnergy(int amount, IReactiveEnergyConsumer consumer)
         {
-            currentLoad = Mathf.Max(0, currentLoad - amount);
+            Load.Value = Mathf.Max(0, Load.Value - amount);
 
-            if (_outputMap.ContainsKey(consumer))
-            {
-                _outputMap[consumer] -= amount;
-                if (_outputMap[consumer] <= 0) _outputMap.Remove(consumer);
+            // Update list
+            var existingIndex = -1;
+            for(int i=0; i<ActiveConnections.Count; i++) {
+                if (ActiveConnections[i].consumer == consumer) { existingIndex = i; break; }
             }
 
-            OnStateChanged?.Invoke();
-        }
-
-        public event Action OnStateChanged;
-
-        public IReadOnlyDictionary<IEnergyConsumer, int> GetOutputMap()
-        {
-            return _outputMap;
-        }
-
-        private void NotifyNearbyConsumers()
-        {
-            var hits = Physics.OverlapSphere(transform.position, broadcastRadius, consumerLayer);
-
-            foreach (var hit in hits)
+            if (existingIndex >= 0)
             {
-                var consumer = hit.GetComponent<IEnergyConsumer>();
+                var oldAmt = ActiveConnections[existingIndex].amount;
+                int newAmt = oldAmt - amount;
 
-                consumer?.RefreshConnection();
+                if (newAmt <= 0)
+                {
+                    ActiveConnections.RemoveAt(existingIndex);
+                }
+                else
+                {
+                    ActiveConnections[existingIndex] = (consumer, newAmt);
+                }
             }
         }
-
-        private void GenerateRangeTrigger()
+        
+        // Helper for Visualizer/Gizmos
+        private void OnDrawGizmosSelected()
         {
-            if (transform.Find("EnergyField_Generated")) return;
-
-            var fieldObj = new GameObject("EnergyField_Generated");
-            fieldObj.transform.SetParent(transform);
-            fieldObj.transform.localPosition = Vector3.zero;
-            fieldObj.layer = _powerGridLayerIndex;
-
-            var col = fieldObj.AddComponent<SphereCollider>();
-            col.isTrigger = true;
-            col.radius = broadcastRadius;
-
-            var link = fieldObj.AddComponent<EnergyFieldLink>();
-            link.Initialize(this);
+            Gizmos.color = Color.cyan;
+            Gizmos.DrawWireSphere(transform.position, _broadcastRadius);
         }
     }
+    
 }

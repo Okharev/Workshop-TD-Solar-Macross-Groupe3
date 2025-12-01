@@ -12,32 +12,32 @@ namespace Towers
             DoT
         }
 
-        public Action<OnFireData> onFire;
+        public Action<OnFireData> OnFire;
 
         // The Events
-        public Action<OnHitData> onHit;
-        public Action<OnKillData> onKill;
+        public Action<OnHitData> OnHit;
+        public Action<OnKillData> OnKill;
 
         // Data Packets
         public struct OnHitData
         {
-            public GameObject origin;
-            public GameObject target;
-            public float damage;
-            public DamageType damageType;
+            public GameObject Origin;
+            public GameObject Target;
+            public float Damage;
+            public DamageType DamageType;
         }
 
         public struct OnKillData
         {
-            public GameObject origin;
-            public GameObject target;
-            public float damage;
+            public GameObject Origin;
+            public GameObject Target;
+            public float Damage;
         }
 
         public struct OnFireData
         {
-            public GameObject origin;
-            public GameObject target;
+            public GameObject Origin;
+            public GameObject Target;
         }
     }
 }
