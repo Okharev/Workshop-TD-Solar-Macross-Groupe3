@@ -28,14 +28,14 @@ namespace Towers.ProjectileDerived
             if (_hasExploded) return;
             _hasExploded = true;
 
-            var hits = Physics.OverlapSphereNonAlloc(transform.position, _explosionRange, CollidersCache,
+            var hits = Physics.OverlapSphereNonAlloc(transform.position, _explosionRange, collidersCache,
                 source.targetLayer);
 
             Debug.Log($"Hit enemy count: {hits}");
 
             for (var i = 0; i < hits; i++)
             {
-                var obj = CollidersCache[i];
+                var obj = collidersCache[i];
                 if (obj == null) continue;
 
                 /*

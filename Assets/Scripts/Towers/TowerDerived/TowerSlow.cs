@@ -1,33 +1,53 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using Economy;
 using UnityEngine;
-using R3; // Import R3
-using Economy; // Required to access EnemyController
+// Import R3
+
+// Required to access EnemyController
 
 namespace Towers.TowerDerived
 {
     public class TowerSlow : BaseTower
     {
-        [Header("Slow Configuration")]
-        [Tooltip("Percentage to slow the enemy. 0.3 = 30% slow.")]
-        [Range(0f, 0.9f)] public float slowPercent = 0.3f;
+        [Header("Slow Configuration")] [Tooltip("Percentage to slow the enemy. 0.3 = 30% slow.")] [Range(0f, 0.9f)]
+        public float slowPercent = 0.3f;
 
-        [Header("Performance")]
-        [SerializeField] private float checkInterval = 0.2f; 
-        [SerializeField] private LayerMask enemyLayer; 
+        [Header("Performance")] [SerializeField]
+        private float checkInterval = 0.2f;
 
-        // Track currently slowed enemies to remove the slow when they leave range
-        private readonly HashSet<EnemyController> _slowedEnemies = new();
-        
+        [SerializeField] private LayerMask enemyLayer;
+
         // Optimization: Reusable lists/arrays to prevent Garbage Collection allocation in the loop
-        private readonly List<EnemyController> _currentFrameEnemies = new(); 
+        private readonly List<EnemyController> _currentFrameEnemies = new();
         private readonly List<EnemyController> _enemiesToRemove = new();
         private readonly Collider[] _hitBuffer = new Collider[32]; // Cap max targets to 50 for performance
 
+        // Track currently slowed enemies to remove the slow when they leave range
+        private readonly HashSet<EnemyController> _slowedEnemies = new();
+
         protected override void Start()
         {
-            if (enemyLayer == 0) enemyLayer = LayerMask.GetMask("Enemy"); 
+            if (enemyLayer == 0) enemyLayer = LayerMask.GetMask("Enemy");
             StartCoroutine(SlowLoop());
+        }
+
+        // Cleanup on Tower Sell/Destroy
+        private void OnDestroy()
+        {
+            RemoveAllSlows();
+            StopAllCoroutines();
+        }
+
+        private void OnDrawGizmosSelected()
+        {
+            // Safety check for range in editor mode
+            var r = range.Value;
+            Gizmos.color = new Color(0, 0, 1, 0.3f);
+            Gizmos.DrawSphere(transform.position, r);
+
+            Gizmos.color = Color.green;
+            foreach (var nemy in _slowedEnemies) Gizmos.DrawLine(transform.position, nemy.transform.position);
         }
 
         private IEnumerator SlowLoop()
@@ -40,16 +60,12 @@ namespace Towers.TowerDerived
                 if (!this) yield break;
 
                 // Logic: Only apply slow if powered on
-                if (powerSource && powerSource.IsPowered.CurrentValue) 
-                {
+                if (powerSource && powerSource.IsPowered)
                     CheckForEnemies();
-                }
                 else if (_slowedEnemies.Count > 0)
-                {
                     // If power is lost, immediately free everyone
                     RemoveAllSlows();
-                }
-                
+
                 yield return wait;
             }
         }
@@ -57,33 +73,33 @@ namespace Towers.TowerDerived
         private void CheckForEnemies()
         {
             Debug.Log("1");
-            
-            float currentRange = range.Value.CurrentValue;
+
+            var currentRange = range.Value;
 
             // 1. Physics Check (NonAlloc for performance)
-            int hitCount = Physics.OverlapSphereNonAlloc(transform.position, currentRange, _hitBuffer, enemyLayer);
-            
+            var hitCount = Physics.OverlapSphereNonAlloc(transform.position, currentRange, _hitBuffer, enemyLayer);
+
             Debug.Log("2");
-            
+
             _currentFrameEnemies.Clear();
 
             // 2. Identify Valid Enemies in Range
-            for (int i = 0; i < hitCount; i++)
+            for (var i = 0; i < hitCount; i++)
             {
                 Debug.Log("3: " + hitCount);
-                
-                EnemyController enemy = _hitBuffer[i].GetComponentInParent<EnemyController>();
+
+                var enemy = _hitBuffer[i].GetComponentInParent<EnemyController>();
 
                 if (enemy)
                 {
                     Debug.Log("4");
-                    
+
                     // Optional: Distance check if collider is larger than range
-                    float dist = Vector3.Distance(transform.position, enemy.transform.position);
+                    var dist = Vector3.Distance(transform.position, enemy.transform.position);
                     if (dist <= currentRange)
                     {
                         _currentFrameEnemies.Add(enemy);
-                        
+
                         Debug.Log("5");
 
 
@@ -99,15 +115,11 @@ namespace Towers.TowerDerived
 
             // 3. Cleanup: Find enemies in the "Slowed" list that are NOT in the "Current" list
             _enemiesToRemove.Clear();
-            
+
             foreach (var slowedEnemy in _slowedEnemies)
-            {
                 // If enemy died (null) OR is no longer in range list
                 if (!slowedEnemy || !_currentFrameEnemies.Contains(slowedEnemy))
-                {
                     _enemiesToRemove.Add(slowedEnemy);
-                }
-            }
 
             // Remove modifiers
             foreach (var oldEnemy in _enemiesToRemove)
@@ -123,7 +135,7 @@ namespace Towers.TowerDerived
             // Create a modifier with 'this' as the source.
             // Value is negative because Type is PercentAdd (Add -0.3 = 70% speed).
             var mod = new StatModifier(-slowPercent, StatModType.PercentAdd, this);
-            
+
             // Assuming EnemyController has a field 'Speed' of type ReactiveStat
             target.speed.AddModifier(mod);
         }
@@ -138,34 +150,17 @@ namespace Towers.TowerDerived
         private void RemoveAllSlows()
         {
             foreach (var enemy in _slowedEnemies)
-            {
-                if (enemy) RemoveSlow(enemy);
-            }
+                if (enemy)
+                    RemoveSlow(enemy);
             _slowedEnemies.Clear();
         }
 
-        // Cleanup on Tower Sell/Destroy
-        private void OnDestroy()
+        protected override void Fire()
         {
-            RemoveAllSlows();
-            StopAllCoroutines();
         }
 
-        protected override void Fire() { }
-        protected override void AcquireTarget() { }
-
-        private void OnDrawGizmosSelected()
+        protected override void AcquireTarget()
         {
-            // Safety check for range in editor mode
-            float r = range is { Value: not null } ? range.Value.CurrentValue : 5f;
-            Gizmos.color = new Color(0, 0, 1, 0.3f); 
-            Gizmos.DrawSphere(transform.position, r);
-            
-            Gizmos.color = Color.green;
-            foreach (var nemy in _slowedEnemies)
-            {
-                Gizmos.DrawLine(transform.position, nemy.transform.position);
-            }
         }
     }
 }

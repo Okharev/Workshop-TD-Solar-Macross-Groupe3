@@ -18,7 +18,7 @@ namespace Towers.TowerDerived
 
         protected override void Fire()
         {
-            var totalDamage = damage.Value.CurrentValue;
+            var totalDamage = damage.Value;
             var damagePerPellet = totalDamage / pelletCount;
 
             Events.OnFire?.Invoke(new UpgradeProvider.OnFireData
@@ -29,12 +29,12 @@ namespace Towers.TowerDerived
 
             for (var i = 0; i < pelletCount; i++) FireSingleRay(damagePerPellet);
 
-            var rate = fireRate.Value.CurrentValue > 0 ? fireRate.Value.CurrentValue : 0.5f;
+            var rate = fireRate.Value > 0 ? fireRate.Value : 0.5f;
         }
 
         protected override void AcquireTarget()
         {
-            var hits = Physics.OverlapSphereNonAlloc(transform.position, range.Value.CurrentValue, _colliderCache, targetLayer);
+            var hits = Physics.OverlapSphereNonAlloc(transform.position, range.Value, _colliderCache, targetLayer);
             Transform bestTarget = null;
             var bestDist = float.MaxValue;
 
@@ -59,7 +59,7 @@ namespace Towers.TowerDerived
         private void FireSingleRay(float dmg)
         {
             var fp = firePoint;
-            
+
             // 1. Get a random point inside a unit circle (Uniform distribution)
             var randomCircle = Random.insideUnitCircle;
 
@@ -76,8 +76,8 @@ namespace Towers.TowerDerived
             var spreadRot = Quaternion.Euler(-yAngle, xAngle, 0);
 
             var shootDir = fp.rotation * spreadRot * Vector3.forward;
-            
-            if (Physics.Raycast(fp.position, shootDir, out var hit, range.Value.CurrentValue, targetLayer))
+
+            if (Physics.Raycast(fp.position, shootDir, out var hit, range.Value, targetLayer))
                 Debug.DrawLine(fp.position, hit.point, Color.green, 0.2f);
             // Assuming you have an IDamageable or similar interface
             /*
@@ -87,7 +87,7 @@ namespace Towers.TowerDerived
                 }
                 */
             else
-                Debug.DrawRay(fp.position, shootDir * range.Value.CurrentValue, Color.red, 0.2f);
+                Debug.DrawRay(fp.position, shootDir * range.Value, Color.red, 0.2f);
         }
     }
 }

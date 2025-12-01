@@ -1,0 +1,9 @@
+<ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <ui:VisualElement style="flex-grow: 1; align-items: center; justify-content: flex-end; align-content: flex-end; align-self: stretch;">
+        <ui:ScrollView name="ScrollView" mode="Horizontal" style="align-content: auto; justify-content: flex-start; align-items: auto; align-self: auto;">
+            <ui:Button text="Button" />
+            <ui:Button text="Button" />
+            <ui:Button text="Button" />
+        </ui:ScrollView>
+    </ui:VisualElement>
+</ui:UXML>
