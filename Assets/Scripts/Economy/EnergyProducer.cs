@@ -14,11 +14,18 @@ namespace Economy
         private Vector3 _lastPos;
         private SphereCollider _rangeCollider; // Reference to update size dynamically
 
-        public ReactiveInt MaxCapacity => maxCapacity;
-        public ReactiveFloat BroadcastRadius => broadcastRadius;
+        public IReadOnlyReactiveProperty<int> MaxCapacity => maxCapacity;
+        public IReadOnlyReactiveProperty<float> BroadcastRadius => broadcastRadius;
 
         // Runtime State (Read Only for public, Writable by Manager)
         public int CurrentLoad { get; private set; }
+
+        public void Setup(int pmaxCapacity, float pbroadcastRadius, bool pmobileGenerator)
+        {
+            this.maxCapacity.Value = pmaxCapacity;
+            this.broadcastRadius.Value = pbroadcastRadius;
+            this.isMobileGenerator = pmobileGenerator;
+        }
 
         private void Start()
         {

@@ -1,9 +1,18 @@
 <ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
-    <ui:VisualElement style="flex-grow: 1; align-items: center; justify-content: flex-end; align-content: flex-end; align-self: stretch;">
-        <ui:ScrollView name="ScrollView" mode="Horizontal" style="align-content: auto; justify-content: flex-start; align-items: auto; align-self: auto;">
-            <ui:Button text="Button" />
-            <ui:Button text="Button" />
-            <ui:Button text="Button" />
-        </ui:ScrollView>
+    <ui:Template name="GeneratorPanel" src="project://database/Assets/UI/GeneratorPanel.uxml?fileID=9197481963319205126&amp;guid=cadc881c32efbef4e993687429e7b067&amp;type=3#GeneratorPanel" />
+    <ui:Template name="TowerPanel" src="project://database/Assets/UI/TowerPanel.uxml?fileID=9197481963319205126&amp;guid=34109622c30361c4bab97781797dcdce&amp;type=3#TowerPanel" />
+    <ui:Template name="TowerSelectionPanel" src="project://database/Assets/UI/TowerSelectionPanel.uxml?fileID=9197481963319205126&amp;guid=94bf9e7a4af783f4386a238fc7e4d175&amp;type=3#TowerSelectionPanel" />
+    <ui:Template name="WavePanel" src="project://database/Assets/UI/WavePanel.uxml?fileID=9197481963319205126&amp;guid=b5be9823c72e88c4f8e8c7526ff62807&amp;type=3#WavePanel" />
+    <ui:VisualElement style="flex-grow: 1; flex-direction: row; justify-content: space-between; align-items: center;">
+        <ui:VisualElement style="align-content: auto;">
+            <ui:Instance template="WavePanel" />
+            <ui:Instance template="GeneratorPanel" style="height: 151px; width: 188px;" />
+        </ui:VisualElement>
+        <ui:VisualElement name="VisualElement">
+            <ui:Instance template="TowerPanel" style="height: 260px;" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+    <ui:VisualElement style="flex-grow: 1; align-items: center; justify-content: flex-end; align-content: flex-end; align-self: stretch; margin-top: 0; margin-right: 0; margin-bottom: 0; margin-left: 0; flex-direction: column; position: relative;">
+        <ui:Instance template="TowerSelectionPanel" />
     </ui:VisualElement>
 </ui:UXML>

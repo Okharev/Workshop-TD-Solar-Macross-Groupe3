@@ -44,7 +44,7 @@ namespace Towers.TowerDerived
             // Safety check for range in editor mode
             var r = range.Value;
             Gizmos.color = new Color(0, 0, 1, 0.3f);
-            Gizmos.DrawSphere(transform.position, r);
+            Gizmos.DrawSphere(transform.position, range.Value);
 
             Gizmos.color = Color.green;
             foreach (var nemy in _slowedEnemies) Gizmos.DrawLine(transform.position, nemy.transform.position);
@@ -72,35 +72,29 @@ namespace Towers.TowerDerived
 
         private void CheckForEnemies()
         {
-            Debug.Log("1");
 
-            var currentRange = range.Value;
 
             // 1. Physics Check (NonAlloc for performance)
-            var hitCount = Physics.OverlapSphereNonAlloc(transform.position, currentRange, _hitBuffer, enemyLayer);
+            var hitCount = Physics.OverlapSphereNonAlloc(transform.position, range.Value, _hitBuffer, enemyLayer);
 
-            Debug.Log("2");
 
             _currentFrameEnemies.Clear();
 
             // 2. Identify Valid Enemies in Range
             for (var i = 0; i < hitCount; i++)
             {
-                Debug.Log("3: " + hitCount);
 
                 var enemy = _hitBuffer[i].GetComponentInParent<EnemyController>();
 
                 if (enemy)
                 {
-                    Debug.Log("4");
 
                     // Optional: Distance check if collider is larger than range
                     var dist = Vector3.Distance(transform.position, enemy.transform.position);
-                    if (dist <= currentRange)
+                    if (dist <= range.Value)
                     {
                         _currentFrameEnemies.Add(enemy);
 
-                        Debug.Log("5");
 
 
                         // If this enemy is new to the set, apply the slow

@@ -123,6 +123,7 @@ GameObject:
   - component: {fileID: 2705688281348489239}
   - component: {fileID: 7869415474841890011}
   - component: {fileID: 8781234593180703897}
+  - component: {fileID: 3238345694428518885}
   m_Layer: 10
   m_Name: EnnemySmall
   m_TagString: Enemy
@@ -198,27 +199,43 @@ MonoBehaviour:
   baseHealth: 100
   baseSpeed: 6
   damage:
-    baseValue: 0
-    isDirty: 1
-    value: 0
-    modifiers: []
+    _baseValue:
+      _value: 0
+    _value:
+      _value: 0
   range:
-    baseValue: 0
-    isDirty: 1
-    value: 0
-    modifiers: []
+    _baseValue:
+      _value: 0
+    _value:
+      _value: 0
   fireRate:
-    baseValue: 0
-    isDirty: 1
-    value: 0
-    modifiers: []
+    _baseValue:
+      _value: 0
+    _value:
+      _value: 0
   health:
-    baseValue: 0
-    isDirty: 1
-    value: 0
-    modifiers: []
+    _baseValue:
+      _value: 0
+    _value:
+      _value: 0
   speed:
-    baseValue: 0
-    isDirty: 1
-    value: 0
-    modifiers: []
+    _baseValue:
+      _value: 0
+    _value:
+      _value: 0
+  isKnockedBack: 0
+--- !u!114 &3238345694428518885
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4042230517842136837}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7ff620f9ca1448fd8700a52d185f3afd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Enemy.HealthComponent
+  maxHealth: 100
+  currentHealth:
+    _value: 100

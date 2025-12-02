@@ -108,24 +108,21 @@ namespace Camera
                 // Origin: Future X/Z, but High Up Y
                 var rayOrigin = new Vector3(futureProbePos.x, nextPosition.y + 500f, futureProbePos.z);
                 var ray = new Ray(rayOrigin, Vector3.down);
-                RaycastHit hit;
 
                 // Check if there is ground below the future point
-                if (Physics.Raycast(ray, out hit, 1000f, obstacleLayers))
+                if (Physics.Raycast(ray, out var hit, 1000f, obstacleLayers))
                 {
                     // The minimum Y we want to be at is Ground + Buffer
                     var minSafeY = hit.point.y + heightBuffer;
 
                     // If our next intended position is too low...
-                    if (nextPosition.y < minSafeY)
-                        // We update the target height. 
-                        // Note: We don't snap nextPosition.y immediately. We store the GOAL.
-                        _targetAutoHeight = minSafeY;
-                    else
+                    // We update the target height. 
+                    // Note: We don't snap nextPosition.y immediately. We store the GOAL.
+                    _targetAutoHeight = nextPosition.y < minSafeY ? minSafeY :
                         // If we are flying high enough, target height is just where we are (no force up)
                         // But we allow falling down to the buffer if gravity was a thing (it's not here).
                         // So we just reset target to current to stop lifting.
-                        _targetAutoHeight = nextPosition.y;
+                        nextPosition.y;
                 }
 
                 // --- 4. Apply Smooth Lift ---

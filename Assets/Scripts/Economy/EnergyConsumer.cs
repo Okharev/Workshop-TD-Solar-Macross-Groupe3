@@ -13,12 +13,15 @@ namespace Economy
 
     public class EnergyConsumer : MonoBehaviour
     {
+        public event Action<bool> OnPowerStateChanged;
+
+        
         [Header("Settings")] [SerializeField] private EnergyPriority priority = EnergyPriority.Standard;
 
         [SerializeField] private ReactiveInt totalRequirement = new(100);
 
-        private Vector3 _lastPos; // Kept as requested (will optimize later)
-        public ReactiveInt TotalRequirement => totalRequirement;
+        private Vector3 _lastPos;
+        public IReadOnlyReactiveProperty<int> TotalRequirement => totalRequirement;
         public EnergyPriority Priority => priority;
 
         public bool IsPowered { get; private set; }
@@ -47,10 +50,7 @@ namespace Economy
         {
             EnergyGridManager.Instance?.Unregister(this);
         }
-
-        // Event for UI or Lights to react to power ON/OFF
-        public event Action<bool> OnPowerStateChanged;
-
+        
         private void OnRequirementChanged(int _)
         {
             EnergyGridManager.Instance?.MarkDirty();

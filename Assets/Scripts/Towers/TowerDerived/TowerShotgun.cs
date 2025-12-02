@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using Economy; // Nécessaire pour le Dictionary
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -6,15 +8,23 @@ namespace Towers.TowerDerived
 {
     public class TowerShotgun : BaseTower
     {
-        [Header("Shotgun Config")] public int pelletCount = 6;
+        [Header("Shotgun Config")] 
+        public int pelletCount = 6;
+        public float knockbackForce = 2f; // Force par plomb
+        public float knockbackDuration = 0.2f;
 
         [Tooltip("Horizontal spread in degrees (Width)")]
         public float horizontalSpreadAngle = 30f;
 
         [Tooltip("Vertical spread multiplier (0.0 = flat line, 1.0 = circle)")] [Range(0f, 1f)]
+        public float pelletsThickness = 0.1f;
+        
+        [Tooltip("Vertical spread multiplier (0.0 = flat line, 1.0 = circle)")] [Range(0f, 1f)]
         public float verticalSpreadFactor = 0.2f;
 
         private readonly Collider[] _colliderCache = new Collider[32];
+        
+        private readonly Dictionary<EnemyController, int> _hitTracker = new Dictionary<EnemyController, int>();
 
         protected override void Fire()
         {
@@ -24,12 +34,37 @@ namespace Towers.TowerDerived
             Events.OnFire?.Invoke(new UpgradeProvider.OnFireData
             {
                 Origin = gameObject,
-                Target = currentTarget.gameObject
+                Target = currentTarget ? currentTarget.gameObject : null
             });
 
-            for (var i = 0; i < pelletCount; i++) FireSingleRay(damagePerPellet);
+            // 1. On nettoie le tracker avant de tirer
+            _hitTracker.Clear();
 
-            var rate = fireRate.Value > 0 ? fireRate.Value : 0.5f;
+            // 2. On tire tous les plombs et on enregistre qui est touché
+            for (var i = 0; i < pelletCount; i++)
+            {
+                FireSingleRayAndTrack(damagePerPellet);
+            }
+
+            // 3. On applique le Knockback CUMULÉ
+            ApplyAccumulatedKnockback();
+        }
+
+        private void ApplyAccumulatedKnockback()
+        {
+            foreach (var entry in _hitTracker)
+            {
+                EnemyController enemy = entry.Key;
+                int hitCount = entry.Value;
+
+                // La force est multipliée par le nombre de plombs reçus !
+                // Si l'ennemi prend 6 plombs, il recule 6x plus fort.
+                float totalForce = knockbackForce * hitCount;
+
+                // On peut aussi augmenter légèrement la durée si on veut, 
+                // mais augmenter la force est souvent plus "punchy".
+                enemy.ApplyKnockback(transform.position, totalForce, knockbackDuration);
+            }
         }
 
         protected override void AcquireTarget()
@@ -40,7 +75,6 @@ namespace Towers.TowerDerived
 
             foreach (var hit in _colliderCache.AsSpan(0, hits))
             {
-                // If there is a blocker to the closest target
                 if (Physics.Linecast(firePoint.position, hit.transform.position, visionBlockerLayer))
                     continue;
 
@@ -55,39 +89,53 @@ namespace Towers.TowerDerived
             currentTarget = bestTarget;
         }
 
-
-        private void FireSingleRay(float dmg)
+        private void FireSingleRayAndTrack(float dmg)
         {
             var fp = firePoint;
-
-            // 1. Get a random point inside a unit circle (Uniform distribution)
             var randomCircle = Random.insideUnitCircle;
-
-            // 2. Flatten the Y component
-            // If factor is 0.1, the spread is 10% high compared to its width
             randomCircle.y *= verticalSpreadFactor;
 
-            // 3. Convert to rotation angles
-            // We map the unit circle (-1 to 1) to our desired angle half-width
             var xAngle = randomCircle.x * (horizontalSpreadAngle * 0.5f);
             var yAngle = randomCircle.y * (horizontalSpreadAngle * 0.5f);
-
-            // 4. Create the rotation relative to the gun's forward direction
             var spreadRot = Quaternion.Euler(-yAngle, xAngle, 0);
-
             var shootDir = fp.rotation * spreadRot * Vector3.forward;
-
-            if (Physics.Raycast(fp.position, shootDir, out var hit, range.Value, targetLayer))
-                Debug.DrawLine(fp.position, hit.point, Color.green, 0.2f);
-            // Assuming you have an IDamageable or similar interface
-            /*
+            
+            if (Physics.BoxCast(
+                    center: fp.position,
+                    halfExtents: new Vector3(pelletsThickness, pelletsThickness, pelletsThickness),
+                    direction: shootDir,
+                    hitInfo: out var hit,
+                    orientation: Quaternion.identity,
+                    maxDistance: range.Value,
+                    layerMask: targetLayer
+                ))
+            {
+                Debug.DrawRay(fp.position, shootDir * range.Value, Color.green, 0.2f);
+                
+                // --- Logique de dégâts ---
+                // Tu devrais décommenter et adapter ceci selon ton système de vie
+                /*
                 if (hit.collider.TryGetComponent<IDamageable>(out var victim))
                 {
                     victim.TakeDamage(dmg);
                 }
                 */
+
+                // --- Logique de Tracking pour le Knockback ---
+                // On essaie de récupérer le script de mouvement sur l'ennemi touché
+                var movement = hit.collider.GetComponentInParent<EnemyController>();
+                if (movement)
+                {
+                    if (!_hitTracker.TryAdd(movement, 1))
+                    {
+                        _hitTracker[movement]++;
+                    }
+                }
+            }
             else
+            {
                 Debug.DrawRay(fp.position, shootDir * range.Value, Color.red, 0.2f);
+            }
         }
     }
 }

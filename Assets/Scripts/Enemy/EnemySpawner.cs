@@ -9,7 +9,7 @@ namespace Pathing.Gameplay
 
         public void Spawn(GameObject prefab)
         {
-            if (prefab == null)
+            if (!prefab)
             {
                 Debug.LogWarning($"[EnemySpawner] {name} tried to spawn a null prefab.");
                 return;

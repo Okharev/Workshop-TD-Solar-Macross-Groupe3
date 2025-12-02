@@ -23,8 +23,8 @@ namespace Pathing
                 isBlocked = value;
                 UpdateBlockerState();
 
-                // --- FIX: Notify the generator so it knows the state changed ---
-                if (generator != null)
+                // --- Notify the generator so it knows the state changed ---
+                if (generator)
                 {
                     generator.SetRoadBlocked(splineIndex, isBlocked);
                 }
@@ -55,7 +55,7 @@ namespace Pathing
             {
                 UpdateBlockerState();
                 // Ensure generator is kept in sync if we click the checkbox in Inspector
-                if (generator != null)
+                if (generator)
                 {
                     generator.SetRoadBlocked(splineIndex, isBlocked);
                 }
@@ -64,7 +64,7 @@ namespace Pathing
 
         private void UpdateBlockerState()
         {
-            if (blockerInstance != null)
+            if (blockerInstance)
             {
                 if (blockerInstance.activeSelf != isBlocked)
                     blockerInstance.SetActive(isBlocked);

@@ -113,8 +113,7 @@ namespace Towers
             if (isAligned && fireCountdown <= 0f)
             {
                 Fire();
-                var rate = fireRate.Value;
-                fireCountdown = 1f / (rate <= 0 ? 0.1f : rate);
+                fireCountdown = 1f / (fireRate.Value <= 0 ? 0.1f : fireRate.Value);
             }
         }
 
@@ -137,8 +136,8 @@ namespace Towers
 
         protected float GetCurrentRotationSpeed(float baseInspectorSpeed)
         {
-            var rate = fireRate.Value;
-            if (rate <= 0) rate = 0.1f;
+            var ratee = fireRate.Value;
+            if (ratee <= 0) ratee = 0.1f;
 
             switch (rotationMode)
             {
@@ -146,11 +145,11 @@ namespace Towers
                     return baseInspectorSpeed;
 
                 case RotationMode.ScaledWithStats:
-                    return baseInspectorSpeed * Mathf.Max(1f, rate);
+                    return baseInspectorSpeed * Mathf.Max(1f, ratee);
 
                 case RotationMode.SyncWithReload:
 
-                    return referenceTurnAngle * rate;
+                    return referenceTurnAngle * ratee;
 
                 default:
                     return baseInspectorSpeed;

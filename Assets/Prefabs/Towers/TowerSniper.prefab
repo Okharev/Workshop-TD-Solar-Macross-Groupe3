@@ -708,9 +708,9 @@ GameObject:
   - component: {fileID: 8023000701933666267}
   - component: {fileID: 8987942396502628012}
   - component: {fileID: 8506183719910781864}
-  - component: {fileID: 5533547337734330103}
+  - component: {fileID: 1515377391665533419}
   m_Layer: 8
-  m_Name: TowerGun
+  m_Name: TowerSniper
   m_TagString: Tower
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -768,7 +768,7 @@ MonoBehaviour:
   priority: 50
   totalRequirement:
     _value: 100
---- !u!114 &5533547337734330103
+--- !u!114 &1515377391665533419
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -777,9 +777,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 5607425079627833002}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 357fd033d6944a1a9a2a4aba66663960, type: 3}
+  m_Script: {fileID: 11500000, guid: fd980a721d61465688d25ad0ca133d80, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Towers.TowerDerived.TowerGun
+  m_EditorClassIdentifier: Assembly-CSharp::Towers.TowerDerived.TowerSniper
   powerSource: {fileID: 8506183719910781864}
   buildingData:
     name: 
@@ -807,10 +807,10 @@ MonoBehaviour:
     _value:
       _value: 0
   scaleRotationWithFireRate: 1
-  yPivot: {fileID: 251485060186356928}
+  yPivot: {fileID: 8466082844972713998}
   xPivot: {fileID: 8466082844972713998}
-  yPivotSpeed: 90
-  xPivotSpeed: 90
+  yPivotSpeed: 180
+  xPivotSpeed: 180
   rotationThreshold: 5
   firePoint: {fileID: 5695444759371025651}
   upgrades: []
@@ -825,8 +825,9 @@ MonoBehaviour:
   fireCountdown: 0
   isBusy: 0
   rotationMode: 1
-  referenceTurnAngle: 120
-  projectileThickness: 0.1
+  referenceTurnAngle: 180
+  minRange: 10
+  projectileThickness: 0.05
 --- !u!1 &6357774045865020806
 GameObject:
   m_ObjectHideFlags: 0
