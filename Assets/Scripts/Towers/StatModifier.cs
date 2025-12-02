@@ -29,15 +29,11 @@ namespace Towers
     [Serializable]
     public class Stat
     {
-        // 1. Base Value: Editable in Inspector, triggers updates via ReactivePropertyDrawer
         [SerializeField] private ReactiveFloat _baseValue;
-
-        // 2. Modifiers: Standard list, accessed via methods to ensure dirty flagging
         private readonly List<StatModifier> _modifiers = new();
-
-        // 3. Output: Private ReactiveFloat to handle caching and event firing
-        // We do not Serialize this, as it is a runtime computed value
-        private ReactiveFloat _value = new(0);
+        
+        // On garde _value privé ou protégé
+        [SerializeField] private ReactiveFloat _value = new(0);
 
         public Stat(float initialBaseValue = 0)
         {
@@ -46,11 +42,19 @@ namespace Towers
             Initialize();
         }
 
-        // --- Public API ---
+        // --- CORRECTION SYNTAXE ---
 
-        // Public Read-Only access to the calculated value
+        // 1. Accès direct : permet d'écrire "myStat.Value" (float)
         public float Value => _value.Value;
 
+        // 2. Opérateur Implicite : permet d'écrire "float x = myStat;" ou "if(myStat > 10)"
+        public static implicit operator float(Stat s) => s.Value;
+
+        // 3. On expose l'observable pour ceux qui veulent s'abonner aux changements
+        public IReadOnlyReactiveProperty<float> Observable => _value;
+        
+        // (Le reste de tes méthodes BaseValue, AddModifier, Recalculate restent identiques...)
+        
         public float BaseValue
         {
             get => _baseValue.Value;
@@ -132,14 +136,20 @@ namespace Towers
             // Splitting loops usually easier to read and statistically insignificant performance hit here.
 
             // 1. Flat & Percent Add
-            for (var i = 0; i < _modifiers.Count; i++)
+            foreach (var mod in _modifiers)
             {
-                var mod = _modifiers[i];
-                if (mod.Type == StatModType.Flat)
-                    finalValue += mod.Value;
-                else if (mod.Type == StatModType.PercentAdd)
-                    sumPercentAdd += mod.Value;
-                else if (mod.Type == StatModType.PercentMult) totalPercentMult *= mod.Value;
+                switch (mod.Type)
+                {
+                    case StatModType.Flat:
+                        finalValue += mod.Value;
+                        break;
+                    case StatModType.PercentAdd:
+                        sumPercentAdd += mod.Value;
+                        break;
+                    case StatModType.PercentMult:
+                        totalPercentMult *= mod.Value;
+                        break;
+                }
             }
 
             // 2. Apply Percent Add

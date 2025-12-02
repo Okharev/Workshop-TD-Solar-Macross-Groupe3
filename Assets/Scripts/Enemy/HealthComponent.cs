@@ -3,40 +3,52 @@ using UnityEngine.Serialization;
 
 namespace Enemy
 {
+    public interface IDamageable
+    {
+        IReadOnlyReactiveProperty<float> Health { get; }
+    
+        float MaxHealth { get; }
+        bool IsDead { get; }
 
+        void TakeDamage(float amount);
+        void Heal(float amount);
+    }
     
     
-    public class HealthComponent : MonoBehaviour
+    public class HealthComponent : MonoBehaviour, IDamageable
     {
         [Header("Configuration")]
-        // Utilisation de votre ReactiveInt pour la sérialisation et les événements
-        [SerializeField] private ReactiveInt _currentHealth = new ReactiveInt(100);
-        [SerializeField] private int _maxHealth = 100;
+        [SerializeField] private float maxHealth = 100f;
 
-        // Exposition en lecture seule pour la sécurité
-        public IReadOnlyReactiveProperty<int> CurrentHealth => _currentHealth;
-        public int MaxHealth => _maxHealth;
+        [SerializeField] private ReactiveFloat currentHealth = new(100f);
 
-        public bool IsDead => _currentHealth.Value <= 0;
+        public IReadOnlyReactiveProperty<float> Health => currentHealth;
+        public float MaxHealth => maxHealth;
+    
+        public bool IsDead => currentHealth.Value <= 0;
 
-        public void TakeDamage(int amount)
+        private void Start()
+        {
+            currentHealth.Value = maxHealth;
+        }
+
+        public void TakeDamage(float amount)
         {
             if (IsDead) return;
 
-            // Modification simple de la valeur, le système réactif préviendra les abonnés
-            _currentHealth.Value = Mathf.Max(0, _currentHealth.Value - amount);
+            float newValue = currentHealth.Value - amount;
+        
+            currentHealth.Value = Mathf.Clamp(newValue, 0, maxHealth);
+
+            Debug.Log($"{name} took {amount} damage. Current: {currentHealth.Value}");
         }
 
-        public void Heal(int amount)
+        public void Heal(float amount)
         {
             if (IsDead) return;
-            _currentHealth.Value = Mathf.Min(_maxHealth, _currentHealth.Value + amount);
-        }
 
-        // Une méthode pratique pour réinitialiser (utile pour le pooling d'ennemis)
-        public void ResetHealth()
-        {
-            _currentHealth.Value = _maxHealth;
+            float newValue = currentHealth.Value + amount;
+            currentHealth.Value = Mathf.Clamp(newValue, 0, maxHealth);
         }
     }
 }

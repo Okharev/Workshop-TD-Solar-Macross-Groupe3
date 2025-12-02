@@ -93,9 +93,9 @@ namespace Towers
                     var target = _lockedTargets[i % _lockedTargets.Count];
 
                     // Cleanup check: if target died, try to find another
-                    if (target == null) target = GetFirstAliveTarget();
+                    if (!target) target = GetFirstAliveTarget();
 
-                    if (target != null) FireSingleMissile(target, i);
+                    if (target) FireSingleMissile(target, i);
                     yield return _dispatchWait;
                 }
 
@@ -153,7 +153,7 @@ namespace Towers
         private Transform GetFirstAliveTarget()
         {
             foreach (var t in _lockedTargets)
-                if (t != null)
+                if (t)
                     return t;
             return null;
         }

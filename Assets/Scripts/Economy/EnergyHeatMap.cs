@@ -27,7 +27,6 @@ namespace Economy
 
         [Range(0f, 0.95f)] [SerializeField] private float brushCoreRadius = 0.5f;
 
-        // Optimization: We listen to the grid instead of updating every frame
         [Header("Performance")] [Tooltip("If true, redraws automatically when the Grid changes.")] [SerializeField]
         private bool autoRefresh = true;
 

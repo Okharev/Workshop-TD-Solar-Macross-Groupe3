@@ -15,7 +15,6 @@ namespace Pathing.Gameplay
         [Header("Configuration")]
         public List<WaveProfile> waves = new List<WaveProfile>();
         
-        // Removed manualWaveStart bool as logic is now always manual
 
         // --- Events for UI (Decoupled) ---
         public event Action<int, string> OnWaveStarted;      // (WaveIndex, WaveName)
@@ -110,13 +109,11 @@ namespace Pathing.Gameplay
             _isWaveActive = false;
             OnWaveFinished?.Invoke();
 
-            // Auto-start logic removed per request.
-            // The next wave will only start when StartNextWave() is called again.
         }
 
         private void ConfigureRoadsForWave(WaveProfile wave)
         {
-            if (roadGenerator == null || roadGenerator.splineContainer == null) return;
+            if (!roadGenerator || !roadGenerator.splineContainer) return;
 
             int totalSplines = roadGenerator.splineContainer.Splines.Count;
 

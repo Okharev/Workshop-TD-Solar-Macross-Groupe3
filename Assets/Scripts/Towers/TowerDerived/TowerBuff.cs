@@ -13,7 +13,7 @@ namespace Towers.TowerDerived
         [Range(0, 2)] public float fireRatePercentBuff = 0.1f;
 
         [Header("Performance")] [SerializeField]
-        private float checkInterval = 2f; // Check 4 times a second
+        private float checkInterval = 0.25f;
 
         [SerializeField] private LayerMask towerLayer; // Assign your "Towers" layer here
 
@@ -45,7 +45,7 @@ namespace Towers.TowerDerived
             foreach (var hit in hits)
             {
                 var t = hit.GetComponent<BaseTower>();
-                if (t != null && t != this)
+                if (t && t != this)
                     // Check the Point logic visually
                     if (Vector3.Distance(transform.position, t.transform.position) <= range.Value)
                         Gizmos.DrawLine(transform.position, t.transform.position);
@@ -59,7 +59,7 @@ namespace Towers.TowerDerived
 
             while (true)
             {
-                if (powerSource.IsPowered) // Optional: Stop buffing if out of power
+                if (powerSource.IsPowered)
                     CheckForTowers();
                 else
                     RemoveAllBuffs();
@@ -79,8 +79,8 @@ namespace Towers.TowerDerived
 
             foreach (var hit in hits)
             {
-                var neighbor = hit.GetComponent<BaseTower>();
-
+                if (!hit.TryGetComponent<BaseTower>(out var neighbor)) continue;
+                
                 // Validate neighbor
                 if (neighbor && neighbor != this)
                 {
@@ -100,7 +100,7 @@ namespace Towers.TowerDerived
                             _currentBuffedTowers.Add(neighbor);
                         }
                     }
-                }
+                } 
             }
 
             // 3. Cleanup: Find towers that were buffed but are no longer in the valid list
@@ -129,7 +129,7 @@ namespace Towers.TowerDerived
             if (fireRatePercentBuff > 0)
                 target.fireRate.AddModifier(new StatModifier(fireRatePercentBuff, StatModType.PercentAdd, this));
 
-            Debug.Log($"Buff added to {target.name}");
+            Debug.Log($"Buff added to {target.name}, old stat: {target.baseDamage}dmg, {target.baseFireRate}rate,  {target.baseRange}range || new stat: {target.damage.Value} dmg, fire{target.fireRate.Value}, range {target.range.Value}");
         }
 
         private void RemoveBuffs(BaseTower target)

@@ -105,8 +105,8 @@ namespace Economy
 
         private void DrawLabel(Vector3 screenPos, string text, GUIStyle style)
         {
-            var width = 100f;
-            var height = 50f;
+            const float width = 100f;
+            const float height = 50f;
             // Invert Y for GUI coordinates
             var rect = new Rect(screenPos.x - width / 2, Screen.height - screenPos.y - height / 2, width, height);
 

@@ -87,9 +87,7 @@ namespace Placement
 
             // Energy Producer
             var source = sectorObj.AddComponent<EnergyProducer>();
-            source.MaxCapacity.Value = capacityPerDistrict;
-            source.BroadcastRadius.Value = mapRadius;
-            source.isMobileGenerator = false;
+            source.Setup(capacityPerDistrict, mapRadius, false);
         }
 
         // [GenerateSectorMesh remains exactly the same as before...]
