@@ -84,9 +84,9 @@ MonoBehaviour:
   separationRadius: 7
   weightTarget: 1
   weightSeparation: 9
-  baseSpeed: 20
-  turnSpeed: 5
-  maxBankAngle: 60
+  baseSpeed: 8
+  turnSpeed: 4
+  maxBankAngle: 40
   directionSmoothing: 0.2
   obstacleLayer:
     serializedVersion: 2

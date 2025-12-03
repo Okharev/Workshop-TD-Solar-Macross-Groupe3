@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using Enemy;
+using Pathing;
+using Pathing.Gameplay;
+using Placement;
 using UnityEngine;
-using Pathing; 
 
-namespace Pathing.Gameplay
+namespace Enemy
 {
     public class WaveManager : MonoBehaviour
     {
@@ -26,9 +27,7 @@ namespace Pathing.Gameplay
 
         public bool IsWaveActive => _isWaveActive;
         public int CurrentWaveIndex => _currentWaveIndex;
-
-        // We no longer need Start() to build Dictionaries because we use direct references!
-
+        
         [ContextMenu("Start Next Wave")]
         public void StartNextWave()
         {
@@ -56,18 +55,14 @@ namespace Pathing.Gameplay
             OnWaveStarted?.Invoke(_currentWaveIndex + 1, wave.waveName);
             Debug.Log($"Starting Wave {_currentWaveIndex + 1}: {wave.waveName}");
 
-            // 1. Configure Roads (Open/Close gates)
             ConfigureRoadsForWave(wave);
-            yield return null; // Wait 1 frame for physics/navmesh updates if needed
+            yield return null;
 
-            // 2. Prepare Parallel Execution
-            // We want Ground and Air to start at the same time, but finish only when BOTH are done.
             List<Coroutine> activeSpawns = new List<Coroutine>();
 
-            // --- Launch Ground Units ---
             foreach (var segment in wave.groundSegments)
             {
-                if (segment.targetSpawner != null)
+                if (segment.targetSpawner)
                 {
                     Coroutine c = StartCoroutine(SpawnGroundSegment(segment));
                     activeSpawns.Add(c);
@@ -78,10 +73,9 @@ namespace Pathing.Gameplay
                 }
             }
 
-            // --- Launch Air Units ---
             foreach (var segment in wave.airSegments)
             {
-                if (segment.targetPath != null)
+                if (segment.targetPath)
                 {
                     Coroutine c = StartCoroutine(SpawnAirSegment(segment));
                     activeSpawns.Add(c);
@@ -109,33 +103,28 @@ namespace Pathing.Gameplay
 
             for (int i = 0; i < segment.count; i++)
             {
-                // Direct reference call
-                segment.targetSpawner.Spawn(segment.enemyPrefab);
+                // On passe le 'specificTarget' à la méthode Spawn
+                segment.targetSpawner.Spawn(segment.enemyPrefab, segment.specificTarget);
                 
                 if (segment.spawnInterval > 0) yield return new WaitForSeconds(segment.spawnInterval);
             }
         }
 
-        // --- Air Logic ---
-// Dans WaveManager.cs
-
         private IEnumerator SpawnAirSegment(AirWaveSegment segment)
         {
             if (segment.initialDelay > 0) yield return new WaitForSeconds(segment.initialDelay);
 
-            // Plus de calculs complexes ici, on délègue tout à l'AirPath
             AirPath path = segment.targetPath;
-
             if (path == null)
             {
-                Debug.LogError($"[WaveManager] Le segment aérien n'a pas de 'targetPath' assigné !");
+                Debug.LogError($"[WaveManager] Segment aérien sans Path !");
                 yield break;
             }
 
             for (int i = 0; i < segment.count; i++)
             {
-                // Une seule ligne propre :
-                path.Spawn(segment.enemyPrefab); //
+                // On passe le 'specificTarget' à la méthode Spawn
+                path.Spawn(segment.enemyPrefab, segment.specificTarget); 
 
                 if (segment.spawnInterval > 0) yield return new WaitForSeconds(segment.spawnInterval);
             }
@@ -175,14 +164,21 @@ namespace Pathing.Gameplay
     }
 
     // Base class for shared settings
+// Dans WaveManager.cs, tout en bas
+
     [Serializable]
     public abstract class BaseWaveSegment
     {
         public GameObject enemyPrefab;
         [Min(1)] public int count = 5;
         [Min(0)] public float spawnInterval = 1.0f;
+        
         [Tooltip("Seconds to wait before starting this specific group.")]
         public float initialDelay = 0.0f;
+
+        [Header("Override Target")]
+        [Tooltip("Si vide, utilise la cible par défaut du Spawner/Path. Si rempli, les ennemis attaqueront cet objectif spécifique.")]
+        public DestructibleObjective specificTarget;
     }
 
     [Serializable]

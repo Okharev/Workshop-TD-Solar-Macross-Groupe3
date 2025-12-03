@@ -1,4 +1,5 @@
-﻿using Placement;
+﻿using Enemy;
+using Placement;
 using UnityEngine;
 
 namespace Pathing.Gameplay
@@ -6,32 +7,28 @@ namespace Pathing.Gameplay
     public class EnemySpawner : MonoBehaviour
     {
 
-        [Header("Objectives")]
-        // Changement de GameObject -> DestructibleObjective pour accéder à la logique de santé
-        [Tooltip("L'objectif spécifique à cette 'Lane' (ex: Nexus du Nord)")]
+        [Header("Objectives Defaults")]
         public DestructibleObjective localObjective; 
-
-        [Tooltip("L'objectif final si le local est détruit (ex: Base Principale)")]
         public DestructibleObjective mainBaseObjective;
 
-        public void Spawn(GameObject prefab)
+        // Modification de la signature : ajout de 'targetOverride'
+        public void Spawn(GameObject prefab, DestructibleObjective targetOverride = null)
         {
             if (!prefab) return;
             
-            // Instanciation
             GameObject newEnemy = Instantiate(prefab, transform.position, transform.rotation);
-
-            // --- INJECTION DES DÉPENDANCES ---
-            // On cherche le tracker sur l'ennemi fraîchement créé
+            
             var tracker = newEnemy.GetComponent<EnemyObjectiveTracker>();
             if (tracker != null)
             {
-                // On lui donne ses ordres : Attaque le Local, sinon le Main
-                tracker.Initialize(localObjective, mainBaseObjective);
+                // Logique de priorité : Override > Default
+                DestructibleObjective targetToUse = (targetOverride != null) ? targetOverride : localObjective;
+
+                tracker.Initialize(targetToUse, mainBaseObjective);
             }
             else
             {
-                Debug.LogWarning($"[EnemySpawner] L'ennemi {newEnemy.name} n'a pas de composant 'EnemyObjectiveTracker' !");
+                Debug.LogWarning($"[EnemySpawner] {newEnemy.name} n'a pas de tracker !");
             }
         }
 

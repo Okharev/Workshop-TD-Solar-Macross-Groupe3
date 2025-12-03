@@ -1,0 +1,11 @@
+<ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <ui:Template name="HealthBarTemplate" src="project://database/Assets/UI/ObjectiveHealthBar.uxml?fileID=9197481963319205126&amp;guid=5f2d21905e6996c4d93dbd4b46dc8696&amp;type=3#ObjectiveHealthBar" />
+    <Style src="project://database/Assets/UI/ObjectivesHealthPanel.uss?fileID=7433441132597879392&amp;guid=a7eb2283b8f842d0aebcfd2460187d89&amp;type=3#ObjectivesHealthPanel" />
+    <ui:VisualElement name="SidePanel" class="side-panel">
+        <ui:Label text="OBJECTIVES" class="header-label" />
+        <ui:Instance template="HealthBarTemplate" name="Bar_North" />
+        <ui:Instance template="HealthBarTemplate" name="Bar_East" />
+        <ui:Instance template="HealthBarTemplate" name="Bar_West" />
+
+    </ui:VisualElement>
+</ui:UXML>

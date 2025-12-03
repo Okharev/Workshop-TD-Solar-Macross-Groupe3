@@ -1,7 +1,9 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 using Pathing.Gameplay; // Pour EnemyObjectiveTracker
-using System.Linq;      // Pour gérer les listes proprement
+using System.Linq;
+using Enemy;
+using Placement; // Pour gérer les listes proprement
 
 [RequireComponent(typeof(EnemyObjectiveTracker))]
 public class FighterJetAi : MonoBehaviour
@@ -17,25 +19,23 @@ public class FighterJetAi : MonoBehaviour
     public float separationRadius = 4f;
     
     [Range(0, 10)] public float weightTarget = 1f;     
-    [Range(0, 20)] public float weightSeparation = 12f; // Augmenté pour plus de réactivité entre eux
+    [Range(0, 20)] public float weightSeparation = 12f;
 
     [Header("3. Flight Physics (LATENCY FIX)")]
     public float baseSpeed = 20f;
     
-    // AUGMENTÉ : 90 permet des virages serrés. Si c'est trop bas (ex: 20), l'avion voit le mur mais ne tourne pas assez vite.
     public float turnSpeed = 90f;       
     
     public float maxBankAngle = 60f;
 
-    // RÉDUIT : 0.1f rend l'avion "nerveux" et réactif. 0.3f ou plus le rend "lourd" et en retard.
     [Tooltip("Temps de réaction. 0.1 = Rapide/Nerveux. 0.5 = Lent/Paquebot.")]
     public float directionSmoothing = 0.1f; 
 
     [Header("4. Obstacle Avoidance (Whiskers)")]
-    public LayerMask obstacleLayer; // Assurez-vous que ce n'est PAS le layer des ennemis !
-    public float whiskerLength = 20f; // Assez long pour voir venir le mur à haute vitesse
+    public LayerMask obstacleLayer;
+    public float whiskerLength = 20f;
     public float whiskerAngle = 35f;  
-    [Range(0, 100)] public float weightAvoidance = 60f; // DOIT être très élevé pour surclasser la cible
+    [Range(0, 100)] public float weightAvoidance = 60f;
 
     [Header("5. Navigation")]
     public List<Transform> waypoints;
@@ -48,7 +48,7 @@ public class FighterJetAi : MonoBehaviour
     
     private EnemyObjectiveTracker _tracker;
     private Vector3 _smoothDampVelocity;
-    private bool _hasBeenInitialized = false; // Flag pour protéger l'initialisation
+    private bool _hasBeenInitialized = false;
 
     void Awake()
     {
@@ -59,19 +59,15 @@ public class FighterJetAi : MonoBehaviour
     {
         orbitClockwise = Random.value > 0.5f;
 
-        // Protection : Si Initialize() a déjà tourné, on ne touche à rien
         if (_hasBeenInitialized) return;
 
-        // Fallback pour les tests manuels dans la scène
         currentMissionTarget = transform.position + transform.forward * 100f;
     }
 
-    // Appelé par AirPath.Spawn
     public void Initialize(List<Transform> pathPoints)
     {
         _hasBeenInitialized = true;
         
-        // Nettoyage de la liste
         this.waypoints = new List<Transform>(pathPoints).Where(t => t != null).ToList();
 
         if (waypoints.Count > 0)
