@@ -24,13 +24,21 @@ namespace Pathing
                 UpdateBlockerState();
 
                 // --- Notify the generator so it knows the state changed ---
-                if (generator)
-                {
-                    generator.SetRoadBlocked(splineIndex, isBlocked);
-                }
+                if (generator) generator.SetRoadBlocked(splineIndex, isBlocked);
             }
         }
-        
+
+        // Allow toggling in the inspector at runtime
+        private void OnValidate()
+        {
+            if (Application.isPlaying)
+            {
+                UpdateBlockerState();
+                // Ensure generator is kept in sync if we click the checkbox in Inspector
+                if (generator) generator.SetRoadBlocked(splineIndex, isBlocked);
+            }
+        }
+
         // Use this method when the Network Generator forces a state change
         // to avoid calling back to the generator.
         public void SetBlockedInternal(bool blocked)
@@ -48,27 +56,11 @@ namespace Pathing
             UpdateBlockerState();
         }
 
-        // Allow toggling in the inspector at runtime
-        private void OnValidate()
-        {
-            if (Application.isPlaying)
-            {
-                UpdateBlockerState();
-                // Ensure generator is kept in sync if we click the checkbox in Inspector
-                if (generator)
-                {
-                    generator.SetRoadBlocked(splineIndex, isBlocked);
-                }
-            }
-        }
-
         private void UpdateBlockerState()
         {
             if (blockerInstance)
-            {
                 if (blockerInstance.activeSelf != isBlocked)
                     blockerInstance.SetActive(isBlocked);
-            }
         }
     }
 }

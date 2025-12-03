@@ -20,13 +20,6 @@ namespace Economy
         // Runtime State (Read Only for public, Writable by Manager)
         public int CurrentLoad { get; private set; }
 
-        public void Setup(int pmaxCapacity, float pbroadcastRadius, bool pmobileGenerator)
-        {
-            this.maxCapacity.Value = pmaxCapacity;
-            this.broadcastRadius.Value = pbroadcastRadius;
-            this.isMobileGenerator = pmobileGenerator;
-        }
-
         private void Start()
         {
             // Physics/Manager registration setup
@@ -62,6 +55,13 @@ namespace Economy
         {
             Gizmos.color = new Color(0, 1, 1, 0.4f);
             Gizmos.DrawWireSphere(transform.position, BroadcastRadius.Value);
+        }
+
+        public void Setup(int pmaxCapacity, float pbroadcastRadius, bool pmobileGenerator)
+        {
+            maxCapacity.Value = pmaxCapacity;
+            broadcastRadius.Value = pbroadcastRadius;
+            isMobileGenerator = pmobileGenerator;
         }
 
         // Named methods make debugging easier than Lambdas

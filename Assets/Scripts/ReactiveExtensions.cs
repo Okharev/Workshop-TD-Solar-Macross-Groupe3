@@ -4,11 +4,11 @@ using UnityEngine;
 public static class ReactiveExtensions
 {
     // --- 1. Standard Subscription ---
-    
+
     // Allows: myInt.Subscribe(val => Debug.Log(val))
     public static IDisposable Subscribe<T>(
-        this IReadOnlyReactiveProperty<T> source, 
-        Action<T> onNext, 
+        this IReadOnlyReactiveProperty<T> source,
+        Action<T> onNext,
         bool fireImmediately = true)
     {
         if (fireImmediately) onNext(source.Value);

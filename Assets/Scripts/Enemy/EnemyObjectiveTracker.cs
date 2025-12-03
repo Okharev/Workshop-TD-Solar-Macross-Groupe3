@@ -5,11 +5,18 @@ namespace Enemy
 {
     public class EnemyObjectiveTracker : MonoBehaviour
     {
-        // La propriété réactive que Movement et Attacker écoutent
-        public ReactiveProperty<Transform> CurrentTarget { get; private set; } = new ReactiveProperty<Transform>();
-
         [SerializeField] private DestructibleObjective _activeObjectiveScript; // Le script de la cible actuelle
-        [SerializeField] private DestructibleObjective _backupObjective;       // La base principale (généralement)
+
+        [SerializeField] private DestructibleObjective _backupObjective; // La base principale (généralement)
+
+        // La propriété réactive que Movement et Attacker écoutent
+        public ReactiveProperty<Transform> CurrentTarget { get; } = new();
+
+        private void OnDestroy()
+        {
+            // Nettoyage final pour éviter les erreurs de mémoire
+            if (_activeObjectiveScript != null) _activeObjectiveScript.OnDestroyed.RemoveListener(OnTargetDestroyed);
+        }
 
         public void Initialize(DestructibleObjective primary, DestructibleObjective backup)
         {
@@ -17,23 +24,15 @@ namespace Enemy
 
             // On commence par cibler le primaire (Pylône ou Override)
             if (primary != null)
-            {
                 SetNewTarget(primary);
-            }
-            else if (backup != null)
-            {
-                SetNewTarget(backup);
-            }
+            else if (backup != null) SetNewTarget(backup);
         }
 
         // Méthode centrale pour changer de cible proprement
         private void SetNewTarget(DestructibleObjective newTarget)
         {
             // 1. Nettoyage de l'ancienne cible (désabonnement)
-            if (_activeObjectiveScript != null)
-            {
-                _activeObjectiveScript.OnDestroyed.RemoveListener(OnTargetDestroyed);
-            }
+            if (_activeObjectiveScript != null) _activeObjectiveScript.OnDestroyed.RemoveListener(OnTargetDestroyed);
 
             // 2. Assignation de la nouvelle cible
             _activeObjectiveScript = newTarget;
@@ -67,7 +66,7 @@ namespace Enemy
             if (_backupObjective != null)
             {
                 // Vérification de sécurité au cas où le backup serait déjà mort aussi
-                if (_backupObjective.gameObject != null) 
+                if (_backupObjective.gameObject != null)
                 {
                     Debug.Log($"[Enemy] {name}: Cible détruite ! Redirection vers {_backupObjective.name}");
                     SetNewTarget(_backupObjective);
@@ -90,15 +89,6 @@ namespace Enemy
             {
                 Debug.Log($"[Enemy] {name}: Plus aucune cible sur la carte !");
                 CurrentTarget.Value = null;
-            }
-        }
-
-        private void OnDestroy()
-        {
-            // Nettoyage final pour éviter les erreurs de mémoire
-            if (_activeObjectiveScript != null)
-            {
-                _activeObjectiveScript.OnDestroyed.RemoveListener(OnTargetDestroyed);
             }
         }
     }

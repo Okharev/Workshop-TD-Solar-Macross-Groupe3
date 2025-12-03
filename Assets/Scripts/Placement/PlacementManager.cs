@@ -172,7 +172,7 @@ namespace Placement
             var composite = new CompositeValidator();
             // composite.AddValidator(new EconomyValidator());
             composite.AddValidator(new PhysicsValidator(obstacleLayerMask, overlapCheckPadding));
-            
+
             // Don't need but might be good to warn player in placement ui
             // composite.AddValidator(new AdditiveEnergyValidator(energyLayerMask));
 

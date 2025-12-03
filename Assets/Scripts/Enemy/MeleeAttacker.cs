@@ -8,7 +8,7 @@ namespace Enemy
         protected override void PerformAttack(GameObject target)
         {
             var damage = 10;
-            
+
             if (target.TryGetComponent<HealthComponent>(out var health))
             {
                 health.TakeDamage(damage);

@@ -1,78 +1,79 @@
+using Enemy;
+using Placement;
 using UnityEngine;
 using UnityEngine.UIElements;
-using Placement; // Pour DestructibleObjective
-using Enemy;     // Pour HealthComponent
 
-public class ObjectivesPanelController : MonoBehaviour
+namespace UI
 {
-    [Header("UI Document")]
-    [SerializeField] private UIDocument _uiDocument;
-
-    [Header("Objectives to Track")]
-    [SerializeField] private DestructibleObjective _mainBase;
-    [SerializeField] private DestructibleObjective _northPylon;
-    [SerializeField] private DestructibleObjective _southPylon;
-
-    private HealthBarView _northView;
-    private HealthBarView _eastView;
-    private HealthBarView _westView;
-
-    private void OnEnable()
+    public class ObjectivesPanelController : MonoBehaviour
     {
-        var root = _uiDocument.rootVisualElement;
+        [Header("UI Document")] [SerializeField]
+        private UIDocument _uiDocument;
 
-        _northView = new HealthBarView(root.Q("Bar_North"), "North Pylon", _mainBase);
-        _eastView = new HealthBarView(root.Q("Bar_East"), "East Pylon", _northPylon);
-        _westView = new HealthBarView(root.Q("Bar_West"), "West Pylon", _southPylon);
-    }
+        [Header("Objectives to Track")] [SerializeField]
+        private DestructibleObjective _mainBase;
 
-    // Classe interne pour encapsuler la logique d'une barre unique (Pattern View-Wrapper)
-    private class HealthBarView
-    {
-        private VisualElement _barFill;
-        private Label _label;
-        private int _maxHealth;
+        [SerializeField] private DestructibleObjective _northPylon;
+        [SerializeField] private DestructibleObjective _southPylon;
+        private HealthBarView _eastView;
 
-        public HealthBarView(VisualElement rootElement, string displayName, DestructibleObjective objective)
+        private HealthBarView _northView;
+        private HealthBarView _westView;
+
+        private void OnEnable()
         {
-            if (rootElement == null) return;
+            var root = _uiDocument.rootVisualElement;
 
-            _label = rootElement.Q<Label>("ObjectiveLabel");
-            _barFill = rootElement.Q<VisualElement>("HealthFill");
-
-            if (_label != null) _label.text = displayName;
-
-            if (objective)
-            {
-                var health = objective.GetComponent<HealthComponent>();
-                
-                if (health)
-                {
-                    _maxHealth = health.MaxHealth;
-            
-                    health.CurrentHealth.Subscribe(UpdateUI);
-            
-                    UpdateUI(health.CurrentHealth.Value);
-                }
-            }
-            else
-            {
-                UpdateUI(0);
-                if (_label != null) _label.text = $"{displayName} (Destroyed)";
-            }
+            _northView = new HealthBarView(root.Q("Bar_North"), "North Pylon", _mainBase);
+            _eastView = new HealthBarView(root.Q("Bar_East"), "East Pylon", _northPylon);
+            _westView = new HealthBarView(root.Q("Bar_West"), "West Pylon", _southPylon);
         }
 
-        private void UpdateUI(int currentHealth)
+        // Classe interne pour encapsuler la logique d'une barre unique (Pattern View-Wrapper)
+        private class HealthBarView
         {
-            if (_barFill == null) return;
+            private readonly VisualElement _barFill;
+            private readonly Label _label;
+            private readonly int _maxHealth;
 
-            float percent = Mathf.Clamp01((float)currentHealth / _maxHealth);
-
-            _barFill.style.width = Length.Percent(percent * 100f);
-
-            if (percent < 0.3f)
+            public HealthBarView(VisualElement rootElement, string displayName, DestructibleObjective objective)
             {
-                _barFill.AddToClassList("health-critical");
+                if (rootElement == null) return;
+
+                _label = rootElement.Q<Label>("ObjectiveLabel");
+                _barFill = rootElement.Q<VisualElement>("HealthFill");
+
+                if (_label != null) _label.text = displayName;
+
+                if (objective)
+                {
+                    var health = objective.GetComponent<HealthComponent>();
+
+                    if (health)
+                    {
+                        _maxHealth = health.MaxHealth;
+
+                        health.CurrentHealth.Subscribe(UpdateUI);
+
+                        UpdateUI(health.CurrentHealth.Value);
+                    }
+                }
+                else
+                {
+                    UpdateUI(0);
+                    if (_label != null) _label.text = $"{displayName} (Destroyed)";
+                }
+            }
+
+            private void UpdateUI(int currentHealth)
+            {
+                if (_barFill == null) return;
+
+                var percent = Mathf.Clamp01((float)currentHealth / _maxHealth);
+
+                _barFill.style.width = Length.Percent(percent * 100f);
+
+                if (percent < 0.3f) _barFill.AddToClassList("health-critical");
             }
         }
     }

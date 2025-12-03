@@ -20,20 +20,21 @@ namespace Pathing
         public float groundOffset = 0.05f;
         public bool useSplineTwist = true;
 
-        [Header("Navigation Logic")] 
-        public int roadEdgeAreaID = 3; // High Cost
+        [Header("Navigation Logic")] public int roadEdgeAreaID = 3; // High Cost
+
         public int roadCenterAreaID = 4; // Low Cost
-        
+
         [Tooltip("Prefab with a NavMeshObstacle(Carve=True).")]
         public GameObject navigationBlockerPrefab;
-        
+
         [Tooltip("Lifts the blocker up. Useful if your prefab pivot is in the center.")]
-        public float blockerHeightOffset = 0.0f; // <--- NEW: Fixes "half in ground"
+        public float blockerHeightOffset; // <--- NEW: Fixes "half in ground"
 
         [Range(0.1f, 0.9f)] public float centerLaneWidthPercent = 0.5f;
 
         [Header("Junction Corners")] [Range(1, 10)]
         public int cornerResolution = 5;
+
         public float cornerCurveStrength = 0.5f;
 
         [Header("Junction Quality")] [Range(1, 10)]
@@ -55,15 +56,15 @@ namespace Pathing
         public float minDirtWidth = 2.0f;
 
         public Material roadMaterial;
-        public Material navDebugMaterial; 
+        public Material navDebugMaterial;
 
         [Header("Per-Spline Configuration")] public List<RoadProfile> roadProfiles = new();
 
         private readonly Dictionary<int, SplineConnectionIds> _connectionMap = new();
-        private readonly Dictionary<int, (SeamData StartSeam, SeamData EndSeam)> _seamPositionMap = new();
-        
+
         // Registry to look up roads by index at runtime
         private readonly Dictionary<int, RoadSegmentController> _roadRegistry = new();
+        private readonly Dictionary<int, (SeamData StartSeam, SeamData EndSeam)> _seamPositionMap = new();
 
         private void Awake()
         {
@@ -72,14 +73,10 @@ namespace Pathing
             _roadRegistry.Clear();
             var controllers = GetComponentsInChildren<RoadSegmentController>();
             foreach (var controller in controllers)
-            {
                 if (!_roadRegistry.ContainsKey(controller.SplineIndex))
-                {
                     _roadRegistry.Add(controller.SplineIndex, controller);
-                }
-            }
         }
-        
+
 #if UNITY_EDITOR
         private void OnValidate()
         {
@@ -100,7 +97,7 @@ namespace Pathing
             SyncProfiles();
             _connectionMap.Clear();
             _seamPositionMap.Clear();
-            _roadRegistry.Clear(); 
+            _roadRegistry.Clear();
 
             // 1. Cleanup Children
             for (var i = transform.childCount - 1; i >= 0; i--)
@@ -145,15 +142,11 @@ namespace Pathing
         public void SetRoadBlocked(int splineIndex, bool isBlocked)
         {
             if (_roadRegistry.TryGetValue(splineIndex, out var controller))
-            {
                 // We call a specific Internal method to avoid infinite loops
                 // if the controller tries to call back to us.
                 controller.SetBlockedInternal(isBlocked);
-            }
             else
-            {
                 Debug.LogWarning($"[RoadNetworkGenerator] Cannot find road for Spline Index {splineIndex}.");
-            }
         }
 
         // --------------------------------------------------------------------------------
@@ -205,27 +198,27 @@ namespace Pathing
 
                 // --- NEW: Setup Navigation Blocker with Profile Settings ---
                 GameObject blockerInstance = null;
-                bool initialBlockedState = profile.defaultBlocked; // Read from profile
+                var initialBlockedState = profile.defaultBlocked; // Read from profile
 
                 if (navigationBlockerPrefab != null)
                 {
-                    float midT = Mathf.Lerp(tStart, tEnd, 0.5f);
+                    var midT = Mathf.Lerp(tStart, tEnd, 0.5f);
                     spline.Evaluate(midT, out var rawP, out var rawTan, out var rawUp);
-                    
-                    Vector3 snappedPos = SnapToGround((Vector3)rawP);
-                    
+
+                    var snappedPos = SnapToGround(rawP);
+
                     // --- FIX: Apply Height Offset ---
                     snappedPos += Vector3.up * blockerHeightOffset;
 
                     Vector3 forward = math.normalizesafe(rawTan);
                     Vector3 up = useSplineTwist ? math.normalizesafe(rawUp) : Vector3.up;
-                    if(forward == Vector3.zero) forward = Vector3.forward;
+                    if (forward == Vector3.zero) forward = Vector3.forward;
 
                     blockerInstance = Instantiate(navigationBlockerPrefab, roadGO.transform);
                     blockerInstance.name = "Nav_Blocker";
-                    blockerInstance.transform.localPosition = snappedPos; 
+                    blockerInstance.transform.localPosition = snappedPos;
                     blockerInstance.transform.rotation = Quaternion.LookRotation(forward, up);
-                    
+
                     // Set initial state based on profile
                     blockerInstance.SetActive(initialBlockedState);
                 }
@@ -304,10 +297,10 @@ namespace Pathing
                     var uGlobal = Mathf.Lerp(uMin, uMax, uLocal);
                     var offsetMultiplier = uGlobal - 0.5f;
                     var posRaw = splinePos + right * (offsetMultiplier * currentWidth);
-                    var posSnapped = SnapToGround(posRaw); 
+                    var posSnapped = SnapToGround(posRaw);
 
                     data.verts.Add(posSnapped);
-                    data.colors.Add(CalculateVertexColor(currentWidth, uGlobal)); 
+                    data.colors.Add(CalculateVertexColor(currentWidth, uGlobal));
                     currentRowIndices.Add(data.verts.Count - 1);
                 }
 
@@ -363,7 +356,8 @@ namespace Pathing
 
         private void GenerateJunctionGeometry(Node node, MeshData data, Dictionary<int, Vector2> trims)
         {
-            node.Connections.Sort((a, b) => {
+            node.Connections.Sort((a, b) =>
+            {
                 var angleA = Mathf.Atan2(a.Tangent.x, a.Tangent.z);
                 var angleB = Mathf.Atan2(b.Tangent.x, b.Tangent.z);
                 return angleA.CompareTo(angleB);
@@ -381,10 +375,13 @@ namespace Pathing
                 var retractMeters = effectiveWidth * 0.5f * profile.junctionRetractMultiplier;
                 var tOffset = splineLen > 0.001f ? Mathf.Clamp01(retractMeters / splineLen) : 0;
 
-                if (conn.IsStart) {
+                if (conn.IsStart)
+                {
                     var current = trims[conn.SplineIndex];
                     trims[conn.SplineIndex] = new Vector2(Mathf.Max(current.x, tOffset), current.y);
-                } else {
+                }
+                else
+                {
                     var current = trims[conn.SplineIndex];
                     trims[conn.SplineIndex] = new Vector2(current.x, Mathf.Min(current.y, 1f - tOffset));
                 }
@@ -428,36 +425,66 @@ namespace Pathing
                         if (x == crossRes) armRightIndices.Add(newIdx);
                         if (s == steps) seamPositions.Add(posSnapped);
                     }
-                    if (s > 0) {
-                         for (var x = 0; x < crossRes; x++) {
-                            var c = currentRowIndices[x + 1]; var d = currentRowIndices[x];
-                            var b = prevRowIndices[x]; var a = prevRowIndices[x + 1];
-                            if (conn.IsStart) { data.tris.Add(a); data.tris.Add(b); data.tris.Add(d); data.tris.Add(a); data.tris.Add(d); data.tris.Add(c); }
-                            else { data.tris.Add(a); data.tris.Add(d); data.tris.Add(b); data.tris.Add(a); data.tris.Add(c); data.tris.Add(d); }
+
+                    if (s > 0)
+                        for (var x = 0; x < crossRes; x++)
+                        {
+                            var c = currentRowIndices[x + 1];
+                            var d = currentRowIndices[x];
+                            var b = prevRowIndices[x];
+                            var a = prevRowIndices[x + 1];
+                            if (conn.IsStart)
+                            {
+                                data.tris.Add(a);
+                                data.tris.Add(b);
+                                data.tris.Add(d);
+                                data.tris.Add(a);
+                                data.tris.Add(d);
+                                data.tris.Add(c);
+                            }
+                            else
+                            {
+                                data.tris.Add(a);
+                                data.tris.Add(d);
+                                data.tris.Add(b);
+                                data.tris.Add(a);
+                                data.tris.Add(c);
+                                data.tris.Add(d);
+                            }
                         }
-                    }
+
                     prevRowIndices = currentRowIndices;
                 }
+
                 var sd = new SeamData { Positions = seamPositions, Tangent = outDirection };
                 if (conn.IsStart) _seamPositionMap[conn.SplineIndex] = (sd, _seamPositionMap[conn.SplineIndex].EndSeam);
                 else _seamPositionMap[conn.SplineIndex] = (_seamPositionMap[conn.SplineIndex].StartSeam, sd);
 
                 var finalLeft = data.verts[prevRowIndices[0]];
                 var finalRight = data.verts[prevRowIndices[crossRes]];
-                if (conn.IsStart) {
-                    leftEdges.Add(new JunctionEdge { position = finalLeft, tangentDir = outDirection, indices = armLeftIndices });
-                    rightEdges.Add(new JunctionEdge { position = finalRight, tangentDir = outDirection, indices = armRightIndices });
-                } else {
-                    leftEdges.Add(new JunctionEdge { position = finalRight, tangentDir = outDirection, indices = armRightIndices });
-                    rightEdges.Add(new JunctionEdge { position = finalLeft, tangentDir = outDirection, indices = armLeftIndices });
+                if (conn.IsStart)
+                {
+                    leftEdges.Add(new JunctionEdge
+                        { position = finalLeft, tangentDir = outDirection, indices = armLeftIndices });
+                    rightEdges.Add(new JunctionEdge
+                        { position = finalRight, tangentDir = outDirection, indices = armRightIndices });
+                }
+                else
+                {
+                    leftEdges.Add(new JunctionEdge
+                        { position = finalRight, tangentDir = outDirection, indices = armRightIndices });
+                    rightEdges.Add(new JunctionEdge
+                        { position = finalLeft, tangentDir = outDirection, indices = armLeftIndices });
                 }
             }
-            
+
             var count = node.Connections.Count;
-            for (var i = 0; i < count; i++) {
+            for (var i = 0; i < count; i++)
+            {
                 var startEdge = rightEdges[i];
                 var endEdge = leftEdges[(i + 1) % count];
-                var p0 = startEdge.position; var p3 = endEdge.position;
+                var p0 = startEdge.position;
+                var p3 = endEdge.position;
                 var dist = Vector3.Distance(p0, p3);
                 var p1 = p0 + startEdge.tangentDir * dist * cornerCurveStrength;
                 var p2 = p3 + endEdge.tangentDir * dist * cornerCurveStrength;
@@ -465,16 +492,20 @@ namespace Pathing
                 var curveSteps = Mathf.Max(1, cornerResolution);
                 var ringSteps = Mathf.Max(1, junctionResolution);
 
-                for (var s = 0; s <= curveSteps; s++) {
+                for (var s = 0; s <= curveSteps; s++)
+                {
                     var tCurve = s / (float)curveSteps;
                     var rimPos = CalculateCubicBezierPoint(tCurve, p0, p1, p2, p3);
                     var currentColumnIndices = new List<int>();
-                    var isStartWeld = s == 0; var isEndWeld = s == curveSteps;
-                    for (var r = 0; r <= ringSteps; r++) {
+                    var isStartWeld = s == 0;
+                    var isEndWeld = s == curveSteps;
+                    for (var r = 0; r <= ringSteps; r++)
+                    {
                         var currentIdx = -1;
                         if (isStartWeld && r < startEdge.indices.Count) currentIdx = startEdge.indices[r];
                         else if (isEndWeld && r < endEdge.indices.Count) currentIdx = endEdge.indices[r];
-                        if (currentIdx == -1) {
+                        if (currentIdx == -1)
+                        {
                             var tRing = r / (float)ringSteps;
                             var posRaw = Vector3.Lerp(centerPos, rimPos, tRing);
                             if (r == ringSteps) posRaw = rimPos;
@@ -485,13 +516,23 @@ namespace Pathing
                             var alpha = r == ringSteps ? 0f : 1f;
                             data.colors.Add(new Color(redChannel, 0, 0, alpha));
                         }
+
                         currentColumnIndices.Add(currentIdx);
-                        if (s > 0 && r > 0) {
-                            var c = currentIdx; var d = currentColumnIndices[r - 1];
-                            var b = prevColumnIndices[r]; var a = prevColumnIndices[r - 1];
-                            data.tris.Add(a); data.tris.Add(b); data.tris.Add(c); data.tris.Add(a); data.tris.Add(c); data.tris.Add(d);
+                        if (s > 0 && r > 0)
+                        {
+                            var c = currentIdx;
+                            var d = currentColumnIndices[r - 1];
+                            var b = prevColumnIndices[r];
+                            var a = prevColumnIndices[r - 1];
+                            data.tris.Add(a);
+                            data.tris.Add(b);
+                            data.tris.Add(c);
+                            data.tris.Add(a);
+                            data.tris.Add(c);
+                            data.tris.Add(d);
                         }
                     }
+
                     prevColumnIndices = currentColumnIndices;
                 }
             }
@@ -517,6 +558,7 @@ namespace Pathing
                     currentWidth = Mathf.Lerp(currentWidth, baseWidth * bulgeMultiplier, bulgeFactor);
                 }
             }
+
             return currentWidth;
         }
 
@@ -585,6 +627,7 @@ namespace Pathing
                     }
                 }
             }
+
             tData.SetAlphamaps(0, 0, splatmapData);
         }
 
@@ -598,6 +641,7 @@ namespace Pathing
                 var finalWorldPos = hit.point + Vector3.up * groundOffset;
                 return transform.InverseTransformPoint(finalWorldPos);
             }
+
             return localPos + Vector3.up * groundOffset;
         }
 
@@ -613,13 +657,20 @@ namespace Pathing
                 AddConnectionToGraph(nodes, startPos, i, true, spline, mergeDistance);
                 if (!spline.Closed) AddConnectionToGraph(nodes, endPos, i, false, spline, mergeDistance);
             }
+
             return nodes;
         }
 
-        private void AddConnectionToGraph(List<Node> nodes, Vector3 pos, int splineIdx, bool isStart, Spline spline, float dist)
+        private void AddConnectionToGraph(List<Node> nodes, Vector3 pos, int splineIdx, bool isStart, Spline spline,
+            float dist)
         {
             var node = nodes.FirstOrDefault(n => Vector3.Distance(n.Position, pos) < dist);
-            if (node == null) { node = new Node { Position = pos }; nodes.Add(node); }
+            if (node == null)
+            {
+                node = new Node { Position = pos };
+                nodes.Add(node);
+            }
+
             float3 tan, up, p;
             if (isStart) spline.Evaluate(0f, out p, out tan, out up);
             else spline.Evaluate(1f, out p, out tan, out up);
@@ -630,16 +681,33 @@ namespace Pathing
 
         private Vector3 CalculateCubicBezierPoint(float t, Vector3 p0, Vector3 p1, Vector3 p2, Vector3 p3)
         {
-            var u = 1 - t; var tt = t * t; var uu = u * u; var uuu = uu * u; var ttt = tt * t;
-            var p = uuu * p0; p += 3 * uu * t * p1; p += 3 * u * tt * p2; p += ttt * p3;
+            var u = 1 - t;
+            var tt = t * t;
+            var uu = u * u;
+            var uuu = uu * u;
+            var ttt = tt * t;
+            var p = uuu * p0;
+            p += 3 * uu * t * p1;
+            p += 3 * u * tt * p2;
+            p += ttt * p3;
             return p;
         }
 
         // --- Data Classes ---
 
-        private class MeshData { public readonly List<Color> colors = new(); public readonly List<int> tris = new(); public readonly List<Vector3> verts = new(); }
-        private class SeamData { public List<Vector3> Positions = new(); public Vector3 Tangent; }
-        
+        private class MeshData
+        {
+            public readonly List<Color> colors = new();
+            public readonly List<int> tris = new();
+            public readonly List<Vector3> verts = new();
+        }
+
+        private class SeamData
+        {
+            public List<Vector3> Positions = new();
+            public Vector3 Tangent;
+        }
+
         [Serializable]
         public class RoadProfile
         {
@@ -649,14 +717,34 @@ namespace Pathing
             [Range(1, 8)] public int crossResolution = 4;
             [Range(0.5f, 12f)] public float junctionRetractMultiplier = 2.5f;
 
-            [Header("Navigation")]
-            [Tooltip("If true, the road will spawn with the NavBlocker active.")]
-            public bool defaultBlocked = true; 
+            [Header("Navigation")] [Tooltip("If true, the road will spawn with the NavBlocker active.")]
+            public bool defaultBlocked = true;
         }
 
-        private class Node { public readonly List<Connection> Connections = new(); public Vector3 Position; }
-        private struct Connection { public bool IsStart; public int SplineIndex; public Vector3 Tangent; }
-        private class SplineConnectionIds { public readonly List<int> EndIndices = new(); public readonly List<int> StartIndices = new(); }
-        private struct JunctionEdge { public Vector3 position; public Vector3 tangentDir; public List<int> indices; }
+        private class Node
+        {
+            public readonly List<Connection> Connections = new();
+            public Vector3 Position;
+        }
+
+        private struct Connection
+        {
+            public bool IsStart;
+            public int SplineIndex;
+            public Vector3 Tangent;
+        }
+
+        private class SplineConnectionIds
+        {
+            public readonly List<int> EndIndices = new();
+            public readonly List<int> StartIndices = new();
+        }
+
+        private struct JunctionEdge
+        {
+            public Vector3 position;
+            public Vector3 tangentDir;
+            public List<int> indices;
+        }
     }
 }
