@@ -1,58 +1,105 @@
-﻿using UnityEngine;
-using System;
-using Placement;
+﻿using Placement;
+using UnityEngine;
 
-namespace Pathing.Gameplay
+namespace Enemy
 {
     public class EnemyObjectiveTracker : MonoBehaviour
     {
+        // La propriété réactive que Movement et Attacker écoutent
         public ReactiveProperty<Transform> CurrentTarget { get; private set; } = new ReactiveProperty<Transform>();
 
-        private DestructibleObjective _primaryObjective;
-        private DestructibleObjective _backupObjective;
-        
+        [SerializeField] private DestructibleObjective _activeObjectiveScript; // Le script de la cible actuelle
+        [SerializeField] private DestructibleObjective _backupObjective;       // La base principale (généralement)
+
         public void Initialize(DestructibleObjective primary, DestructibleObjective backup)
         {
-            _primaryObjective = primary;
             _backupObjective = backup;
 
-            if (_primaryObjective)
+            // On commence par cibler le primaire (Pylône ou Override)
+            if (primary != null)
             {
-                SetTarget(_primaryObjective);
+                SetNewTarget(primary);
+            }
+            else if (backup != null)
+            {
+                SetNewTarget(backup);
+            }
+        }
+
+        // Méthode centrale pour changer de cible proprement
+        private void SetNewTarget(DestructibleObjective newTarget)
+        {
+            // 1. Nettoyage de l'ancienne cible (désabonnement)
+            if (_activeObjectiveScript != null)
+            {
+                _activeObjectiveScript.OnDestroyed.RemoveListener(OnTargetDestroyed);
+            }
+
+            // 2. Assignation de la nouvelle cible
+            _activeObjectiveScript = newTarget;
+
+            if (_activeObjectiveScript != null)
+            {
+                // Mettre à jour la ReactiveProperty pour que Movement/Attacker réagissent
+                CurrentTarget.Value = _activeObjectiveScript.transform;
+
+                // S'abonner à l'événement de mort de CETTE cible spécifique
+                _activeObjectiveScript.OnDestroyed.AddListener(OnTargetDestroyed);
             }
             else
             {
-                SetTarget(_backupObjective);
+                CurrentTarget.Value = null;
             }
         }
 
-        private void SetTarget(DestructibleObjective objective)
-        {
-            if (!objective) return;
-
-            CurrentTarget.Value = objective.transform;
-            
-            objective.OnDestroyed.AddListener(OnTargetDestroyed);
-        }
-
+        // Déclenché automatiquement quand la cible actuelle meurt
         private void OnTargetDestroyed()
         {
-            if (CurrentTarget.Value == _primaryObjective.transform)
+            // Si on visait déjà le backup et qu'il est mort, c'est fini (Game Over ?)
+            if (_activeObjectiveScript == _backupObjective)
             {
-                Debug.Log($"[Enemy] Objectif {_primaryObjective.name} détruit ! Redirection vers {_backupObjective.name}");
-                
-                _primaryObjective.OnDestroyed.RemoveListener(OnTargetDestroyed);
-                
-                if (_backupObjective)
+                Debug.Log($"[Enemy] {name}: Ma cible finale est détruite. Victoire des ennemis ?");
+                CurrentTarget.Value = null;
+                return;
+            }
+
+            // Sinon, on passe au backup (la Base Principale)
+            if (_backupObjective != null)
+            {
+                // Vérification de sécurité au cas où le backup serait déjà mort aussi
+                if (_backupObjective.gameObject != null) 
                 {
-                    CurrentTarget.Value = _backupObjective.transform;
+                    Debug.Log($"[Enemy] {name}: Cible détruite ! Redirection vers {_backupObjective.name}");
+                    SetNewTarget(_backupObjective);
                 }
+            }
+            else
+            {
+                FindAnyBackupTarget();
+            }
+        }
+
+        private void FindAnyBackupTarget()
+        {
+            var potentialTarget = FindFirstObjectByType<DestructibleObjective>();
+            if (potentialTarget)
+            {
+                SetNewTarget(potentialTarget);
+            }
+            else
+            {
+                Debug.Log($"[Enemy] {name}: Plus aucune cible sur la carte !");
+                CurrentTarget.Value = null;
             }
         }
 
         private void OnDestroy()
         {
-            if (_primaryObjective != null) _primaryObjective.OnDestroyed.RemoveListener(OnTargetDestroyed);
+            // Nettoyage final pour éviter les erreurs de mémoire
+            if (_activeObjectiveScript != null)
+            {
+                _activeObjectiveScript.OnDestroyed.RemoveListener(OnTargetDestroyed);
+            }
         }
     }
 }

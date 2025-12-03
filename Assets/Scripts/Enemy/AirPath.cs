@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
-using Pathing.Gameplay; 
+using Pathing.Gameplay;
+using Placement;
 
 namespace Enemy
 {
@@ -17,13 +18,12 @@ namespace Enemy
         [Header("Trajectory Points")]
         public List<Transform> waypoints = new List<Transform>();
 
-        // --- NOUVEAU : La méthode Spawn (comme EnemySpawner) ---
-        public void Spawn(GameObject prefab)
+        // --- La méthode Spawn (comme EnemySpawner) ---
+        public void Spawn(GameObject prefab, DestructibleObjective targetOverride = null)
         {
             if (prefab == null) return;
 
-            // 1. Spawner à la position/rotation de l'objet AirPath (le root)
-            // On peut optionnellement faire regarder l'avion vers le 1er point immédiatement
+            // 1. Positionnement
             Quaternion spawnRotation = transform.rotation;
             if (waypoints.Count > 0 && waypoints[0] != null)
             {
@@ -32,18 +32,21 @@ namespace Enemy
 
             GameObject newAirUnit = Instantiate(prefab, transform.position, spawnRotation);
 
-            // 2. Initialiser le mouvement (FighterJetAi)
+            // 2. Initialiser le mouvement
             var boidAI = newAirUnit.GetComponent<FighterJetAi>();
-            if (boidAI != null)
+            if (boidAI)
             {
                 boidAI.Initialize(waypoints); 
             }
 
-            // 3. Initialiser les objectifs (Tracker)
+            // 3. Initialiser les objectifs avec l'OVERRIDE
             var tracker = newAirUnit.GetComponent<EnemyObjectiveTracker>();
-            if (tracker != null)
+            if (tracker)
             {
-                tracker.Initialize(localObjective, mainBaseObjective);
+                // Logique de priorité
+                DestructibleObjective targetToUse = (targetOverride != null) ? targetOverride : localObjective;
+                
+                tracker.Initialize(targetToUse, mainBaseObjective);
             }
         }
 

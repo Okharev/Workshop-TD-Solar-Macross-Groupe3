@@ -166,10 +166,8 @@ namespace Economy
                 var fulfilledAmount = 0;
 
                 // Iterate the pre-sorted candidate list for this cell
-                for (var i = 0; i < candidates.Count; i++)
+                foreach (var producer in candidates)
                 {
-                    var producer = candidates[i];
-
                     // Double check exact distance (Circle vs Square grid accuracy)
                     var distSqr = (producer.transform.position - consumer.transform.position).sqrMagnitude;
                     var range = producer.BroadcastRadius.Value;

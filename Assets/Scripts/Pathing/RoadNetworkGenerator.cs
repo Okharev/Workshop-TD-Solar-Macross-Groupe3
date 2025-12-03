@@ -659,6 +659,4 @@ namespace Pathing
         private class SplineConnectionIds { public readonly List<int> EndIndices = new(); public readonly List<int> StartIndices = new(); }
         private struct JunctionEdge { public Vector3 position; public Vector3 tangentDir; public List<int> indices; }
     }
-
-
 }

@@ -1,0 +1,52 @@
+﻿.side-panel {
+    position: absolute;
+    right: 20px;
+    top: 20px;
+    width: 300px;
+    background-color: rgba(0, 0, 0, 0.6);
+    padding: 15px;
+    border-radius: 10px;
+}
+
+.header-label {
+    color: white;
+    font-size: 18px;
+    -unity-font-style: bold;
+    margin-bottom: 10px;
+    border-bottom-width: 1px;
+    border-bottom-color: gray;
+}
+
+.health-row {
+    margin-bottom: 10px;
+    width: 100%;
+}
+
+.health-label {
+    color: #dddddd;
+    font-size: 14px;
+    margin-bottom: 4px;
+}
+
+.health-bar-container {
+    height: 15px;
+    background-color: #333333;
+    border-radius: 4px;
+    overflow: hidden;
+    border-width: 1px;
+    border-color: #555555;
+    width: 100%;
+}
+
+.health-bar-fill {
+    height: 100%;
+    width: 50%;
+    background-color: #4CAF50;
+    transition-property: width, background-color;
+    transition-duration: 0.3s, 0.3s;
+    transition-timing-function: ease-out-circ, ease-out-circ;
+}
+
+.health-critical {
+    background-color: #F44336;
+}

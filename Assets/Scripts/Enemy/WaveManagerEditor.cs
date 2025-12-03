@@ -35,7 +35,7 @@ namespace Pathing.EditorTools
             serializedObject.Update();
             
             GUILayout.Space(10);
-            EditorGUILayout.LabelField("🌊 Wave Designer", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("Wave Designer", EditorStyles.boldLabel);
 
             // Handle null lists
             if (_target.waves == null) _target.waves = new List<WaveProfile>();
@@ -180,7 +180,7 @@ namespace Pathing.EditorTools
         {
             GUILayout.Space(10);
             var dropRect = GUILayoutUtility.GetRect(0, 50, GUILayout.ExpandWidth(true));
-            GUI.Box(dropRect, "📥 DRAG & DROP ZONE\n(Drag Spawners or AirPaths here)", EditorStyles.helpBox);
+            GUI.Box(dropRect, "DRAG & DROP ZONE\n(Drag Spawners or AirPaths here)", EditorStyles.helpBox);
 
             var evt = Event.current;
             if (dropRect.Contains(evt.mousePosition))

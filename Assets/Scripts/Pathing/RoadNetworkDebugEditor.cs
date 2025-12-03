@@ -57,10 +57,15 @@ namespace Pathing
             if (!container) return;
 
             // Setup Style
-            var style = new GUIStyle(EditorStyles.boldLabel);
-            style.normal.textColor = _labelColor;
-            style.fontSize = Mathf.RoundToInt(12 * _labelSize);
-            style.alignment = TextAnchor.MiddleCenter;
+            var style = new GUIStyle(EditorStyles.boldLabel)
+            {
+                normal =
+                {
+                    textColor = _labelColor
+                },
+                fontSize = Mathf.RoundToInt(12 * _labelSize),
+                alignment = TextAnchor.MiddleCenter
+            };
 
             // Iterate all splines to draw IDs
             for (int i = 0; i < container.Splines.Count; i++)
