@@ -1,16 +1,14 @@
 ﻿using UnityEngine;
-using UnityEngine.Serialization;
 
 namespace Enemy
 {
-
-    
-    
     public class HealthComponent : MonoBehaviour
     {
         [Header("Configuration")]
         // Utilisation de votre ReactiveInt pour la sérialisation et les événements
-        [SerializeField] private ReactiveInt _currentHealth = new ReactiveInt(100);
+        [SerializeField]
+        private ReactiveInt _currentHealth = new(100);
+
         [SerializeField] private int _maxHealth = 100;
 
         // Exposition en lecture seule pour la sécurité

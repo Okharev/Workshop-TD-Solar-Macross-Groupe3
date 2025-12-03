@@ -1,0 +1,60 @@
+/* Conteneur principal flottant en haut à gauche */
+.panel-container {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    width: 250px;
+    background-color: rgba(32, 32, 32, 0.9); /* Fond sombre semi-transparent */
+    border-radius: 8px;
+    padding: 15px;
+    border-left-width: 4px;
+    border-left-color: #ff9900; /* Une petite touche de couleur sur le côté */
+}
+
+/* Textes */
+.status-text {
+    font-size: 12px;
+    color: #aaaaaa;
+    -unity-font-style: bold;
+    margin-bottom: 5px;
+}
+
+.title-text {
+    font-size: 24px;
+    color: #ffffff;
+    -unity-font-style: bold;
+    margin-bottom: 2px;
+}
+
+.subtitle-text {
+    font-size: 14px;
+    color: #dddddd;
+    margin-bottom: 15px;
+    white-space: normal; /* Permet au texte de revenir à la ligne */
+}
+
+/* Bouton */
+.action-button {
+    background-color: #2ecc71;
+    color: #ffffff;
+    border-radius: 4px;
+    padding: 10px;
+    border-width: 0;
+    -unity-font-style: bold;
+    transition-duration: 0.2s;
+}
+
+.action-button:hover {
+    background-color: #27ae60;
+    scale: 1.05;
+}
+
+.action-button:active {
+    background-color: #1e8449;
+    scale: 0.95;
+}
+
+/* Classe utilitaire pour désactiver visuellement le bouton */
+.hidden {
+    display: none;
+}

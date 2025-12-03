@@ -1,7 +1,8 @@
-﻿using UnityEditor;
-using UnityEngine;
-using System.Reflection;
+﻿using System;
 using System.Collections;
+using System.Reflection;
+using UnityEditor;
+using UnityEngine;
 
 namespace Economy.Reactive.Editor
 {
@@ -34,7 +35,7 @@ namespace Economy.Reactive.Editor
         {
             try
             {
-                object target = GetTargetObjectOfProperty(property);
+                var target = GetTargetObjectOfProperty(property);
                 if (target == null) return;
 
                 var method = target.GetType().GetMethod("Notify");
@@ -47,7 +48,7 @@ namespace Economy.Reactive.Editor
         }
 
         // --- Reflection Helpers for Nested Objects ---
-        
+
         private object GetTargetObjectOfProperty(SerializedProperty prop)
         {
             if (prop == null) return null;
@@ -57,18 +58,18 @@ namespace Economy.Reactive.Editor
             var elements = path.Split('.');
 
             foreach (var element in elements)
-            {
                 if (element.Contains("["))
                 {
                     var elementName = element.Substring(0, element.IndexOf("["));
-                    var index = System.Convert.ToInt32(element.Substring(element.IndexOf("[")).Replace("[", "").Replace("]", ""));
+                    var index = Convert.ToInt32(element.Substring(element.IndexOf("[")).Replace("[", "")
+                        .Replace("]", ""));
                     obj = GetValue_Imp(obj, elementName, index);
                 }
                 else
                 {
                     obj = GetValue_Imp(obj, element);
                 }
-            }
+
             return obj;
         }
 
@@ -82,11 +83,13 @@ namespace Economy.Reactive.Editor
                 var f = type.GetField(name, BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance);
                 if (f != null) return f.GetValue(source);
 
-                var p = type.GetProperty(name, BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
+                var p = type.GetProperty(name,
+                    BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
                 if (p != null) return p.GetValue(source, null);
 
                 type = type.BaseType;
             }
+
             return null;
         }
 
@@ -96,10 +99,9 @@ namespace Economy.Reactive.Editor
             if (enumerable == null) return null;
             var enm = enumerable.GetEnumerator();
 
-            for (int i = 0; i <= index; i++)
-            {
-                if (!enm.MoveNext()) return null;
-            }
+            for (var i = 0; i <= index; i++)
+                if (!enm.MoveNext())
+                    return null;
             return enm.Current;
         }
     }

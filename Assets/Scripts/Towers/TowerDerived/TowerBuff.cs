@@ -80,7 +80,7 @@ namespace Towers.TowerDerived
             foreach (var hit in hits)
             {
                 if (!hit.TryGetComponent<BaseTower>(out var neighbor)) continue;
-                
+
                 // Validate neighbor
                 if (neighbor && neighbor != this)
                 {
@@ -100,7 +100,7 @@ namespace Towers.TowerDerived
                             _currentBuffedTowers.Add(neighbor);
                         }
                     }
-                } 
+                }
             }
 
             // 3. Cleanup: Find towers that were buffed but are no longer in the valid list
@@ -129,7 +129,8 @@ namespace Towers.TowerDerived
             if (fireRatePercentBuff > 0)
                 target.fireRate.AddModifier(new StatModifier(fireRatePercentBuff, StatModType.PercentAdd, this));
 
-            Debug.Log($"Buff added to {target.name}, old stat: {target.baseDamage}dmg, {target.baseFireRate}rate,  {target.baseRange}range || new stat: {target.damage.Value} dmg, fire{target.fireRate.Value}, range {target.range.Value}");
+            Debug.Log(
+                $"Buff added to {target.name}, old stat: {target.baseDamage}dmg, {target.baseFireRate}rate,  {target.baseRange}range || new stat: {target.damage.Value} dmg, fire{target.fireRate.Value}, range {target.range.Value}");
         }
 
         private void RemoveBuffs(BaseTower target)

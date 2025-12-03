@@ -9,10 +9,7 @@ public class DisposableTracker : MonoBehaviour
 
     private void OnDestroy()
     {
-        for (int i = 0; i < _disposables.Count; i++)
-        {
-            _disposables[i].Dispose();
-        }
+        for (var i = 0; i < _disposables.Count; i++) _disposables[i].Dispose();
         _disposables.Clear();
     }
 

@@ -1,4 +1,15 @@
-<ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
-    <ui:Label text="Label" />
-    <ui:ProgressBar value="22" title="my-progress" />
+<ui:UXML xmlns:ui="UnityEngine.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd"
+         editor-extension-mode="False">
+    <Style src="project://database/Assets/UI/WavePanel.uss?fileID=7433441132597879392&amp;guid=50b86e0e6c9f14b4e86674680b30ac56&amp;type=3#WavePanel"/>
+    <ui:VisualElement name="wave-panel" class="panel-container">
+
+        <ui:VisualElement name="info-container">
+            <ui:Label text="PREPARATION" name="wave-status-label" class="status-text"/>
+            <ui:Label text="Wave 0" name="wave-index-label" class="title-text"/>
+            <ui:Label text="..." name="wave-name-label" class="subtitle-text"/>
+        </ui:VisualElement>
+
+        <ui:Button text="Start Next Wave" name="next-wave-btn" class="action-button"/>
+
+    </ui:VisualElement>
 </ui:UXML>

@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Globalization;
 using Economy;
+using UI;
 using UnityEngine;
 
 namespace Towers
@@ -31,7 +33,7 @@ namespace Towers
     }
 
     [RequireComponent(typeof(EnergyConsumer), typeof(Collider))]
-    public abstract class BaseTower : MonoBehaviour
+    public abstract class BaseTower : MonoBehaviour, ISelectable
     {
         [SerializeField] protected EnergyConsumer powerSource;
 
@@ -125,6 +127,45 @@ namespace Towers
             if (currentTarget) Gizmos.DrawWireSphere(currentTarget.transform.position, 1.0f);
 
             OnDrawGizmosTower();
+        }
+
+
+        public string DisplayName => "Tower";
+        public string Description => "testing";
+
+        public Dictionary<string, string> GetStats()
+        {
+            return new Dictionary<string, string>
+            {
+                { "Range", range.Value.ToString(CultureInfo.InvariantCulture) },
+                { "Speed", fireRate.Value.ToString(CultureInfo.InvariantCulture) },
+                { "Damage", damage.Value.ToString(CultureInfo.InvariantCulture) }
+            };
+        }
+
+        public List<InteractionButton> GetInteractions()
+        {
+            return new List<InteractionButton>
+            {
+                new()
+                {
+                    Label = "Améliorer (100 Or)",
+                    OnClick = UpgradeTower
+                },
+                new()
+                {
+                    Label = "Vendre (50 Or)",
+                    OnClick = SellTower
+                }
+            };
+        }
+
+        public void OnSelect()
+        {
+        }
+
+        public void OnDeselect()
+        {
         }
 
         protected float GetScaledRotationSpeed(float baseSpeed)
@@ -232,6 +273,20 @@ namespace Towers
 
         protected virtual void OnDrawGizmosTower()
         {
+        }
+
+        private void SellTower()
+        {
+            Debug.Log("Sold Tower !");
+            SelectionManager.Deselect();
+            Destroy(gameObject);
+        }
+
+        private void UpgradeTower()
+        {
+            Debug.Log("Upgraded ");
+
+            SelectionManager.Select(this);
         }
     }
 }

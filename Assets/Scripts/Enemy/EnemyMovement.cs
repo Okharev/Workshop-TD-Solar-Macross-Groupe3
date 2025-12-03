@@ -1,5 +1,4 @@
-﻿using Pathing.Gameplay;
-using Placement;
+﻿using Placement;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -9,42 +8,42 @@ namespace Enemy
     [RequireComponent(typeof(EnemyObjectiveTracker))]
     public class EnemyMovement : MonoBehaviour
     {
-        private NavMeshAgent _agent;
-        private EnemyObjectiveTracker _tracker;
-    
-        // CACHED VARIABLES
-        private Transform _currentTargetTransform;
-        private Collider _currentTargetCollider; 
+        [Header("Movement Settings")] [SerializeField]
+        private float defaultStoppingDistance = 2.0f;
 
-        [Header("Movement Settings")]
-        [SerializeField] private float defaultStoppingDistance = 2.0f; 
-    
         [Header("Flanking (Anti-Clumping)")]
         [Tooltip("How wide (in degrees) the enemies should spread out.")]
-        [Range(0, 90)] public float spreadAngle = 45f; // 45 degrees left or right
-    
-        private float _myFlankBias; // Unique random value for this specific unit
-        private Vector3 _lastKnownTargetPosition;
-        private float _repathThreshold = 1.0f;
+        [Range(0, 90)]
+        public float spreadAngle = 45f; // 45 degrees left or right
 
-        public NavMeshAgent Agent => _agent;
+        private readonly float _repathThreshold = 1.0f;
+        private Collider _currentTargetCollider;
+
+        // CACHED VARIABLES
+        private Transform _currentTargetTransform;
+        private Vector3 _lastKnownTargetPosition;
+
+        private float _myFlankBias; // Unique random value for this specific unit
+        private EnemyObjectiveTracker _tracker;
+
+        public NavMeshAgent Agent { get; private set; }
 
         private void Awake()
         {
-            _agent = GetComponent<NavMeshAgent>();
+            Agent = GetComponent<NavMeshAgent>();
             _tracker = GetComponent<EnemyObjectiveTracker>();
         }
 
         private void Start()
         {
-            _agent.autoBraking = false;
-            _agent.stoppingDistance = defaultStoppingDistance;
+            Agent.autoBraking = false;
+            Agent.stoppingDistance = defaultStoppingDistance;
             _myFlankBias = Random.Range(-spreadAngle, spreadAngle);
 
-            _tracker.CurrentTarget.Subscribe(newTarget => 
+            _tracker.CurrentTarget.Subscribe(newTarget =>
             {
                 _currentTargetTransform = newTarget;
-                _currentTargetCollider = null; 
+                _currentTargetCollider = null;
 
                 if (newTarget != null)
                 {
@@ -55,9 +54,17 @@ namespace Enemy
                 }
                 else
                 {
-                    _agent.ResetPath();
+                    Agent.ResetPath();
                 }
             }).AddTo(this);
+        }
+
+        private void Update()
+        {
+            if (_currentTargetTransform)
+                if (Vector3.SqrMagnitude(_currentTargetTransform.position - _lastKnownTargetPosition) >
+                    _repathThreshold * _repathThreshold)
+                    UpdatePathImmediate(_currentTargetTransform.position);
         }
 
         // --- ADD THIS HELPER METHOD ---
@@ -65,19 +72,15 @@ namespace Enemy
         {
             // 1. Try to get the manually assigned "MainBody" from DestructibleObjective
             var objective = target.GetComponent<DestructibleObjective>();
-            if (objective != null && objective.MainCollider != null)
-            {
-                return objective.MainCollider;
-            }
+            if (objective != null && objective.MainCollider != null) return objective.MainCollider;
 
             // 2. If no script, look for ALL colliders on the object
-            Collider[] allColliders = target.GetComponents<Collider>();
+            var allColliders = target.GetComponents<Collider>();
 
             // 3. Priority: Return the first NON-TRIGGER collider (Physical wall)
             foreach (var col in allColliders)
-            {
-                if (!col.isTrigger && col.enabled) return col;
-            }
+                if (!col.isTrigger && col.enabled)
+                    return col;
 
             // 4. Fallback: If only triggers exist, return the first one (better than nothing)
             if (allColliders.Length > 0) return allColliders[0];
@@ -85,46 +88,35 @@ namespace Enemy
             return null;
         }
 
-        private void Update()
-        {
-            if (_currentTargetTransform)
-            {
-                if (Vector3.SqrMagnitude(_currentTargetTransform.position - _lastKnownTargetPosition) > _repathThreshold * _repathThreshold)
-                {
-                    UpdatePathImmediate(_currentTargetTransform.position);
-                }
-            }
-        }
-
         private void UpdatePathImmediate(Vector3 targetPos)
         {
-            Vector3 finalDestination = targetPos;
+            var finalDestination = targetPos;
 
             if (_currentTargetCollider != null)
             {
                 // 1. Calculate direction from Target TO Me (The approach angle)
-                Vector3 directionFromTarget = (transform.position - targetPos).normalized;
+                var directionFromTarget = (transform.position - targetPos).normalized;
 
                 // 2. Rotate this direction by my personal Flank Bias
                 // This creates a "preferred angle" of attack relative to the target
-                Quaternion rotation = Quaternion.Euler(0, _myFlankBias, 0);
-                Vector3 flankedDirection = rotation * directionFromTarget;
+                var rotation = Quaternion.Euler(0, _myFlankBias, 0);
+                var flankedDirection = rotation * directionFromTarget;
 
                 // 3. Project a point onto the collider surface using this angled direction
                 // We ask: "If I were standing at this angle, where is the closest point?"
                 // We simulate a position 20 units away in that direction to find the edge.
-                Vector3 searchPos = targetPos + (flankedDirection * 20f);
-            
+                var searchPos = targetPos + flankedDirection * 20f;
+
                 finalDestination = _currentTargetCollider.ClosestPoint(searchPos);
             }
 
             _lastKnownTargetPosition = targetPos;
-            _agent.SetDestination(finalDestination);
+            Agent.SetDestination(finalDestination);
         }
-    
+
         public void SetStoppingDistance(float distance)
         {
-            if(_agent != null) _agent.stoppingDistance = distance;
+            if (Agent != null) Agent.stoppingDistance = distance;
         }
     }
 }

@@ -13,9 +13,6 @@ namespace Economy
 
     public class EnergyConsumer : MonoBehaviour
     {
-        public event Action<bool> OnPowerStateChanged;
-
-        
         [Header("Settings")] [SerializeField] private EnergyPriority priority = EnergyPriority.Standard;
 
         [SerializeField] private ReactiveInt totalRequirement = new(100);
@@ -50,7 +47,9 @@ namespace Economy
         {
             EnergyGridManager.Instance?.Unregister(this);
         }
-        
+
+        public event Action<bool> OnPowerStateChanged;
+
         private void OnRequirementChanged(int _)
         {
             EnergyGridManager.Instance?.MarkDirty();
