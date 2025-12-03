@@ -18,10 +18,10 @@ TagManager:
   - Terrain
   - PlacementBlockers
   - PowerGrid
-  - Enemy
+  - EnemyGround
   - Projectile
   - PhysicalBlocker
-  - 
+  - EnemyAir
   - 
   - 
   - 
