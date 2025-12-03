@@ -121,9 +121,10 @@ GameObject:
   m_Component:
   - component: {fileID: 3676794826586101564}
   - component: {fileID: 2705688281348489239}
-  - component: {fileID: 7869415474841890011}
   - component: {fileID: 8781234593180703897}
   - component: {fileID: 3238345694428518885}
+  - component: {fileID: 7110423381043756644}
+  - component: {fileID: 1105061454396104584}
   m_Layer: 10
   m_Name: EnnemySmall
   m_TagString: Enemy
@@ -169,18 +170,6 @@ NavMeshAgent:
   m_BaseOffset: 0
   m_WalkableMask: 4294967295
   m_ObstacleAvoidanceType: 4
---- !u!114 &7869415474841890011
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4042230517842136837}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c4fefa2783c64978afe977778d48d8bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::TestNavMesh
 --- !u!114 &8781234593180703897
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -236,6 +225,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7ff620f9ca1448fd8700a52d185f3afd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Enemy.HealthComponent
-  maxHealth: 100
-  currentHealth:
+  _currentHealth:
     _value: 100
+  _maxHealth: 100
+--- !u!114 &7110423381043756644
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4042230517842136837}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 40a16456eea34f7589fb846707f5a7e8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Pathing.Gameplay.EnemyObjectiveTracker
+--- !u!114 &1105061454396104584
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4042230517842136837}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4905b37c72034461becf3aea6772ddf8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Enemy.EnemyMovement
