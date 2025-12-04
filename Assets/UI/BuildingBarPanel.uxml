@@ -1,0 +1,13 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd"
+         editor-extension-mode="False">
+    <Style src="project://database/Assets/UI/BuildingBarPanel.uss?fileID=7433441132597879392&amp;guid=a0d596e7938443a8a478da3fca5785a9&amp;type=3#BuildingBarPanel"/>
+    <ui:VisualElement name="BuildingBarRoot" class="building-bar-root">
+        <ui:VisualElement name="TooltipContainer" class="tooltip-container tooltip-hidden">
+            <ui:Label name="TooltipTitle" text="Building Name" class="tooltip-header"/>
+            <ui:Label name="TooltipCost" text="150 Gold" class="tooltip-cost"/>
+            <ui:Label name="TooltipDesc" text="Description of the building functionality." class="tooltip-desc"/>
+        </ui:VisualElement>
+        <ui:VisualElement name="SlotsContainer" class="slots-container"/>
+    </ui:VisualElement>
+</ui:UXML>
+    

@@ -30,10 +30,10 @@ namespace Towers
     public class Stat
     {
         [SerializeField] private ReactiveFloat _baseValue;
-        private readonly List<StatModifier> _modifiers = new();
-        
+
         // On garde _value privé ou protégé
         [SerializeField] private ReactiveFloat _value = new(0);
+        private readonly List<StatModifier> _modifiers = new();
 
         public Stat(float initialBaseValue = 0)
         {
@@ -47,18 +47,21 @@ namespace Towers
         // 1. Accès direct : permet d'écrire "myStat.Value" (float)
         public float Value => _value.Value;
 
-        // 2. Opérateur Implicite : permet d'écrire "float x = myStat;" ou "if(myStat > 10)"
-        public static implicit operator float(Stat s) => s.Value;
-
         // 3. On expose l'observable pour ceux qui veulent s'abonner aux changements
         public IReadOnlyReactiveProperty<float> Observable => _value;
-        
+
         // (Le reste de tes méthodes BaseValue, AddModifier, Recalculate restent identiques...)
-        
+
         public float BaseValue
         {
             get => _baseValue.Value;
             set => _baseValue.Value = value;
+        }
+
+        // 2. Opérateur Implicite : permet d'écrire "float x = myStat;" ou "if(myStat > 10)"
+        public static implicit operator float(Stat s)
+        {
+            return s.Value;
         }
 
         // Event for when the FINAL calculated value changes
@@ -137,7 +140,6 @@ namespace Towers
 
             // 1. Flat & Percent Add
             foreach (var mod in _modifiers)
-            {
                 switch (mod.Type)
                 {
                     case StatModType.Flat:
@@ -150,7 +152,6 @@ namespace Towers
                         totalPercentMult *= mod.Value;
                         break;
                 }
-            }
 
             // 2. Apply Percent Add
             finalValue *= 1 + sumPercentAdd;

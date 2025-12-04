@@ -1,0 +1,11 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd"
+         editor-extension-mode="False">
+    <Style src="project://database/Assets/UI/InfoPanel.uss?fileID=7433441132597879392&amp;guid=b8383ba551774a218973a50334aae02a&amp;type=3#InfoPanel"/>
+    <ui:VisualElement name="SidePanel" class="side-panel">
+        <ui:Label name="Title" text="Unit Name" class="panel-header"/>
+        <ui:Label name="Description" text="Description placeholder..." class="panel-description"/>
+        <ui:VisualElement class="divider"/>
+        <ui:ScrollView name="StatsContainer" mode="Vertical" class="stats-container"/>
+        <ui:VisualElement name="ActionsContainer" class="actions-container"/>
+    </ui:VisualElement>
+</ui:UXML>
