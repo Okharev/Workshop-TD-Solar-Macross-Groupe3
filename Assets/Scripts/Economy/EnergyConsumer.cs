@@ -37,6 +37,11 @@ namespace Economy
             }
         }
 
+        private void OnDestroy()
+        {
+            EnergyGridManager.Instance?.Unregister(this);
+        }
+
         private void OnEnable()
         {
             EnergyGridManager.Instance?.Register(this);

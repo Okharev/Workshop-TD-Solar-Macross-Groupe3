@@ -1,134 +1,196 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UIElements;
+using Economy;
 
-namespace Economy
+public class EnergyDebugToolkit : MonoBehaviour
 {
-    public class EnergyDebugUI : MonoBehaviour
+    [Header("UI Setup")]
+    public UIDocument uiDocument;
+    public float verticalOffset = 2.5f;
+    public KeyCode toggleKey = KeyCode.F3;
+
+
+    private readonly Queue<LabelElement> _pool = new Queue<LabelElement>();
+    
+    private readonly Dictionary<Component, LabelElement> _activeLabels = new Dictionary<Component, LabelElement>();
+    
+    private readonly List<Component> _toRemove = new List<Component>();
+
+    private VisualElement _container;
+    private UnityEngine.Camera _mainCam;
+    private bool _isVisible = true;
+
+    private class LabelElement
     {
-        [Header("Settings")] public bool showDebug = true;
+        public VisualElement Root; 
+        public Label Text;         
+    }
 
-        public KeyCode toggleKey = KeyCode.F3;
-        public float verticalOffset = 2.5f;
+    private void OnEnable()
+    {
+        _mainCam = UnityEngine.Camera.main;
+        if (uiDocument == null) uiDocument = GetComponent<UIDocument>();
 
-        [Header("Update Frequency")] [Tooltip("How often to refresh the list of buildings (seconds)")]
-        public float refreshRate = 0.5f;
+        var root = uiDocument.rootVisualElement;
+        _container = new VisualElement();
+        _container.pickingMode = PickingMode.Ignore;
+        _container.style.flexGrow = 1;
+        root.Add(_container);
+    }
 
-        private EnergyConsumer[] consumers = Array.Empty<EnergyConsumer>();
-        private UnityEngine.Camera mainCam;
-
-        // Cache
-        private EnergyProducer[] producers = Array.Empty<EnergyProducer>();
-        private GUIStyle styleConsumer;
-        private GUIStyle styleProducer;
-
-        private void Awake()
+    private void LateUpdate()
+    {
+        if (Input.GetKeyDown(toggleKey))
         {
-            mainCam = UnityEngine.Camera.main;
-            StartCoroutine(CacheObjectsRoutine());
+            _isVisible = !_isVisible;
+            _container.style.display = _isVisible ? DisplayStyle.Flex : DisplayStyle.None;
         }
 
-        private void Update()
+        if (!_isVisible || !EnergyGridManager.Instance) return;
+
+        _toRemove.Clear();
+        foreach (var kvp in _activeLabels)
         {
-            if (Input.GetKeyDown(toggleKey)) showDebug = !showDebug;
-        }
-
-        private void OnGUI()
-        {
-            if (!showDebug || !mainCam) return;
-
-            if (styleProducer == null) SetupStyles();
-
-            DrawProducers();
-            DrawConsumers();
-        }
-
-        private IEnumerator CacheObjectsRoutine()
-        {
-            var wait = new WaitForSeconds(refreshRate);
-            while (true)
+            if (!kvp.Key || !kvp.Key.gameObject.activeInHierarchy)
             {
-                if (showDebug)
-                {
-                    // FindObjectsByType automatically excludes inactive objects by default,
-                    // but we still need the runtime checks in OnGUI for the time between refreshes.
-                    producers = FindObjectsByType<EnergyProducer>(FindObjectsSortMode.None);
-                    consumers = FindObjectsByType<EnergyConsumer>(FindObjectsSortMode.None);
-                }
-
-                yield return wait;
+                _toRemove.Add(kvp.Key);
             }
         }
 
-        private void DrawProducers()
+        foreach (var deadKey in _toRemove)
         {
-            foreach (var p in producers)
+            Release(deadKey);
+        }
+
+        UpdateList(EnergyGridManager.Instance.AllProducers);
+        UpdateList(EnergyGridManager.Instance.AllConsumers);
+    }
+
+    private void UpdateList<T>(IEnumerable<T> components) where T : Component
+    {
+        foreach (var item in components)
+        {
+            if (item == null || !item.gameObject.activeInHierarchy) continue;
+
+            var labelEl = Acquire(item);
+
+            if (item is EnergyProducer producer)
             {
-                if (!p || !p.isActiveAndEnabled) continue;
-
-                var screenPos = GetScreenPosition(p.transform.position);
-                if (screenPos.z < 0) continue;
-
-                var current = p.CurrentLoad;
-                var available = p.GetAvailable();
-                var total = current + available;
-
-                var text = p.isMobileGenerator ? "GENERATOR" : "DISTRICT";
-                text += $"\nLoad: {current}/{total}";
-
-                GUI.color = available == 0 ? Color.red : Color.cyan;
-
-                DrawLabel(screenPos, text, styleProducer);
+                UpdateProducerVisuals(labelEl, producer);
             }
-        }
-
-        private void DrawConsumers()
-        {
-            foreach (var c in consumers)
+            else if (item is EnergyConsumer consumer)
             {
-                if (!c || !c.isActiveAndEnabled) continue;
-
-                var screenPos = GetScreenPosition(c.transform.position);
-                if (screenPos.z < 0) continue;
-
-                var isPowered = c.IsPowered;
-                var req = c.TotalRequirement.Value;
-
-                var text = isPowered ? "POWERED" : "NO POWER";
-                text += $"\nReq: {req}";
-
-                GUI.color = isPowered ? Color.green : Color.red;
-
-                DrawLabel(screenPos, text, styleConsumer);
+                UpdateConsumerVisuals(labelEl, consumer);
             }
-        }
 
-        private void DrawLabel(Vector3 screenPos, string text, GUIStyle style)
+            PositionLabel(labelEl, item.transform.position);
+        }
+    }
+    
+    private LabelElement Acquire(Component key)
+    {
+        if (_activeLabels.TryGetValue(key, out var existing)) return existing;
+
+        LabelElement element;
+
+        if (_pool.Count > 0)
         {
-            const float width = 100f;
-            const float height = 50f;
-            // Invert Y for GUI coordinates
-            var rect = new Rect(screenPos.x - width / 2, Screen.height - screenPos.y - height / 2, width, height);
-
-            GUI.Box(rect, GUIContent.none);
-            GUI.Label(rect, text, style);
+            element = _pool.Dequeue();
+            element.Root.style.display = DisplayStyle.Flex;
         }
-
-        private Vector3 GetScreenPosition(Vector3 worldPos)
+        else
         {
-            return mainCam.WorldToScreenPoint(worldPos + Vector3.up * verticalOffset);
+            element = CreateVisual();
+            _container.Add(element.Root);
         }
 
-        private void SetupStyles()
+        _activeLabels.Add(key, element);
+        return element;
+    }
+
+    private void Release(Component key)
+    {
+        if (_activeLabels.TryGetValue(key, out var element))
         {
-            styleProducer = new GUIStyle(GUI.skin.label)
-            {
-                alignment = TextAnchor.MiddleCenter,
-                fontStyle = FontStyle.Bold,
-                fontSize = 12
-            };
-
-            styleConsumer = new GUIStyle(styleProducer);
+            element.Root.style.display = DisplayStyle.None;
+            
+            _pool.Enqueue(element);
+            
+            _activeLabels.Remove(key);
         }
+    }
+
+
+    private LabelElement CreateVisual()
+    {
+        var box = new VisualElement();
+        box.style.position = Position.Absolute;
+        box.style.width = 100;
+        box.style.height = 50;
+        box.style.translate = new StyleTranslate(new Translate(-50, -50, 0)); 
+        box.style.backgroundColor = new Color(0, 0, 0, 0.65f);
+        box.style.borderTopLeftRadius = 4;
+        box.style.borderTopRightRadius = 4;
+        box.style.borderBottomRightRadius = 4;
+        box.style.borderBottomLeftRadius = 4;
+        box.style.justifyContent = Justify.Center;
+        box.style.alignItems = Align.Center;
+
+        var label = new Label();
+        label.style.unityFontStyleAndWeight = FontStyle.Bold;
+        label.style.fontSize = 11;
+        label.style.color = Color.white;
+        label.style.unityTextAlign = TextAnchor.MiddleCenter;
+
+        box.Add(label);
+
+        return new LabelElement { Root = box, Text = label };
+    }
+
+    private void PositionLabel(LabelElement element, Vector3 worldPos)
+    {
+        Vector3 targetPos = worldPos + Vector3.up * verticalOffset;
+        
+        Vector2 panelPos = RuntimePanelUtils.CameraTransformWorldToPanel(
+            _container.panel, targetPos, _mainCam
+        );
+
+        Vector3 direction = targetPos - _mainCam.transform.position;
+        bool isBehind = Vector3.Dot(_mainCam.transform.forward, direction) < 0;
+
+        if (isBehind)
+        {
+             element.Root.style.display = DisplayStyle.None;
+        }
+        else
+        {
+            // Si on l'avait caché, on le remonte
+            if (element.Root.style.display == DisplayStyle.None) 
+                element.Root.style.display = DisplayStyle.Flex;
+
+            element.Root.transform.position = panelPos;
+        }
+    }
+
+    private void UpdateProducerVisuals(LabelElement el, EnergyProducer p)
+    {
+        float current = p.CurrentLoad;
+        float available = p.GetAvailable();
+        float total = current + available;
+
+        string typeName = p.isMobileGenerator ? "GEN" : "PLANT";
+        el.Text.text = $"{typeName}\n{current:F0} / {total:F0}";
+        el.Text.style.color = available <= 0.01f ? new Color(1f, 0.3f, 0.3f) : new Color(0.3f, 1f, 1f); // Rouge pastel / Cyan pastel
+    }
+
+    private void UpdateConsumerVisuals(LabelElement el, EnergyConsumer c)
+    {
+        bool isPowered = c.IsPowered;
+        float req = c.TotalRequirement.Value;
+
+        el.Text.text = isPowered ? "ON" : "OFF";
+        el.Text.text += $"\n-{req:F0} PWR";
+        el.Text.style.color = isPowered ? new Color(0.3f, 1f, 0.3f) : new Color(1f, 0.3f, 0.3f);
     }
 }

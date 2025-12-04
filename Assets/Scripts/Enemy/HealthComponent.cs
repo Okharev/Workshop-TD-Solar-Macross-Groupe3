@@ -1,40 +1,37 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 namespace Enemy
 {
     public class HealthComponent : MonoBehaviour
     {
         [Header("Configuration")]
-        // Utilisation de votre ReactiveInt pour la sérialisation et les événements
         [SerializeField]
-        private ReactiveInt _currentHealth = new(100);
+        private ReactiveInt currentHealth = new(100);
 
-        [SerializeField] private int _maxHealth = 100;
+        [SerializeField] private int maxHealth = 100;
 
-        // Exposition en lecture seule pour la sécurité
-        public IReadOnlyReactiveProperty<int> CurrentHealth => _currentHealth;
-        public int MaxHealth => _maxHealth;
+        public IReadOnlyReactiveProperty<int> CurrentHealth => currentHealth;
+        public int MaxHealth => maxHealth;
 
-        public bool IsDead => _currentHealth.Value <= 0;
+        public event Action<GameObject> OnDeath;
 
-        public void TakeDamage(int amount)
+        public bool TakeDamage(int amount)
         {
-            if (IsDead) return;
+            currentHealth.Value = Mathf.Max(0, currentHealth.Value - amount);
 
-            // Modification simple de la valeur, le système réactif préviendra les abonnés
-            _currentHealth.Value = Mathf.Max(0, _currentHealth.Value - amount);
+            if (currentHealth.Value <= 0)
+            {
+                OnDeath?.Invoke(gameObject);
+                return true;
+            }
+            
+            return false;
         }
 
         public void Heal(int amount)
         {
-            if (IsDead) return;
-            _currentHealth.Value = Mathf.Min(_maxHealth, _currentHealth.Value + amount);
-        }
-
-        // Une méthode pratique pour réinitialiser (utile pour le pooling d'ennemis)
-        public void ResetHealth()
-        {
-            _currentHealth.Value = _maxHealth;
+            currentHealth.Value = Mathf.Min(maxHealth, currentHealth.Value + amount);
         }
     }
 }

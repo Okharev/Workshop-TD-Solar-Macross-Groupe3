@@ -29,7 +29,6 @@ namespace UI
             _westView = new HealthBarView(root.Q("Bar_West"), "West Pylon", _southPylon);
         }
 
-        // Classe interne pour encapsuler la logique d'une barre unique (Pattern View-Wrapper)
         private class HealthBarView
         {
             private readonly VisualElement _barFill;

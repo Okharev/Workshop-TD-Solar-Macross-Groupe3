@@ -12,17 +12,17 @@ namespace Placement
 
     public struct ValidationResult
     {
-        public bool isValid;
-        public string message;
+        public bool IsValid;
+        public string Message;
 
         public static ValidationResult Success()
         {
-            return new ValidationResult { isValid = true };
+            return new ValidationResult { IsValid = true };
         }
 
         public static ValidationResult Fail(string msg)
         {
-            return new ValidationResult { isValid = false, message = msg };
+            return new ValidationResult { IsValid = false, Message = msg };
         }
     }
 
@@ -40,7 +40,7 @@ namespace Placement
             foreach (var v in _validators)
             {
                 var result = v.Validate(p, r, d);
-                if (!result.isValid) return result;
+                if (!result.IsValid) return result;
             }
 
             return ValidationResult.Success();
@@ -67,19 +67,24 @@ namespace Placement
         public ValidationResult Validate(Vector3 pos, Quaternion rot, BuildingSo data)
         {
             var refCol = data.prefab.GetComponent<BoxCollider>();
+            
             if (!refCol) refCol = data.prefab.GetComponentInChildren<BoxCollider>();
+            
             if (!refCol) return ValidationResult.Success();
+            
             var center = pos + rot * refCol.center;
+            
             var halfExtents = refCol.size * (0.5f * _padding);
+            
             if (Physics.OverlapBoxNonAlloc(center, halfExtents, _cache, rot, _mask) > 0)
                 return ValidationResult.Fail("Obstacle detected");
+            
             return ValidationResult.Success();
         }
     }
 
     #endregion
 
-    // CHANGED: Validation Logic adapted to new Producer
     public class AdditiveEnergyValidator : IPlacementValidator
     {
         private readonly LayerMask _energyLayer;
@@ -92,10 +97,7 @@ namespace Placement
         public ValidationResult Validate(Vector3 pos, Quaternion rot, BuildingSo data)
         {
             if (data.energyDrain <= 0) return ValidationResult.Success();
-
-            // Find triggers (Generators/Districts)
-            // Note: Since we use GridManager distance check, ideally we ask Manager.
-            // But for simple "overlap" placement checks, physics is still fastest for "Who is nearby".
+            
             var hits = Physics.OverlapSphere(pos, 0.5f, _energyLayer);
 
             var totalAvailable = 0;
@@ -103,26 +105,21 @@ namespace Placement
 
             foreach (var hit in hits)
             {
-                EnergyProducer provider = null;
-
-                // 1. Direct check
-                provider = hit.GetComponent<EnergyProducer>();
-
-                // 2. Link check (Refactored link class)
-                if (!provider)
+                if (!hit.TryGetComponent<EnergyProducer>(out var provider))
                 {
-                    var link = hit.GetComponent<EnergyFieldLink>();
-                    if (link) provider = link.GetProducer();
+                    if (hit.TryGetComponent<EnergyFieldLink>(out var link))
+                    {
+                        provider = link.GetProducer();
+                    }
                 }
 
-                // 3. Add unique energy
                 if (provider && !checkedProducers.Contains(provider))
                 {
-                    // Check if we are actually in range (Double check logic)
+                    // Check if we are actually in range
                     var dist = Vector3.Distance(pos, provider.transform.position);
+                    
                     if (dist <= provider.BroadcastRadius.Value)
                     {
-                        // Use new Public API
                         totalAvailable += provider.GetAvailable();
                         checkedProducers.Add(provider);
                     }
@@ -152,6 +149,10 @@ namespace Placement
         [Header("Visuals")] [SerializeField] private Material validPreviewMat;
 
         [SerializeField] private Material invalidPreviewMat;
+        
+        public event Action OnPlacementStarted;
+        public event Action OnPlacementEnded;
+        public event Action<int> OnBuildingPlaced;
 
         private BuildingSo _currentBuilding;
         private float _currentRotationY;
@@ -194,10 +195,10 @@ namespace Placement
                 _ghostHelper.UpdatePosition(position, rotation);
 
                 var result = _validator.Validate(position, rotation, _currentBuilding);
-                _ghostHelper.SetState(result.isValid);
+                _ghostHelper.SetState(result.IsValid);
 
                 if (Mouse.current.leftButton.wasPressedThisFrame && !IsPointerOverUI())
-                    if (result.isValid)
+                    if (result.IsValid)
                         PlaceTower(position, rotation);
             }
             else
@@ -206,9 +207,6 @@ namespace Placement
             }
         }
 
-        public event Action OnPlacementStarted;
-        public event Action OnPlacementEnded;
-        public event Action<int> OnBuildingPlaced;
 
         public void StartPlacement(BuildingSo blueprint)
         {
@@ -220,7 +218,6 @@ namespace Placement
 
             _ghostHelper.CreateGhost(blueprint.prefab.gameObject);
 
-            // CHANGED: Uncommented Heatmap toggle
             if (blueprint.energyDrain > 0) EnergyHeatmapSystem.Instance?.ToggleHeatmap(true);
 
             OnPlacementStarted?.Invoke();
@@ -232,7 +229,6 @@ namespace Placement
             _currentBuilding = null;
             _ghostHelper.ClearGhost();
 
-            // CHANGED: Uncommented Heatmap toggle
             EnergyHeatmapSystem.Instance?.ToggleHeatmap(false);
 
             OnPlacementEnded?.Invoke();
@@ -255,12 +251,6 @@ namespace Placement
             // Instantiate Real Object
             var newObj = Instantiate(_currentBuilding.prefab.gameObject, position, rotation);
 
-            // CHANGED: Energy Registration is automatic now!
-            // When newObj is instantiated, EnergyConsumer.Start() runs.
-            // It calls EnergyGridManager.Register().
-            // The Manager sees the new drain, runs ResolveGrid(), and powers it.
-            // No manual "ConsumeEnergyResources" needed.
-
             OnBuildingPlaced?.Invoke(_currentBuilding.cost);
             Debug.Log($"Placed {_currentBuilding.name}");
         }
@@ -279,7 +269,6 @@ namespace Placement
         }
     }
 
-    // [PlacementGhost Class remains exactly the same, no changes needed]
     public class PlacementGhost
     {
         private readonly Material _invalidMaterial;

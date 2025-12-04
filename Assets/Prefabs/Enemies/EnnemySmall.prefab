@@ -126,6 +126,7 @@ GameObject:
   - component: {fileID: 7110423381043756644}
   - component: {fileID: 1105061454396104584}
   - component: {fileID: 1075060716700723535}
+  - component: {fileID: -3085748104850769281}
   m_Layer: 10
   m_Name: EnnemySmall
   m_TagString: Enemy
@@ -226,9 +227,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7ff620f9ca1448fd8700a52d185f3afd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Enemy.HealthComponent
-  _currentHealth:
+  currentHealth:
     _value: 100
-  _maxHealth: 100
+  maxHealth: 100
 --- !u!114 &7110423381043756644
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -241,6 +242,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 40a16456eea34f7589fb846707f5a7e8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Pathing.Gameplay.EnemyObjectiveTracker
+  _activeObjectiveScript: {fileID: 0}
+  _backupObjective: {fileID: 0}
 --- !u!114 &1105061454396104584
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -272,3 +275,16 @@ MonoBehaviour:
   projectilePrefab: {fileID: 0}
   firePoint: {fileID: 0}
   projectileSpeed: 20
+--- !u!114 &-3085748104850769281
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4042230517842136837}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4c7c047890ef41e3a09b86de7cd68374, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Enemy.LootMoneyOnDeath
+  amountToLoot: 10

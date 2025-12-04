@@ -18,21 +18,17 @@ namespace Enemy
 
         private void OnDrawGizmos()
         {
-            // Dessin du point de spawn (Root)
             Gizmos.color = gizmoColor;
             Gizmos.DrawWireSphere(transform.position, 1f);
 
-            // Ligne du Spawn -> 1er Waypoint
             if (waypoints.Count > 0 && waypoints[0] != null) Gizmos.DrawLine(transform.position, waypoints[0].position);
 
-            // Ligne du dernier Waypoint -> Objectif
             if (waypoints.Count > 0 && localObjective != null)
             {
                 Gizmos.color = Color.red;
                 Gizmos.DrawLine(waypoints[^1].position, localObjective.transform.position);
             }
 
-            // Chemin entre les waypoints
             if (waypoints == null || waypoints.Count == 0) return;
             Gizmos.color = gizmoColor;
             for (var i = 0; i < waypoints.Count - 1; i++)
@@ -45,23 +41,19 @@ namespace Enemy
             if (waypoints.Count > 0 && waypoints[^1] != null) Gizmos.DrawSphere(waypoints[^1].position, 0.5f);
         }
 
-        // --- La méthode Spawn (comme EnemySpawner) ---
         public void Spawn(GameObject prefab, DestructibleObjective targetOverride = null)
         {
             if (prefab == null) return;
 
-            // 1. Positionnement
             var spawnRotation = transform.rotation;
             if (waypoints.Count > 0 && waypoints[0] != null)
                 spawnRotation = Quaternion.LookRotation(waypoints[0].position - transform.position);
 
             var newAirUnit = Instantiate(prefab, transform.position, spawnRotation);
 
-            // 2. Initialiser le mouvement
             var boidAI = newAirUnit.GetComponent<FighterJetAi>();
             if (boidAI) boidAI.Initialize(waypoints);
 
-            // 3. Initialiser les objectifs avec l'OVERRIDE
             var tracker = newAirUnit.GetComponent<EnemyObjectiveTracker>();
             if (tracker)
             {

@@ -206,18 +206,19 @@ namespace Economy
         }
 
         // --- CUSTOM COMPARERS ---
-        // Using classes implementing IComparer<T> to avoid boxing/allocations
+        // Avoiding boxing/allocations
 
         private class ProducerComparer : IComparer<EnergyProducer>
         {
             public int Compare(EnergyProducer x, EnergyProducer y)
             {
                 // 1. Mobile Generators First (y vs x for Descending)
-                var mobileComp = y.isMobileGenerator.CompareTo(x.isMobileGenerator);
-                if (mobileComp != 0) return mobileComp;
-
-                // 2. Higher Capacity First
-                return y.MaxCapacity.Value.CompareTo(x.MaxCapacity.Value);
+                var mobileComp = (y is { isMobileGenerator: true }).CompareTo(x is { isMobileGenerator: true });
+                return mobileComp != 0
+                    ? mobileComp
+                    :
+                    // 2. Higher Capacity First
+                    y.MaxCapacity.Value.CompareTo(x.MaxCapacity.Value);
             }
         }
 
@@ -227,11 +228,10 @@ namespace Economy
             {
                 // 1. Priority First (Critical > Low)
                 var priorityComp = y.Priority.CompareTo(x.Priority);
-                if (priorityComp != 0) return priorityComp;
-
-                // 2. Deterministic Tie-Breaker (Position X)
-                // This ensures that if priority is equal, the order doesn't jitter
-                return x.transform.position.x.CompareTo(y.transform.position.x);
+                return priorityComp != 0 ? priorityComp :
+                    // 2. Deterministic Tie-Breaker (Position X)
+                    // This ensures that if priority is equal, the order doesn't jitter
+                    x.transform.position.x.CompareTo(y.transform.position.x);
             }
         }
     }
