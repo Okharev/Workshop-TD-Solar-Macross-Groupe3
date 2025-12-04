@@ -5,23 +5,19 @@ using UnityEngine.UIElements;
 
 namespace UI
 {
-// Structure pour définir un bouton dynamique (ex: Upgrade, Sell)
     public struct InteractionButton
     {
         public string Label;
         public Action OnClick;
     }
 
-// L'interface que tes Tours et Ennemis doivent implémenter
     public interface ISelectable
     {
         string DisplayName { get; }
         string Description { get; }
 
-        // Pour afficher des stats (ex: "Dégâts: 50")
         Dictionary<string, string> GetStats();
 
-        // Pour générer les boutons d'action
         List<InteractionButton> GetInteractions();
 
         void OnSelect();
@@ -31,7 +27,6 @@ namespace UI
 
     public static class SelectionManager
     {
-        // On garde en mémoire l'objet actuellement sélectionné
         private static ISelectable _currentSelection;
 
         public static event Action<ISelectable> OnObjectSelected;
@@ -97,11 +92,9 @@ namespace UI
 
         private void ShowPanel(ISelectable target)
         {
-            // 1. Remplir les textes de base
             _titleLabel.text = target.DisplayName;
             _descLabel.text = target.Description;
 
-            // 2. Remplir les stats dynamiquement
             _statsContainer.Clear();
             foreach (var stat in target.GetStats())
             {
@@ -110,7 +103,6 @@ namespace UI
                 _statsContainer.Add(statLabel);
             }
 
-            // 3. Créer les boutons d'action
             _actionsContainer.Clear();
             var actions = target.GetInteractions();
 
@@ -123,7 +115,6 @@ namespace UI
                     _actionsContainer.Add(btn);
                 }
 
-            // 4. Activer l'animation CSS
             _panel.AddToClassList("side-panel--open");
         }
 

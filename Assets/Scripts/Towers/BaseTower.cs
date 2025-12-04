@@ -278,6 +278,8 @@ namespace Towers
         private void SellTower()
         {
             Debug.Log("Sold Tower !");
+
+            
             SelectionManager.Deselect();
             Destroy(gameObject);
         }
@@ -285,6 +287,7 @@ namespace Towers
         private void UpgradeTower()
         {
             Debug.Log("Upgraded ");
+            
 
             SelectionManager.Select(this);
         }
