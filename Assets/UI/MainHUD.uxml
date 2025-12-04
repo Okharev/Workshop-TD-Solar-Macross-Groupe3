@@ -1,18 +1,36 @@
-<ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
-    <ui:Template name="GeneratorPanel" src="project://database/Assets/UI/GeneratorPanel.uxml?fileID=9197481963319205126&amp;guid=cadc881c32efbef4e993687429e7b067&amp;type=3#GeneratorPanel" />
-    <ui:Template name="TowerPanel" src="project://database/Assets/UI/TowerPanel.uxml?fileID=9197481963319205126&amp;guid=34109622c30361c4bab97781797dcdce&amp;type=3#TowerPanel" />
-    <ui:Template name="TowerSelectionPanel" src="project://database/Assets/UI/TowerSelectionPanel.uxml?fileID=9197481963319205126&amp;guid=94bf9e7a4af783f4386a238fc7e4d175&amp;type=3#TowerSelectionPanel" />
-    <ui:Template name="WavePanel" src="project://database/Assets/UI/WavePanel.uxml?fileID=9197481963319205126&amp;guid=b5be9823c72e88c4f8e8c7526ff62807&amp;type=3#WavePanel" />
-    <ui:VisualElement style="flex-grow: 1; flex-direction: row; justify-content: space-between; align-items: center;">
-        <ui:VisualElement style="align-content: auto;">
-            <ui:Instance template="WavePanel" />
-            <ui:Instance template="GeneratorPanel" style="height: 151px; width: 188px;" />
+<ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns:ui="UnityEngine.UIElements"
+         xsi:noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd"
+         editor-extension-mode="False">
+
+    <ui:Style src="MainHUD.uss"/>
+
+    <ui:Template name="WavePanelTemplate" src="WavePanel.uxml"/>
+    <ui:Template name="InfoPanelTemplate" src="InfoPanel.uxml"/>
+    <ui:Template name="ObjectiveRowTemplate" src="ObjectiveHealthBar.uxml"/>
+    <ui:Template name="BuildingBarPanelTemplate" src="BuildingBarPanel.uxml"/>
+
+    <ui:VisualElement name="HUD_Root" picking-mode="Ignore" class="hud-root">
+
+        <ui:VisualElement name="LeftSidebar" class="left-sidebar" picking-mode="Ignore">
+
+            <ui:Instance template="WavePanelTemplate" name="WavePanelInstance"/>
+
+            <ui:VisualElement style="height: 10px;"/>
+
+            <ui:VisualElement name="ObjectivesContainer" class="objectives-box">
+                <ui:Label text="Districts" class="header-label"/>
+                <ui:Instance template="ObjectiveRowTemplate" name="Bar_North"/>
+                <ui:Instance template="ObjectiveRowTemplate" name="Bar_East"/>
+                <ui:Instance template="ObjectiveRowTemplate" name="Bar_West"/>
+            </ui:VisualElement>
         </ui:VisualElement>
-        <ui:VisualElement name="VisualElement">
-            <ui:Instance template="TowerPanel" style="height: 260px;" />
+
+        <ui:VisualElement name="RightSidebar" class="right-sidebar" picking-mode="Ignore">
+            <ui:Instance template="InfoPanelTemplate" name="InfoPanelInstance"/>
         </ui:VisualElement>
-    </ui:VisualElement>
-    <ui:VisualElement style="flex-grow: 1; align-items: center; justify-content: flex-end; align-content: flex-end; align-self: stretch; margin-top: 0; margin-right: 0; margin-bottom: 0; margin-left: 0; flex-direction: column; position: relative;">
-        <ui:Instance template="TowerSelectionPanel" />
+
+        <ui:Instance template="BuildingBarPanelTemplate" name="BuildingBarInstance"/>
+
     </ui:VisualElement>
 </ui:UXML>

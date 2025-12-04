@@ -1,12 +1,15 @@
 ﻿using System.Collections;
+using System.Collections.Generic;
+using System.Globalization;
 using Towers;
+using UI;
 using UnityEngine;
 using UnityEngine.AI;
 
 namespace Economy
 {
     [RequireComponent(typeof(NavMeshAgent))]
-    public class EnemyController : MonoBehaviour
+    public class EnemyController : MonoBehaviour, ISelectable
     {
         [SerializeField] public float baseDamage = 10f;
         [SerializeField] public float baseRange = 15f;
@@ -19,11 +22,11 @@ namespace Economy
         [SerializeField] public Stat fireRate;
         [SerializeField] public Stat health;
         [SerializeField] public Stat speed;
-        
-        private NavMeshAgent _agent;
 
         [SerializeField] private bool isKnockedBack;
-        
+
+        private NavMeshAgent _agent;
+
         private void Awake()
         {
             InitializeReactiveStats();
@@ -36,6 +39,32 @@ namespace Economy
                     Debug.Log($"Enemy Speed Updated: {_agent.speed}");
                 })
                 .AddTo(this);
+        }
+
+        public string DisplayName => "Yaa";
+        public string Description => "SDFSDF";
+
+        public Dictionary<string, string> GetStats()
+        {
+            return new Dictionary<string, string>
+            {
+                { "Range", range.Value.ToString(CultureInfo.InvariantCulture) },
+                { "Speed", fireRate.Value.ToString(CultureInfo.InvariantCulture) },
+                { "Damage", damage.Value.ToString(CultureInfo.InvariantCulture) }
+            };
+        }
+
+        public List<InteractionButton> GetInteractions()
+        {
+            return null;
+        }
+
+        public void OnSelect()
+        {
+        }
+
+        public void OnDeselect()
+        {
         }
 
         public void InitializeReactiveStats()
@@ -52,7 +81,7 @@ namespace Economy
             health.Initialize();
             speed.Initialize();
         }
-        
+
         public void ApplyKnockback(Vector3 sourcePosition, float force, float duration)
         {
             if (isKnockedBack) return; // Évite le spam de knockback
@@ -70,7 +99,7 @@ namespace Economy
             _agent.velocity = Vector3.zero;
 
             // 2. Calculer la direction du recul (de la tour vers l'ennemi)
-            Vector3 direction = (transform.position - sourcePosition).normalized;
+            var direction = (transform.position - sourcePosition).normalized;
             direction.y = 0; // On garde le recul à l'horizontale pour ne pas qu'il s'envole
 
             float timer = 0;
@@ -80,7 +109,7 @@ namespace Economy
                 // 3. Déplacer manuellement l'ennemi
                 // On utilise Move de l'agent pour respecter les collisions du NavMesh
                 _agent.Move(direction * (force * Time.deltaTime));
-            
+
                 timer += Time.deltaTime;
                 yield return null; // Attendre la prochaine frame
             }

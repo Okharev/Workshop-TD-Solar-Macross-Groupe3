@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Economy;
 using UnityEngine;
+
 // Import R3
 
 // Required to access EnemyController
@@ -72,8 +73,6 @@ namespace Towers.TowerDerived
 
         private void CheckForEnemies()
         {
-
-
             // 1. Physics Check (NonAlloc for performance)
             var hitCount = Physics.OverlapSphereNonAlloc(transform.position, range.Value, _hitBuffer, enemyLayer);
 
@@ -83,18 +82,15 @@ namespace Towers.TowerDerived
             // 2. Identify Valid Enemies in Range
             for (var i = 0; i < hitCount; i++)
             {
-
                 var enemy = _hitBuffer[i].GetComponentInParent<EnemyController>();
 
                 if (enemy)
                 {
-
                     // Optional: Distance check if collider is larger than range
                     var dist = Vector3.Distance(transform.position, enemy.transform.position);
                     if (dist <= range.Value)
                     {
                         _currentFrameEnemies.Add(enemy);
-
 
 
                         // If this enemy is new to the set, apply the slow
