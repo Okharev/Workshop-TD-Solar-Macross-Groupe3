@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using Enemy;
+using UnityEditor.PackageManager;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -52,7 +54,7 @@ namespace Towers
             _rb.useGravity = false;
             _rb.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
 
-            _enemyLayer = LayerMask.GetMask("Enemies");
+            _enemyLayer = LayerMask.GetMask("EnemyAir", "EnemyGround");
             _waypointReachedThresholdSqr = waypointReachedThreshold * waypointReachedThreshold;
 
             _perlinSeedX = Random.Range(0f, 100f);
@@ -132,40 +134,27 @@ namespace Towers
         protected override void HandleImpact(Collider other)
         {
             // 1. AoE Damage Logic
-            var hitCount =
-                Physics.OverlapSphereNonAlloc(transform.position, explosionRange, collidersCache, _enemyLayer);
+            var hitCount = Physics.OverlapSphereNonAlloc(transform.position, explosionRange, collidersCache, _enemyLayer);
             var validHits = collidersCache.AsSpan(0, hitCount);
 
             foreach (var col in validHits)
             {
-                // if (!col.TryGetComponent<HealthComponent>(out var health)) continue;
-// 
-                // // 2. Trigger Events on Source Tower
-                // if (source != null)
-                // {
-                //     source.events.onHit?.Invoke(new UpgradeProvider.OnHitData
-                //     {
-                //         damage = damage,
-                //         damageType = UpgradeProvider.DamageType.AreaOfEffect,
-                //         origin = source.gameObject,
-                //         target = col.gameObject
-                //     });
-// 
-                //     if (health.TakeDamage(damage))
-                //     {
-                //         source.events.onKill?.Invoke(new UpgradeProvider.OnKillData
-                //         {
-                //             damage = damage,
-                //             origin = source.gameObject,
-                //             target = col.gameObject
-                //         });
-                //     }
-                // }
-                // else
-                // {
-                //     // Fallback if tower was destroyed while missile was in flight
-                //     health.TakeDamage(damage);
-                // }
+                if (!col.TryGetComponent<HealthComponent>(out var victim)) return;
+                source.Events.OnHit?.Invoke(new UpgradeProvider.OnHitData()
+                {
+                    Origin = gameObject,
+                    Target = gameObject
+                });
+
+
+                if (victim.TakeDamage(Mathf.RoundToInt(source.damage.Value)))
+                {
+                    source.Events.OnKill?.Invoke(new UpgradeProvider.OnKillData()
+                    {
+                        Origin = gameObject,
+                        Target = gameObject
+                    });
+                }
             }
 
             Destroy(gameObject);

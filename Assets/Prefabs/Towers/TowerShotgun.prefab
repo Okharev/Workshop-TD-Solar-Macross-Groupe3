@@ -1,5 +1,36 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!1 &3513237235994944882
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6813643493453001819}
+  m_Layer: 8
+  m_Name: UI_Anchor
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6813643493453001819
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3513237235994944882}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 8.2, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1990734976404385194}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &7592628988196407945
 GameObject:
   m_ObjectHideFlags: 0
@@ -64,6 +95,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 3234638912813975610}
+  - {fileID: 6813643493453001819}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!65 &2770589792623923187
@@ -99,10 +131,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 59633b8dcd384b42a84005c4df8b8c89, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Economy.EnergyConsumer
-  _initialRequirement: 100
-  _producerLayer:
-    serializedVersion: 2
-    m_Bits: 512
+  priority: 50
+  totalRequirement:
+    _value: 100
 --- !u!114 &2372113854924329592
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -120,21 +151,28 @@ MonoBehaviour:
     name: 
     description: 
     icon: {fileID: 0}
-    cost: 0
-    energyDrain: 0
+    cost: 100
+    refundRatio: 0.5
+    energyDrain: 100
     prefab: {fileID: 0}
   baseDamage: 10
   baseRange: 15
   baseFireRate: 1
   damage:
-    baseValue:
-      value: 0
+    _baseValue:
+      _value: 0
+    _value:
+      _value: 0
   range:
-    baseValue:
-      value: 0
+    _baseValue:
+      _value: 0
+    _value:
+      _value: 0
   fireRate:
-    baseValue:
-      value: 0
+    _baseValue:
+      _value: 0
+    _value:
+      _value: 0
   scaleRotationWithFireRate: 1
   yPivot: {fileID: 4151466260295540900}
   xPivot: {fileID: 2917381104366024351}
@@ -156,7 +194,10 @@ MonoBehaviour:
   rotationMode: 1
   referenceTurnAngle: 120
   pelletCount: 6
+  knockbackForce: 2
+  knockbackDuration: 0.2
   horizontalSpreadAngle: 30
+  pelletsThickness: 0.1
   verticalSpreadFactor: 0.2
 --- !u!1001 &3128039703061966801
 PrefabInstance:

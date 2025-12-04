@@ -23,6 +23,7 @@ namespace Enemy
             if (currentHealth.Value <= 0)
             {
                 OnDeath?.Invoke(gameObject);
+                Destroy(gameObject);
                 return true;
             }
             

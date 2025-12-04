@@ -110,8 +110,7 @@ namespace Economy
             {
                 if (!p || !p.isActiveAndEnabled) continue;
 
-                // DATA ACCESS: Reactive Property & Manager Logic
-                float energy = p.GetAvailable(); // Visualizes FREE energy
+                float energy = p.GetAvailable();
                 // float energy = p.MaxCapacity.Value; // Uncomment to visualize TOTAL RANGE
 
                 if (energy <= 0) continue;

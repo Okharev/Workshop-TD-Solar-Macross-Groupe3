@@ -55,7 +55,7 @@ namespace Economy
 
         public event Action<bool> OnPowerStateChanged;
 
-        private void OnRequirementChanged(int _)
+        private static void OnRequirementChanged(int _)
         {
             EnergyGridManager.Instance?.MarkDirty();
         }

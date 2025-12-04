@@ -27,7 +27,6 @@ namespace Placement
 
         private void OnEnable()
         {
-            // If we have already generated them, just turn them back on
             if (_hasGenerated)
                 foreach (var sector in _generatedSectors)
                     if (sector)
@@ -36,7 +35,6 @@ namespace Placement
 
         private void OnDisable()
         {
-            // When this script (or object) is disabled, turn off the children
             foreach (var sector in _generatedSectors)
                 if (sector)
                     sector.SetActive(false);
@@ -44,7 +42,6 @@ namespace Placement
 
         private void GenerateDistricts()
         {
-            // Clear old if any (in case of manual re-run)
             foreach (var old in _generatedSectors) Destroy(old);
             _generatedSectors.Clear();
 

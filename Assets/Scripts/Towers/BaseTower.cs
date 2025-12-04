@@ -27,9 +27,15 @@ namespace Towers
         public string name;
         public string description;
         public Texture2D icon;
+        [Range(0, 2000)]
         public int cost;
+        [Range(0.0f, 1.0f)]
+        public float refundRatio;
+        [Range(0, 2000)]
         public int energyDrain;
         public GameObject prefab;
+        
+        public int RefundCost => Mathf.RoundToInt(cost * refundRatio);
     }
 
     [RequireComponent(typeof(EnergyConsumer), typeof(Collider))]
@@ -84,9 +90,8 @@ namespace Towers
         {
             if (!powerSource) powerSource = GetComponent<EnergyConsumer>();
 
-            // Default Layers if not set
-            if (targetLayer == 0) targetLayer = LayerMask.GetMask("Enemy");
-            if (visionBlockerLayer == 0) visionBlockerLayer = LayerMask.GetMask("Terrain", "PlacementBlockers");
+            if (targetLayer == 0) targetLayer = LayerMask.GetMask("EnemyGround");
+            if (visionBlockerLayer == 0) visionBlockerLayer = LayerMask.GetMask("Terrain", "PhysicalBlocker");
 
             ApplyBlueprintStats();
         }
@@ -130,8 +135,8 @@ namespace Towers
         }
 
 
-        public string DisplayName => "Tower";
-        public string Description => "testing";
+        public string DisplayName => buildingData.name;
+        public string Description => buildingData.description;
 
         public Dictionary<string, string> GetStats()
         {
@@ -149,12 +154,12 @@ namespace Towers
             {
                 new()
                 {
-                    Label = "Améliorer (100 Or)",
+                    Label = "Upgrade: XXX Gold",
                     OnClick = UpgradeTower
                 },
                 new()
                 {
-                    Label = "Vendre (50 Or)",
+                    Label = "Sell: " + buildingData.RefundCost,
                     OnClick = SellTower
                 }
             };
@@ -175,26 +180,18 @@ namespace Towers
             return baseSpeed * Mathf.Max(1f, fireRate.Value);
         }
 
-        protected float GetCurrentRotationSpeed(float baseInspectorSpeed)
+        private float GetCurrentRotationSpeed(float baseInspectorSpeed)
         {
             var ratee = fireRate.Value;
             if (ratee <= 0) ratee = 0.1f;
 
-            switch (rotationMode)
+            return rotationMode switch
             {
-                case RotationMode.Fixed:
-                    return baseInspectorSpeed;
-
-                case RotationMode.ScaledWithStats:
-                    return baseInspectorSpeed * Mathf.Max(1f, ratee);
-
-                case RotationMode.SyncWithReload:
-
-                    return referenceTurnAngle * ratee;
-
-                default:
-                    return baseInspectorSpeed;
-            }
+                RotationMode.Fixed => baseInspectorSpeed,
+                RotationMode.ScaledWithStats => baseInspectorSpeed * Mathf.Max(1f, ratee),
+                RotationMode.SyncWithReload => referenceTurnAngle * ratee,
+                _ => baseInspectorSpeed
+            };
         }
 
         protected IEnumerator TargetUpdateLoop()
@@ -277,8 +274,7 @@ namespace Towers
 
         private void SellTower()
         {
-            Debug.Log("Sold Tower !");
-
+            CurrencyManager.Instance.Gain(buildingData.RefundCost);
             
             SelectionManager.Deselect();
             Destroy(gameObject);
@@ -288,7 +284,6 @@ namespace Towers
         {
             Debug.Log("Upgraded ");
             
-
             SelectionManager.Select(this);
         }
     }

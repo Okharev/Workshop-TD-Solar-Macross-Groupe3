@@ -11,6 +11,14 @@ namespace Enemy
         public int amountToLoot;
         private HealthComponent _healthComponent;
 
+        private void Awake()
+        {
+            if (!TryGetComponent(out _healthComponent))
+            {
+                Debug.LogError("failed to get health component");
+            }
+        }
+
         private void OnEnable()
         {
             _healthComponent.OnDeath += HandleDeath;

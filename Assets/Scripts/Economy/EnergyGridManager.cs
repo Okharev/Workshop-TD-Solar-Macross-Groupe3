@@ -36,6 +36,11 @@ namespace Economy
         public Dictionary<EnergyConsumer, Dictionary<EnergyProducer, int>> ConnectionGraph { get; } = new();
         public IReadOnlyCollection<EnergyProducer> AllProducers => _producers;
         public IReadOnlyCollection<EnergyConsumer> AllConsumers => _consumers;
+        
+        public event Action<EnergyProducer> OnProducerRegistered;
+        public event Action<EnergyProducer> OnProducerUnregistered;
+        public event Action<EnergyConsumer> OnConsumerRegistered;
+        public event Action<EnergyConsumer> OnConsumerUnregistered;
 
         private void Awake()
         {
@@ -58,24 +63,32 @@ namespace Economy
         {
             _producers.Add(p);
             MarkDirty();
+            
+            OnProducerRegistered?.Invoke(p);
         }
 
         public void Unregister(EnergyProducer p)
         {
             _producers.Remove(p);
             MarkDirty();
+            
+            OnProducerUnregistered?.Invoke(p);
         }
 
         public void Register(EnergyConsumer c)
         {
             _consumers.Add(c);
             MarkDirty();
+            
+            OnConsumerRegistered?.Invoke(c);
         }
 
         public void Unregister(EnergyConsumer c)
         {
             _consumers.Remove(c);
             MarkDirty();
+            
+            OnConsumerUnregistered?.Invoke(c);
         }
 
         public void MarkDirty()

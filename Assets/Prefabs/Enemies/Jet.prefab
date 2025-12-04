@@ -14,6 +14,8 @@ GameObject:
   - component: {fileID: 3594526995502976572}
   - component: {fileID: 3399384273038241848}
   - component: {fileID: 5223861261425597731}
+  - component: {fileID: 4774346428336883143}
+  - component: {fileID: 2530288568501768135}
   m_Layer: 13
   m_Name: Jet
   m_TagString: Enemy
@@ -35,6 +37,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 5948110365144819105}
+  - {fileID: 7010327970727181967}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!54 &3991029059045046675
@@ -128,9 +131,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7ff620f9ca1448fd8700a52d185f3afd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Enemy.HealthComponent
-  _currentHealth:
+  currentHealth:
     _value: 100
-  _maxHealth: 100
+  maxHealth: 100
 --- !u!114 &5223861261425597731
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -143,6 +146,64 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 40a16456eea34f7589fb846707f5a7e8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Pathing.Gameplay.EnemyObjectiveTracker
+  _activeObjectiveScript: {fileID: 0}
+  _backupObjective: {fileID: 0}
+--- !u!114 &4774346428336883143
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5069400229212143550}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4c7c047890ef41e3a09b86de7cd68374, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Enemy.LootMoneyOnDeath
+  amountToLoot: 15
+--- !u!114 &2530288568501768135
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5069400229212143550}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa5467bde24d446f92a3f8c25480ce03, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Enemy.HealthComponentUILinker
+--- !u!1 &8828201989002400343
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7010327970727181967}
+  m_Layer: 13
+  m_Name: UI_Anchor
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7010327970727181967
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8828201989002400343}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 2.31, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 6778696234163456189}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &6125273320053785162
 PrefabInstance:
   m_ObjectHideFlags: 0

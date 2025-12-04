@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Economy;
+using Enemy;
 using UnityEngine;
 // Nécessaire pour le Dictionary
 using Random = UnityEngine.Random;
@@ -110,17 +111,23 @@ namespace Towers.TowerDerived
             {
                 Debug.DrawRay(fp.position, shootDir * range.Value, Color.green, 0.2f);
 
-                // --- Logique de dégâts ---
-                // Tu devrais décommenter et adapter ceci selon ton système de vie
-                /*
-                if (hit.collider.TryGetComponent<IDamageable>(out var victim))
+                if (!hit.collider.TryGetComponent<HealthComponent>(out var victim)) return;
+                Events.OnHit?.Invoke(new UpgradeProvider.OnHitData()
                 {
-                    victim.TakeDamage(dmg);
-                }
-                */
+                    Origin = gameObject,
+                    Target = gameObject
+                });
 
-                // --- Logique de Tracking pour le Knockback ---
-                // On essaie de récupérer le script de mouvement sur l'ennemi touché
+
+                if (victim.TakeDamage(Mathf.RoundToInt(damage.Value)))
+                {
+                    Events.OnKill?.Invoke(new UpgradeProvider.OnKillData()
+                    {
+                        Origin = gameObject,
+                        Target = gameObject
+                    });
+                }
+
                 var movement = hit.collider.GetComponentInParent<EnemyController>();
                 if (movement)
                     if (!_hitTracker.TryAdd(movement, 1))

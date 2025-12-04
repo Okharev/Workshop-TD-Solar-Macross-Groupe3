@@ -30,7 +30,6 @@ namespace Enemy
 
         public event Action<int, string> OnWaveStarted;
         public event Action OnWaveFinished;
-        public event Action OnWaveSequenceEnded;
         public event Action OnAllWavesCompleted;
 
         [ContextMenu("Start Next Wave")]
@@ -130,7 +129,7 @@ namespace Enemy
         private IEnumerator SpawnAirSegment(AirWaveSegment segment)
         {
             if (segment.initialDelay > 0) yield return new WaitForSeconds(segment.initialDelay);
-            if (segment.targetPath == null) yield break;
+            if (!segment.targetPath) yield break;
             for (var i = 0; i < segment.count; i++)
             {
                 segment.targetPath.Spawn(segment.enemyPrefab, segment.specificTarget);

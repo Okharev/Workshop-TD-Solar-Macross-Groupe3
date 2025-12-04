@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Enemy;
 using UnityEngine;
 
 namespace Towers.TowerDerived
@@ -93,18 +94,22 @@ namespace Towers.TowerDerived
                 // B. Si on touche un ennemi (Target Layer)
                 if (((1 << hit.collider.gameObject.layer) & targetLayer) != 0)
                 {
-                    // Logique de dégâts
-                    // TODO: Remplace 'IDamageable' par ton vrai script de vie (ex: EnemyHealth)
-                    /*
-                    if (hit.collider.TryGetComponent<IDamageable>(out var victim))
+                    if (!hit.collider.TryGetComponent<HealthComponent>(out var victim)) return;
+                    Events.OnHit?.Invoke(new UpgradeProvider.OnHitData()
                     {
-                        victim.TakeDamage(damageAmount);
-                        // Effet visuel d'impact ici
-                    }
-                    */
+                        Origin = gameObject,
+                        Target = gameObject
+                    });
 
-                    // On ne fait PAS de break ici, car c'est un tir perforant !
-                    // La balle continue vers le prochain ennemi dans la liste.
+
+                    if (victim.TakeDamage(Mathf.RoundToInt(damageAmount)))
+                    {
+                        Events.OnKill?.Invoke(new UpgradeProvider.OnKillData()
+                        {
+                            Origin = gameObject,
+                            Target = gameObject
+                        });
+                    }
                 }
             }
         }

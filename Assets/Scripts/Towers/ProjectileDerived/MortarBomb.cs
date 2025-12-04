@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using Enemy;
+using UnityEngine;
 
 namespace Towers.ProjectileDerived
 {
@@ -36,27 +37,23 @@ namespace Towers.ProjectileDerived
             for (var i = 0; i < hits; i++)
             {
                 var obj = collidersCache[i];
-                if (obj == null) continue;
 
-                /*
-                if (!obj.TryGetComponent<HealthComponent>(out var health)) continue;
-
-                firingTower.events.onHit?.Invoke(new UpgradeProvider.OnHitData
+                if (!obj.TryGetComponent<HealthComponent>(out var victim)) return;
+                source.Events.OnHit?.Invoke(new UpgradeProvider.OnHitData()
                 {
-                    damage = damage,
-                    damageType = UpgradeProvider.DamageType.AreaOfEffect,
-                    origin = firingTower.gameObject,
-                    target = obj.gameObject
+                    Origin = gameObject,
+                    Target = gameObject
                 });
 
-                if (health.TakeDamage(damage))
-                    firingTower.events.onKill?.Invoke(new UpgradeProvider.OnKillData
+
+                if (victim.TakeDamage(Mathf.RoundToInt(source.damage.Value)))
+                {
+                    source.Events.OnKill?.Invoke(new UpgradeProvider.OnKillData()
                     {
-                        damage = damage,
-                        origin = firingTower.gameObject,
-                        target = obj.gameObject
+                        Origin = gameObject,
+                        Target = gameObject
                     });
-                */
+                }
             }
 
             Destroy(gameObject);

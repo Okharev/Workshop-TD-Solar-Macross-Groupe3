@@ -84,7 +84,7 @@ namespace Economy
 
         public void ApplyKnockback(Vector3 sourcePosition, float force, float duration)
         {
-            if (isKnockedBack) return; // Évite le spam de knockback
+            if (isKnockedBack) return;
 
             StartCoroutine(KnockbackRoutine(sourcePosition, force, duration));
         }
@@ -93,28 +93,22 @@ namespace Economy
         {
             isKnockedBack = true;
 
-            // 1. Désactiver le contrôle du NavMesh
-            // On garde l'agent actif pour l'évitement, mais on coupe sa vélocité
             _agent.isStopped = true;
             _agent.velocity = Vector3.zero;
 
-            // 2. Calculer la direction du recul (de la tour vers l'ennemi)
             var direction = (transform.position - sourcePosition).normalized;
-            direction.y = 0; // On garde le recul à l'horizontale pour ne pas qu'il s'envole
+            direction.y = 0;
 
             float timer = 0;
 
             while (timer < duration)
             {
-                // 3. Déplacer manuellement l'ennemi
-                // On utilise Move de l'agent pour respecter les collisions du NavMesh
                 _agent.Move(direction * (force * Time.deltaTime));
 
                 timer += Time.deltaTime;
-                yield return null; // Attendre la prochaine frame
+                yield return null;
             }
 
-            // 4. Réactiver le mouvement normal
             _agent.isStopped = false;
             isKnockedBack = false;
         }

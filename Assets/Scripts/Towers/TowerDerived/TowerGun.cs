@@ -1,4 +1,5 @@
 ﻿using System;
+using Enemy;
 using UnityEngine;
 
 namespace Towers.TowerDerived
@@ -51,16 +52,28 @@ namespace Towers.TowerDerived
                 targetLayer
             );
 
-            if (hasHit)
-                Debug.DrawLine(firePoint.position, hit.point, Color.green, 0.2f);
-            /* Do damage
-                if (hit.collider.TryGetComponent<IDamageable>(out var victim))
+        if (hasHit)
+        {
+            Debug.DrawLine(firePoint.position, hit.point, Color.green, 0.2f);
+
+            if (!hit.collider.TryGetComponent<HealthComponent>(out var victim)) return;
+            Events.OnHit?.Invoke(new UpgradeProvider.OnHitData()
+            {
+                Origin = gameObject,
+                Target = gameObject
+            });
+
+
+            if (victim.TakeDamage(Mathf.RoundToInt(damage.Value)))
+            {
+                Events.OnKill?.Invoke(new UpgradeProvider.OnKillData()
                 {
-                    victim.TakeDamage(damageAmount)
-                }
-                */
-            else
-                Debug.DrawRay(firePoint.position, shootDirection * currentRange, Color.red, 0.2f);
+                    Origin = gameObject,
+                    Target = gameObject
+                });
+            }
+        }
+            else Debug.DrawRay(firePoint.position, shootDirection * currentRange, Color.red, 0.2f);
         }
 
         protected override void AcquireTarget()
