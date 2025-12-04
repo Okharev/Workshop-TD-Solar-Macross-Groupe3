@@ -121,7 +121,7 @@ namespace Towers
 
         private void OnDrawGizmosSelected()
         {
-            Gizmos.DrawWireSphere(transform.position, fireRate.Value);
+            Gizmos.DrawWireSphere(transform.position, range.Value);
 
 
             if (currentTarget) Gizmos.DrawWireSphere(currentTarget.transform.position, 1.0f);
