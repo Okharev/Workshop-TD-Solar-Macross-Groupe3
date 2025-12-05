@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [Serializable]
-// CHANGE: Now implements the interface
 public class ReactiveProperty<T> : IReadOnlyReactiveProperty<T>
 {
     [SerializeField] protected T _value;
@@ -42,28 +41,33 @@ public class ReactiveProperty<T> : IReadOnlyReactiveProperty<T>
     }
 }
 
-public interface IReadOnlyReactiveProperty<T>
+public interface IReadOnlyReactiveProperty<out T>
 {
     T Value { get; }
     event Action<T> OnValueChanged;
 }
 
-// --- Concrete Classes for Unity Inspector Serialization ---
 
 [Serializable]
 public class ReactiveInt : ReactiveProperty<int>
 {
-    public ReactiveInt(int v) : base(v) { }
+    public ReactiveInt(int v) : base(v)
+    {
+    }
 }
 
 [Serializable]
 public class ReactiveFloat : ReactiveProperty<float>
 {
-    public ReactiveFloat(float v) : base(v) { }
+    public ReactiveFloat(float v) : base(v)
+    {
+    }
 }
 
 [Serializable]
 public class ReactiveBool : ReactiveProperty<bool>
 {
-    public ReactiveBool(bool v) : base(v) { }
+    public ReactiveBool(bool v) : base(v)
+    {
+    }
 }

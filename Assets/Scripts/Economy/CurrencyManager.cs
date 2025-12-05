@@ -7,17 +7,18 @@ namespace Economy
     public class CurrencyManager : MonoBehaviour
     {
         [SerializeField] private int startingMoney = 500;
-        private int _currentMoney;
+        private ReactiveInt _currentMoney;
+
+        public IReadOnlyReactiveProperty<int> CurrentMoney => _currentMoney;
+        
         public static CurrencyManager Instance { get; private set; }
 
         private void Awake()
         {
             Instance = this;
-            _currentMoney = startingMoney;
+            _currentMoney = new ReactiveInt(startingMoney);
         }
-
-        public event Action<int> OnMoneyChanged;
-
+        
         public int GetBalance()
         {
             return _currentMoney;
@@ -31,14 +32,12 @@ namespace Economy
         public void Spend(int amount)
         {
             if (amount <= 0) return;
-            _currentMoney -= amount;
-            OnMoneyChanged?.Invoke(_currentMoney);
+            _currentMoney.Value -= amount;
         }
 
         public void Gain(int amount)
         {
-            _currentMoney += amount;
-            OnMoneyChanged?.Invoke(_currentMoney);
+            _currentMoney.Value += amount;
         }
     }
 }

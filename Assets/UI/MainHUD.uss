@@ -1,0 +1,217 @@
+@import "InfoPanel.uss";
+@import "WavePanel.uss";
+@import "ObjectivesHealthPanel.uss";
+@import "BuildingBarPanel.uss";
+
+
+:root {
+    --color-bg: rgba(30, 30, 35, 0.95);
+    --color-border: #3E3E42;
+    --color-accent: #4CAF50;
+    --color-text-main: #E0E0E0;
+    --color-text-sub: #A0A0A0;
+
+    --sidebar-width-left: 150px;
+    --sidebar-width-right: 220px;
+    --panel-radius: 6px;
+    --spacing-std: 10px;
+}
+
+.hud-root {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    font-size: 12px;
+    color: var(--color-text-main);
+}
+
+
+.left-sidebar {
+    position: absolute;
+    left: 15px;
+    top: 15px;
+    bottom: 15px;
+    width: var(--sidebar-width-left);
+
+    flex-direction: column;
+    align-items: stretch;
+}
+
+
+.left-sidebar .panel-container {
+    position: relative;
+    top: auto;
+    left: auto;
+    width: 100%;
+
+    background-color: var(--color-bg);
+    border-radius: var(--panel-radius);
+    border-left-width: 3px;
+    border-left-color: var(--color-accent);
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-color: var(--color-border);
+
+    padding: var(--spacing-std);
+    margin-bottom: 10px;
+    flex-shrink: 0;
+}
+
+.left-sidebar .status-text {
+    font-size: 10px;
+    color: var(--color-text-sub);
+    margin-bottom: 2px;
+}
+
+.left-sidebar .title-text {
+    font-size: 18px;
+    margin-bottom: 0px;
+}
+
+.left-sidebar .subtitle-text {
+    font-size: 11px;
+    margin-bottom: 8px;
+}
+
+.objectives-box {
+    position: relative;
+    background-color: var(--color-bg);
+    border-radius: var(--panel-radius);
+    padding: var(--spacing-std);
+
+    border-width: 1px;
+    border-color: var(--color-border);
+    border-top-width: 3px;
+    border-top-color: #555;
+
+    flex-shrink: 0;
+}
+
+.objectives-box .header-label {
+    font-size: 11px;
+    color: var(--color-text-sub);
+    border-bottom-width: 0;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    opacity: 0.8;
+}
+
+.objectives-box .health-label {
+    font-size: 11px;
+    margin-bottom: 2px;
+}
+
+.objectives-box .health-row {
+    margin-bottom: 6px;
+}
+
+.objectives-box .health-bar-container {
+    height: 6px;
+    border-radius: 2px;
+    background-color: #222;
+}
+
+
+#BuildingBarInstance {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    translate: -50% 0; /* Centre horizontalement */
+
+    /* Important : permet au conteneur de s'adapter à la taille des boutons */
+    width: auto;
+    height: auto;
+
+    /* Assure que les clics passent à travers les zones vides */
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.right-sidebar {
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+
+    width: 320px;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+
+
+    padding: 20px;
+
+    overflow: hidden;
+}
+
+.right-sidebar .side-panel {
+    position: relative;
+    top: auto;
+    left: auto;
+    bottom: auto;
+    width: 100%;
+    height: auto;
+
+    background-color: var(--color-bg);
+    padding: 15px;
+
+    border-width: 1px;
+    border-color: var(--color-border);
+
+    border-left-width: 3px;
+    border-left-color: var(--color-accent);
+
+    border-radius: var(--panel-radius);
+
+
+    translate: 120% 0;
+    transition: translate 0.25s ease-out-cubic;
+
+    flex-shrink: 0;
+}
+
+.right-sidebar .side-panel--open {
+    translate: 0 0;
+}
+
+.right-sidebar .panel-header {
+    font-size: 20px;
+    margin-bottom: 4px;
+    color: white;
+}
+
+.right-sidebar .panel-description {
+    font-size: 12px;
+    margin-bottom: 10px;
+    color: var(--color-text-sub);
+}
+
+.right-sidebar .stat-text {
+    font-size: 11px;
+    padding: 2px 0;
+    border-bottom-width: 1px;
+    border-bottom-color: #333;
+}
+
+
+.action-button {
+    background-color: #2ecc71;
+    color: #ffffff;
+    border-radius: 4px;
+    padding: 10px;
+    border-width: 0;
+    -unity-font-style: bold;
+    transition-duration: 0.2s;
+}
+
+.action-button:hover {
+    background-color: #27ae60;
+    scale: 1.05;
+}
+
+.action-button:active {
+    background-color: #1e8449;
+    scale: 0.95;
+}

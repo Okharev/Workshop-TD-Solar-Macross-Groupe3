@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 namespace Economy
 {
@@ -6,38 +7,25 @@ namespace Economy
     {
         [Header("Configuration")] public bool isMobileGenerator = true;
 
-        // Reactive Properties
         [SerializeField] private ReactiveInt maxCapacity = new(100);
         [SerializeField] private ReactiveFloat broadcastRadius = new(15f);
 
-        // Internal
         private Vector3 _lastPos;
-        private SphereCollider _rangeCollider; // Reference to update size dynamically
+        private SphereCollider _rangeCollider;
 
         public IReadOnlyReactiveProperty<int> MaxCapacity => maxCapacity;
         public IReadOnlyReactiveProperty<float> BroadcastRadius => broadcastRadius;
 
-        // Runtime State (Read Only for public, Writable by Manager)
         public int CurrentLoad { get; private set; }
-
-        public void Setup(int pmaxCapacity, float pbroadcastRadius, bool pmobileGenerator)
-        {
-            this.maxCapacity.Value = pmaxCapacity;
-            this.broadcastRadius.Value = pbroadcastRadius;
-            this.isMobileGenerator = pmobileGenerator;
-        }
 
         private void Start()
         {
-            // Physics/Manager registration setup
             _lastPos = transform.position;
             if (isMobileGenerator) GenerateRangeTrigger();
-            // Registering with Manager is handled in OnEnable now
         }
 
         private void Update()
         {
-            // Detect movement to dirty the grid
             if ((transform.position - _lastPos).sqrMagnitude > 0.01f)
             {
                 _lastPos = transform.position;
@@ -53,6 +41,11 @@ namespace Economy
             MaxCapacity.Subscribe(OnStatsChanged_Int).AddTo(this);
         }
 
+        private void OnDestroy()
+        {
+            EnergyGridManager.Instance?.Unregister(this);
+        }
+
         private void OnDisable()
         {
             EnergyGridManager.Instance?.Unregister(this);
@@ -64,8 +57,14 @@ namespace Economy
             Gizmos.DrawWireSphere(transform.position, BroadcastRadius.Value);
         }
 
-        // Named methods make debugging easier than Lambdas
-        private void OnStatsChanged_Int(int _)
+        public void Setup(int pmaxCapacity, float pbroadcastRadius, bool pmobileGenerator)
+        {
+            maxCapacity.Value = pmaxCapacity;
+            broadcastRadius.Value = pbroadcastRadius;
+            isMobileGenerator = pmobileGenerator;
+        }
+
+        private static void OnStatsChanged_Int(int _)
         {
             EnergyGridManager.Instance?.MarkDirty();
         }
@@ -128,7 +127,7 @@ namespace Economy
 
         private void UpdateRangeCollider(float newRadius)
         {
-            if (_rangeCollider != null)
+            if (_rangeCollider)
                 _rangeCollider.radius = newRadius;
         }
     }

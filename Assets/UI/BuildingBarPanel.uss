@@ -1,0 +1,88 @@
+﻿
+.building-bar-root {
+
+    align-items: center;
+    justify-content: flex-end;
+
+    width: 100%;
+    height: 100%;
+}
+
+.slots-container {
+    flex-direction: row;
+    background-color: rgba(30, 30, 35, 0.95); 
+    border-width: 1px;
+    border-color: #3E3E42;
+    border-radius: 8px;
+    padding: 10px;
+    border-bottom-width: 3px;
+    border-bottom-color: #4CAF50;
+}
+
+/* --- Un Slot (Bouton) --- */
+.building-slot {
+    width: 60px;
+    height: 60px;
+    margin-left: 5px;
+    margin-right: 5px;
+    background-color: #2c2c2c;
+    border-width: 1px;
+    border-color: #555;
+    border-radius: 4px;
+    transition: scale 0.2s ease-out-back, border-color 0.2s;
+}
+
+.building-slot:hover {
+    border-color: #4CAF50;
+    scale: 1.1;
+    background-color: #383838;
+}
+
+.building-slot:active {
+    background-color: #4CAF50;
+    scale: 0.95;
+}
+
+.tooltip-container {
+    position: absolute;
+    bottom: 110%;
+    width: 200px;
+    background-color: rgba(20, 20, 25, 0.98);
+    border-radius: 6px;
+    padding: 10px;
+    border-left-width: 3px;
+    border-left-color: #4CAF50;
+    border-width: 1px;
+    border-color: #3E3E42;
+    transition: opacity 0.2s, translate 0.2s;
+    opacity: 1;
+    translate: 0 0;
+}
+
+.tooltip-hidden {
+    opacity: 0;
+    translate: 0 10px; 
+    display: none;
+}
+
+.tooltip-header {
+    color: #ffffff;
+    font-size: 14px;
+    -unity-font-style: bold;
+    margin-bottom: 2px;
+}
+
+.tooltip-cost {
+    color: #FFD700;
+    font-size: 12px;
+    margin-bottom: 5px;
+    border-bottom-width: 1px;
+    border-bottom-color: #444;
+    padding-bottom: 2px;
+}
+
+.tooltip-desc {
+    color: #aaaaaa;
+    font-size: 10px;
+    white-space: normal;
+}

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:ui="UnityEngine.UIElements"
+        xsi:noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd"
+>
+    <ui:VisualElement name="Root" class="health-row">
+        <ui:Label name="ObjectiveLabel" text="Objective Name" class="health-label"/>
+
+        <ui:VisualElement class="health-bar-container">
+            <ui:VisualElement name="HealthFill" class="health-bar-fill"/>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

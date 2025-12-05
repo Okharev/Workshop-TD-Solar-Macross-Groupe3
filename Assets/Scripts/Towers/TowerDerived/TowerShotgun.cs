@@ -1,15 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
-using Economy; // Nécessaire pour le Dictionary
+using Economy;
 using UnityEngine;
+// Nécessaire pour le Dictionary
 using Random = UnityEngine.Random;
 
 namespace Towers.TowerDerived
 {
     public class TowerShotgun : BaseTower
     {
-        [Header("Shotgun Config")] 
-        public int pelletCount = 6;
+        [Header("Shotgun Config")] public int pelletCount = 6;
+
         public float knockbackForce = 2f; // Force par plomb
         public float knockbackDuration = 0.2f;
 
@@ -18,13 +19,13 @@ namespace Towers.TowerDerived
 
         [Tooltip("Vertical spread multiplier (0.0 = flat line, 1.0 = circle)")] [Range(0f, 1f)]
         public float pelletsThickness = 0.1f;
-        
+
         [Tooltip("Vertical spread multiplier (0.0 = flat line, 1.0 = circle)")] [Range(0f, 1f)]
         public float verticalSpreadFactor = 0.2f;
 
         private readonly Collider[] _colliderCache = new Collider[32];
-        
-        private readonly Dictionary<EnemyController, int> _hitTracker = new Dictionary<EnemyController, int>();
+
+        private readonly Dictionary<EnemyController, int> _hitTracker = new();
 
         protected override void Fire()
         {
@@ -41,10 +42,7 @@ namespace Towers.TowerDerived
             _hitTracker.Clear();
 
             // 2. On tire tous les plombs et on enregistre qui est touché
-            for (var i = 0; i < pelletCount; i++)
-            {
-                FireSingleRayAndTrack(damagePerPellet);
-            }
+            for (var i = 0; i < pelletCount; i++) FireSingleRayAndTrack(damagePerPellet);
 
             // 3. On applique le Knockback CUMULÉ
             ApplyAccumulatedKnockback();
@@ -54,12 +52,12 @@ namespace Towers.TowerDerived
         {
             foreach (var entry in _hitTracker)
             {
-                EnemyController enemy = entry.Key;
-                int hitCount = entry.Value;
+                var enemy = entry.Key;
+                var hitCount = entry.Value;
 
                 // La force est multipliée par le nombre de plombs reçus !
                 // Si l'ennemi prend 6 plombs, il recule 6x plus fort.
-                float totalForce = knockbackForce * hitCount;
+                var totalForce = knockbackForce * hitCount;
 
                 // On peut aussi augmenter légèrement la durée si on veut, 
                 // mais augmenter la force est souvent plus "punchy".
@@ -99,19 +97,19 @@ namespace Towers.TowerDerived
             var yAngle = randomCircle.y * (horizontalSpreadAngle * 0.5f);
             var spreadRot = Quaternion.Euler(-yAngle, xAngle, 0);
             var shootDir = fp.rotation * spreadRot * Vector3.forward;
-            
+
             if (Physics.BoxCast(
-                    center: fp.position,
-                    halfExtents: new Vector3(pelletsThickness, pelletsThickness, pelletsThickness),
-                    direction: shootDir,
-                    hitInfo: out var hit,
-                    orientation: Quaternion.identity,
-                    maxDistance: range.Value,
-                    layerMask: targetLayer
+                    fp.position,
+                    new Vector3(pelletsThickness, pelletsThickness, pelletsThickness),
+                    shootDir,
+                    out var hit,
+                    Quaternion.identity,
+                    range.Value,
+                    targetLayer
                 ))
             {
                 Debug.DrawRay(fp.position, shootDir * range.Value, Color.green, 0.2f);
-                
+
                 // --- Logique de dégâts ---
                 // Tu devrais décommenter et adapter ceci selon ton système de vie
                 /*
@@ -125,12 +123,8 @@ namespace Towers.TowerDerived
                 // On essaie de récupérer le script de mouvement sur l'ennemi touché
                 var movement = hit.collider.GetComponentInParent<EnemyController>();
                 if (movement)
-                {
                     if (!_hitTracker.TryAdd(movement, 1))
-                    {
                         _hitTracker[movement]++;
-                    }
-                }
             }
             else
             {
