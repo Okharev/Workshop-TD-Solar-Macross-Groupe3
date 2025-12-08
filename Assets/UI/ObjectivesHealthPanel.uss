@@ -1,4 +1,4 @@
-﻿.side-panel {
+.side-panel {
     position: absolute;
     right: 20px;
     top: 20px;
@@ -15,6 +15,7 @@
     margin-bottom: 10px;
     border-bottom-width: 1px;
     border-bottom-color: gray;
+    -unity-font-definition: url("project://database/Assets/UI/UIAssets/space%20Xrebron.ttf?fileID=12800000&guid=07da749f81306ef4ab98e07a2320e5c6&type=3#space Xrebron");
 }
 
 .health-row {
@@ -23,30 +24,34 @@
 }
 
 .health-label {
-    color: #dddddd;
+    color: rgb(255, 255, 255);
     font-size: 14px;
     margin-bottom: 4px;
+    background-image: url("project://database/Assets/UI/UIAssets/UI_Vie_G_Name.png?fileID=2800000&guid=976eb2153d794de44b3c431626fe6c1d&type=3#UI_Vie_G_Name");
+    -unity-text-align: upper-center;
+    background-color: rgba(43, 88, 136, 0);
+    -unity-background-image-tint-color: rgb(76, 71, 116);
 }
 
 .health-bar-container {
-    height: 15px;
-    background-color: #333333;
-    border-radius: 4px;
+    height: 18px;
+    background-color: rgb(51, 51, 51);
+    border-radius: 7px;
     overflow: hidden;
-    border-width: 1px;
-    border-color: #555555;
+    border-color: rgb(85, 85, 85);
     width: 100%;
+    background-image: none;
 }
 
 .health-bar-fill {
     height: 100%;
     width: 50%;
-    background-color: #4CAF50;
+    background-color: rgb(76, 175, 80);
     transition-property: width, background-color;
     transition-duration: 0.3s, 0.3s;
     transition-timing-function: ease-out-circ, ease-out-circ;
 }
 
 .health-critical {
-    background-color: #F44336;
+    background-color: rgb(244, 67, 54);
 }

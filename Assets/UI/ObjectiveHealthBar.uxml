@@ -1,14 +1,8 @@
-<?xml version="1.0" encoding="utf-8"?>
-<ui:UXML
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xmlns:ui="UnityEngine.UIElements"
-        xsi:noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd"
->
+<ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
     <ui:VisualElement name="Root" class="health-row">
-        <ui:Label name="ObjectiveLabel" text="Objective Name" class="health-label"/>
-
-        <ui:VisualElement class="health-bar-container">
-            <ui:VisualElement name="HealthFill" class="health-bar-fill"/>
+        <ui:Label name="ObjectiveLabel" text="Objective Name" class="health-label" />
+        <ui:VisualElement class="health-bar-container" style="background-image: url(&quot;project://database/Assets/UI/UIAssets/UI_Vie_G_Vide.png?fileID=2800000&amp;guid=627045a9cfe93f54f8cf655476df8313&amp;type=3#UI_Vie_G_Vide&quot;);">
+            <ui:VisualElement name="HealthFill" class="health-bar-fill" />
         </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

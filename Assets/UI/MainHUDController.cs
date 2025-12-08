@@ -290,12 +290,17 @@ namespace UI
         private InfoPanelView _infoPanel;
         private ObjectivesPanelView _objectivesPanel;
         private WavePanelView _wavePanel;
+        private WavePanelView _nexsPanel;
 
         private void OnEnable()
         {
             var doc = GetComponent<UIDocument>();
             var root = doc.rootVisualElement;
 
+            var nexusRoot = root.Q("NexusHealthInstance");
+            if (nexusRoot != null)
+                _wavePanel = new WavePanelView(nexusRoot, _waveManager);
+            
             // 1. Initialiser le Wave Panel
             var waveRoot = root.Q("WavePanelInstance");
             if (waveRoot != null)

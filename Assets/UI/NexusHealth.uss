@@ -1,0 +1,19 @@
+.health-root {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    position: relative;
+    background-color: black; /* outline or empty background */
+}
+
+.health-fill {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    /* The gradient defines the radial progress */
+    background-image: conic-gradient(
+            red calc(var(--health) * 1%),
+            rgba(255, 0, 0, 0.1) 0
+    );
+}
+    
