@@ -1,6 +1,10 @@
 fileFormatVersion: 2
+<<<<<<<< HEAD:Assets/Assets/Ennemies.meta
 guid: ee6554d87c595f24eab90df9cd526b96
 folderAsset: yes
+========
+guid: 11df846abe05e0147bd26009cb7cfd32
+>>>>>>>> e37f408915e67ee38b7cf5b9f13b3aeba3b6002e:Assets/_Recovery/0.unity.meta
 DefaultImporter:
   externalObjects: {}
   userData: 
