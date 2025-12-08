@@ -9,7 +9,7 @@ using UnityEngine;
 
 namespace Enemy
 {
-    public class WaveManager : MonoBehaviour
+    public sealed class WaveManager : MonoBehaviour
     {
         [Header("Dependencies")] public RoadNetworkGenerator roadGenerator;
 
@@ -151,7 +151,7 @@ namespace Enemy
 
 
     [Serializable]
-    public class WaveProfile
+    public sealed class WaveProfile
     {
         public string waveName = "Wave 1";
 
@@ -181,14 +181,14 @@ namespace Enemy
     }
 
     [Serializable]
-    public class GroundWaveSegment : BaseWaveSegment
+    public sealed class GroundWaveSegment : BaseWaveSegment
     {
         [Tooltip("Drag the GameObject with the EnemySpawner component here.")]
         public EnemySpawner targetSpawner;
     }
 
     [Serializable]
-    public class AirWaveSegment : BaseWaveSegment
+    public sealed class AirWaveSegment : BaseWaveSegment
     {
         [Tooltip("Drag the GameObject with the AirPath component here.")]
         public AirPath targetPath;

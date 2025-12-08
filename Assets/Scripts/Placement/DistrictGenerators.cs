@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Placement
 {
-    public class DistrictGenerator : MonoBehaviour
+    public sealed class DistrictGenerator : MonoBehaviour
     {
         [Header("Map Settings")] public float mapRadius = 50f;
 

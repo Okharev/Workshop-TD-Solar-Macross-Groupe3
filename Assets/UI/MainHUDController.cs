@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Enemy;
 using Placement;
+using Towers;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -56,19 +57,13 @@ namespace UI
             _descLabel.text = target.Description;
 
             _statsContainer.Clear();
-            foreach (var stat in target.GetStats())
-            {
-                var statLabel = new Label($"{stat.Key}: {stat.Value}");
-                statLabel.AddToClassList("stat-text");
-                _statsContainer.Add(statLabel);
-            }
 
             _actionsContainer.Clear();
             var actions = target.GetInteractions();
             if (actions != null)
                 foreach (var action in actions)
                 {
-                    var btn = new Button(action.OnClick) { text = action.Label };
+                    var btn = new Button(action.OnExecute) { text = action.Label };
                     btn.AddToClassList("action-button");
                     _actionsContainer.Add(btn);
                 }
@@ -100,7 +95,7 @@ namespace UI
 
             if (_nextWaveButton != null) _nextWaveButton.clicked += OnNextWaveClicked;
 
-            if (_manager != null)
+            if (_manager)
             {
                 _manager.OnWaveStarted += HandleWaveStarted;
                 _manager.OnWaveFinished += HandleWaveFinished;
@@ -112,7 +107,7 @@ namespace UI
         public void Dispose()
         {
             if (_nextWaveButton != null) _nextWaveButton.clicked -= OnNextWaveClicked;
-            if (_manager != null)
+            if (_manager)
             {
                 _manager.OnWaveStarted -= HandleWaveStarted;
                 _manager.OnWaveFinished -= HandleWaveFinished;
@@ -182,7 +177,7 @@ namespace UI
 
                 if (_label != null) _label.text = name;
 
-                if (obj != null && obj.TryGetComponent<HealthComponent>(out var health))
+                if (obj && obj.TryGetComponent<HealthComponent>(out var health))
                 {
                     _maxHealth = health.MaxHealth;
                     health.CurrentHealth.Subscribe(UpdateUI);
@@ -208,7 +203,7 @@ namespace UI
 
     public class BuildingBarView
     {
-        private readonly Action<BuildingData> _onBuildingSelected;
+        private readonly Action<BuildingEntity> _onBuildingSelected;
         private readonly VisualElement _root;
         private readonly VisualElement _slotsContainer;
 
@@ -217,7 +212,7 @@ namespace UI
         private readonly Label _tooltipDesc;
         private readonly Label _tooltipTitle;
 
-        public BuildingBarView(VisualElement rootElement, List<BuildingData> buildings, Action<BuildingData> onSelect)
+        public BuildingBarView(VisualElement rootElement, List<BuildingEntity> buildings, Action<BuildingEntity> onSelect)
         {
             _root = rootElement;
             _onBuildingSelected = onSelect;
@@ -232,7 +227,7 @@ namespace UI
             GenerateButtons(buildings);
         }
 
-        private void GenerateButtons(List<BuildingData> buildings)
+        private void GenerateButtons(List<BuildingEntity> buildings)
         {
             _slotsContainer.Clear();
 
@@ -242,10 +237,10 @@ namespace UI
                 button.AddToClassList("building-slot");
 
                 // Gestion de l'icône ou texte par défaut
-                if (building.Icon != null)
-                    button.style.backgroundImage = new StyleBackground(building.Icon);
+                if (building.icon)
+                    button.style.backgroundImage = new StyleBackground(building.icon);
                 else
-                    button.text = building.Name[..1];
+                    button.text = building.name[..1];
 
                 button.RegisterCallback<MouseEnterEvent>(evt => ShowTooltip(building));
                 button.RegisterCallback<MouseLeaveEvent>(evt => HideTooltip());
@@ -255,12 +250,12 @@ namespace UI
             }
         }
 
-        private void ShowTooltip(BuildingData data)
+        private void ShowTooltip(BuildingEntity data)
         {
             if (_tooltipContainer == null) return;
 
-            _tooltipTitle.text = data.Name.ToUpper();
-            _tooltipCost.text = $"{data.Cost} CREDITS";
+            _tooltipTitle.text = data.name.ToUpper();
+            _tooltipCost.text = $"{data.cost} CREDITS";
             _tooltipDesc.text = data.Description;
 
             _tooltipContainer.style.display = DisplayStyle.Flex;
@@ -287,7 +282,7 @@ namespace UI
         [Header("Building System")]
         // Liste configurable dans l'Inspecteur
         [SerializeField]
-        private List<BuildingData> _availableBuildings;
+        private List<BuildingEntity> _availableBuildings;
 
         private BuildingBarView _buildingBar; // Nouvelle référence
 
@@ -333,11 +328,11 @@ namespace UI
             _wavePanel?.Dispose();
         }
 
-        private void OnBuildingSelected(BuildingData data)
+        private void OnBuildingSelected(BuildingEntity data)
         {
-            Debug.Log($"[MainHUD] Joueur veut construire : {data.Name} pour {data.Cost} or.");
+            Debug.Log($"[MainHUD] Joueur veut construire : {data.name} pour {data.cost} or.");
 
-            // TODO : Placement System
+            PlacementManager.Instance.StartPlacement(data);
         }
     }
 }

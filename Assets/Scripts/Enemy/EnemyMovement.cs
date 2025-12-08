@@ -6,7 +6,7 @@ namespace Enemy
 {
     [RequireComponent(typeof(NavMeshAgent))]
     [RequireComponent(typeof(EnemyObjectiveTracker))]
-    public class EnemyMovement : MonoBehaviour
+    public sealed class EnemyMovement : MonoBehaviour
     {
         [Header("Movement Settings")] [SerializeField]
         private float defaultStoppingDistance = 2.0f;

@@ -5,7 +5,7 @@ using UnityEngine;
 namespace Economy
 {
     [DefaultExecutionOrder(-100)]
-    public class EnergyGridManager : MonoBehaviour
+    public sealed class EnergyGridManager : MonoBehaviour
     {
         [Header("Optimization Settings")]
         [Tooltip("Size of the spatial bucket. Should be roughly the size of your average power radius.")]
@@ -154,7 +154,7 @@ namespace Economy
             {
                 if (!consumer.isActiveAndEnabled) continue;
 
-                var totalNeeded = consumer.TotalRequirement.Value;
+                var totalNeeded = consumer.totalRequirement.Value;
                 if (totalNeeded <= 0)
                 {
                     consumer.SetPoweredState(true);

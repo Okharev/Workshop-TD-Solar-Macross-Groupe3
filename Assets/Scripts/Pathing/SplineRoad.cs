@@ -39,7 +39,7 @@ namespace Pathing
     }
 
     [Serializable]
-    public class Intersection
+    public sealed class Intersection
     {
         public List<JunctionInfo> Junctions;
         public List<float> Curves;
@@ -65,7 +65,7 @@ namespace Pathing
     }
 
     [Serializable]
-    public class SplineRoadOverrideSettings
+    public sealed class SplineRoadOverrideSettings
     {
         public int SplineIndex;
         public float RoadWidth;
@@ -81,7 +81,7 @@ namespace Pathing
 
     [ExecuteInEditMode]
     [RequireComponent(typeof(MeshFilter))]
-    public class SplineRoad : MonoBehaviour
+    public sealed class SplineRoad : MonoBehaviour
     {
         [SerializeField] private SplineSampler _SplineSampler;
 

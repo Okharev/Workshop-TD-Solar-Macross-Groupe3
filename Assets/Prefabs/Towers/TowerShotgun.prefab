@@ -146,31 +146,33 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 293197d3ebb64630a53576f3d87b09b6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Towers.TowerDerived.TowerShotgun
+  displayName: Shotgun
+  description: Shotgun description
+  icon: {fileID: 10915, guid: 0000000000000000f000000000000000, type: 0}
+  currentLevelPrefab: {fileID: 7615454975634943867}
+  nextLevelPrefab: {fileID: 7615454975634943867}
+  upgradeCost: 100
+  cost: 100
+  energyDrain: 100
+  nextUpgrade: {fileID: 0}
+  refundRatio: 0.9
   powerSource: {fileID: 762822935104049358}
-  buildingData:
-    name: 
-    description: 
-    icon: {fileID: 0}
-    cost: 100
-    refundRatio: 0.5
-    energyDrain: 100
-    prefab: {fileID: 0}
-  baseDamage: 10
-  baseRange: 15
-  baseFireRate: 1
+  baseDamage: 15
+  baseRange: 35
+  baseFireRate: 1.2
   damage:
     _baseValue:
-      _value: 0
+      _value: 15
     _value:
       _value: 0
   range:
     _baseValue:
-      _value: 0
+      _value: 25
     _value:
       _value: 0
   fireRate:
     _baseValue:
-      _value: 0
+      _value: 1.2
     _value:
       _value: 0
   scaleRotationWithFireRate: 1

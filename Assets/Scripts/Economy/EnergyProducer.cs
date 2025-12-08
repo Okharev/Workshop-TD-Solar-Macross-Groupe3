@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace Economy
 {
-    public class EnergyProducer : MonoBehaviour
+    public sealed class EnergyProducer : MonoBehaviour
     {
         [Header("Configuration")] public bool isMobileGenerator = true;
 

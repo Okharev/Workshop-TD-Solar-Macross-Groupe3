@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Pathing.Gameplay
 {
-    public class EnemySpawner : MonoBehaviour
+    public sealed class EnemySpawner : MonoBehaviour
     {
         [Header("Objectives Defaults")] public DestructibleObjective localObjective;
 

@@ -5,7 +5,7 @@ using UnityEngine.UIElements;
 namespace UI
 {
     [RequireComponent(typeof(UIDocument))]
-    public class WavePanelController : MonoBehaviour
+    public sealed class WavePanelController : MonoBehaviour
     {
         [Header("Dependencies")] [Tooltip("Référence au WaveManager de la scène.")]
         public WaveManager waveManager;

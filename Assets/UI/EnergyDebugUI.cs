@@ -5,7 +5,7 @@ using UnityEngine.UIElements;
 
 namespace UI
 {
-    public class EnergyDebugUi : MonoBehaviour
+    public sealed class EnergyDebugUi : MonoBehaviour
     {
         [Header("UI Setup")]
         public UIDocument uiDocument;
@@ -116,8 +116,8 @@ namespace UI
             if (!_isVisible) return;
 
             // --- CORRECTION 3 : Sécurités Anti-Crash ---
-            if (_mainCam == null) _mainCam = UnityEngine.Camera.main;
-            if (_mainCam == null || _container.panel == null) return;
+            if (!_mainCam) _mainCam = UnityEngine.Camera.main;
+            if (!_mainCam || _container.panel == null) return;
 
             Vector3 camPos = _mainCam.transform.position;
             Vector3 camForward = _mainCam.transform.forward;
@@ -126,7 +126,7 @@ namespace UI
             {
                 var item = _trackedComponents[i];
 
-                if (item == null)
+                if (!item)
                 {
                     RemoveTracked(item);
                     continue;
@@ -183,54 +183,59 @@ namespace UI
                 _container.panel, worldPos, _mainCam
             );
             
-            // NOTE : Ici, contrairement à la barre de vie, on n'a pas besoin de faire 
-            // panelPos.x -= width * 0.5f car on utilise le style.translate dans CreateVisual
+
             element.Root.transform.position = panelPos;
         }
 
         // --- CREATION VISUELLE ---
 
-        private LabelElement CreateVisual()
+        private static LabelElement CreateVisual()
         {
-            var box = new VisualElement();
-            box.style.position = Position.Absolute;
-            
-            // Taille auto pour s'adapter au texte
-            box.style.width = StyleKeyword.Auto;
-            box.style.height = StyleKeyword.Auto;
-            
-            box.style.paddingTop = 4; box.style.paddingBottom = 4;
-            box.style.paddingLeft = 8; box.style.paddingRight = 8;
+            var box = new VisualElement
+            {
+                style =
+                {
+                    position = Position.Absolute,
+                    // Taille auto pour s'adapter au texte
+                    width = StyleKeyword.Auto,
+                    height = StyleKeyword.Auto,
+                    paddingTop = 4,
+                    paddingBottom = 4,
+                    paddingLeft = 8,
+                    paddingRight = 8,
+                    // --- CORRECTION 2 : Centrage Parfait via CSS ---
+                    // 1. Le point de transformation (zoom) est au centre
+                    transformOrigin = new TransformOrigin(Length.Percent(50), Length.Percent(50), 0),
+                    // 2. On décale l'élément de -50% de sa propre taille (inconnue en pixels, connue en %)
+                    translate = new StyleTranslate(new Translate(
+                        new Length(-50, LengthUnit.Percent), 
+                        new Length(-50, LengthUnit.Percent), 
+                        0)),
+                    backgroundColor = new Color(0, 0, 0, 0.65f),
+                    borderTopLeftRadius = 4,
+                    borderTopRightRadius = 4,
+                    borderBottomRightRadius = 4,
+                    borderBottomLeftRadius = 4,
+                    alignItems = Align.Center,
+                    justifyContent = Justify.Center
+                }
+            };
 
-            // --- CORRECTION 2 : Centrage Parfait via CSS ---
-            
-            // 1. Le point de transformation (zoom) est au centre
-            box.style.transformOrigin = new TransformOrigin(Length.Percent(50), Length.Percent(50), 0);
-            
-            // 2. On décale l'élément de -50% de sa propre taille (inconnue en pixels, connue en %)
-            box.style.translate = new StyleTranslate(new Translate(
-                new Length(-50, LengthUnit.Percent), 
-                new Length(-50, LengthUnit.Percent), 
-                0));
-
-            box.style.backgroundColor = new Color(0, 0, 0, 0.65f);
-            box.style.borderTopLeftRadius = 4; box.style.borderTopRightRadius = 4;
-            box.style.borderBottomRightRadius = 4; box.style.borderBottomLeftRadius = 4;
-            
-            box.style.alignItems = Align.Center; 
-            box.style.justifyContent = Justify.Center;
-
-            var label = new Label();
-            label.style.unityFontStyleAndWeight = FontStyle.Bold;
-            label.style.fontSize = 11;
-            label.style.color = Color.white;
-            label.style.unityTextAlign = TextAnchor.MiddleCenter;
+            var label = new Label
+            {
+                style =
+                {
+                    unityFontStyleAndWeight = FontStyle.Bold,
+                    fontSize = 11,
+                    color = Color.white,
+                    unityTextAlign = TextAnchor.MiddleCenter
+                }
+            };
 
             box.Add(label);
             return new LabelElement { Root = box, Text = label };
         }
 
-        // --- POOLING & ANCHORS ---
 
         private LabelElement Acquire(Component key)
         {
@@ -287,7 +292,7 @@ namespace UI
         private void UpdateConsumerVisuals(LabelElement el, EnergyConsumer c)
         {
             bool isPowered = c.IsPowered;
-            float req = c.TotalRequirement.Value;
+            float req = c.totalRequirement.Value;
             el.Text.text = isPowered ? "ON" : "OFF";
             el.Text.text += $"\n-{req:F0} PWR";
             el.Text.style.color = isPowered ? new Color(0.3f, 1f, 0.3f) : new Color(1f, 0.3f, 0.3f);

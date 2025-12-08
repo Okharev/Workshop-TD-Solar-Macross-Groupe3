@@ -8,7 +8,7 @@ using Random = UnityEngine.Random;
 namespace Towers
 {
     [RequireComponent(typeof(Rigidbody))]
-    public class HomingMissile : BaseProjectile
+    public sealed class HomingMissile : BaseProjectile
     {
         [Header("Ballistics & Movement")] [SerializeField]
         private float speed = 30f;

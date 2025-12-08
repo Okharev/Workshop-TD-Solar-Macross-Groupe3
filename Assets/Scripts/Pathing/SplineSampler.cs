@@ -5,7 +5,7 @@ using UnityEngine.Splines;
 namespace Pathing
 {
     [ExecuteInEditMode]
-    public class SplineSampler : MonoBehaviour
+    public sealed class SplineSampler : MonoBehaviour
     {
         [SerializeField] private SplineContainer splineContainer;
 

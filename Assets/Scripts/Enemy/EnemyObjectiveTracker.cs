@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace Enemy
 {
-    public class EnemyObjectiveTracker : MonoBehaviour
+    public sealed class EnemyObjectiveTracker : MonoBehaviour
     {
         [SerializeField] private DestructibleObjective _activeObjectiveScript; // Le script de la cible actuelle
 

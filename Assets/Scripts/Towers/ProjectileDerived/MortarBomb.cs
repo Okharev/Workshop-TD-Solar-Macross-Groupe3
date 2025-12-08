@@ -4,7 +4,7 @@ using UnityEngine;
 namespace Towers.ProjectileDerived
 {
     [RequireComponent(typeof(Rigidbody))]
-    public class MortarBomb : BaseProjectile
+    public sealed class MortarBomb : BaseProjectile
     {
         public Rigidbody rigidbody;
         private float _explosionRange;

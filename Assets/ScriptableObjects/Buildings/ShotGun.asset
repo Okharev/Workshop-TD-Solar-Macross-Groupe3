@@ -9,12 +9,18 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 76f67a2b6f074265bec42abbcfd3cf8c, type: 3}
-  m_Name: ShotGun
-  m_EditorClassIdentifier: Assembly-CSharp::Placement.BuildingSo
-  name: Shotgun
-  description: Shotgun tower
-  icon: {fileID: 0}
-  cost: 10
-  energyDrain: 100
-  prefab: {fileID: 7615454975634943867, guid: 1d2549f2edb60d04f894dad9f7feae47, type: 3}
+  m_Script: {fileID: 11500000, guid: 8ad7ec1914f64943b5ed048c031f2e7c, type: 3}
+  m_Name: Shotgun
+  m_EditorClassIdentifier: Assembly-CSharp::Buildings.BuildingLevelSo
+  displayName: Shotgun
+  description: 'Short range
+
+'
+  icon: {fileID: 10901, guid: 0000000000000000f000000000000000, type: 0}
+  currentLevelPrefab: {fileID: 7615454975634943867, guid: 1d2549f2edb60d04f894dad9f7feae47, type: 3}
+  nextLevelPrefab: {fileID: 7615454975634943867, guid: 1d2549f2edb60d04f894dad9f7feae47, type: 3}
+  upgradeCost: 200
+  cost: 100
+  energyDrain: 90
+  nextUpgrade: {fileID: 0}
+  refundRatio: 0.7

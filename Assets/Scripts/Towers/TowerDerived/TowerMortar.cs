@@ -6,7 +6,7 @@ using Random = UnityEngine.Random;
 
 namespace Towers.TowerDerived
 {
-    public class TowerMortar : BaseTower
+    public sealed class TowerMortar : BaseTower
     {
         [Header("Ballistics")] [Tooltip("Minimum flight time (close range).")] [SerializeField]
         private float minProjectileTravelTime = 0.5f;
@@ -103,7 +103,6 @@ namespace Towers.TowerDerived
 
             FillClusterList(bestClusterCenter);
 
-            // Reset velocity tracking on new target acquisition to prevent "teleport" jumps
             _isTracking = false;
             TrackClusterMovement();
 
@@ -222,7 +221,7 @@ namespace Towers.TowerDerived
             var hitCount = Physics.OverlapSphereNonAlloc(clusterCenter.position, radiusOfImpact,
                 _clusterOptimizationCache, targetLayer);
             for (var i = 0; i < hitCount; i++)
-                if (_clusterOptimizationCache[i] != null)
+                if (_clusterOptimizationCache[i])
                     _currentTargetCluster.Add(_clusterOptimizationCache[i]);
         }
 
@@ -265,7 +264,6 @@ namespace Towers.TowerDerived
         {
             if (!yPivot || !xPivot) return true;
 
-            // Aim at the PREDICTED point, not the current cluster center
             var launchVelocity = CalculateLaunchVelocity(_predictedAimPoint, _currentProjectileTravelTime);
             if (launchVelocity == Vector3.zero) return false;
 

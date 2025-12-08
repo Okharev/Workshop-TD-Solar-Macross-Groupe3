@@ -5,7 +5,7 @@ using UnityEngine.Events;
 namespace Placement
 {
     [RequireComponent(typeof(HealthComponent))]
-    public class DestructibleObjective : MonoBehaviour
+    public sealed class DestructibleObjective : MonoBehaviour
     {
         [Header("Configuration")]
         [Tooltip("Drag the tight physical collider here. Enemies will aim for this.")]
@@ -24,7 +24,7 @@ namespace Placement
             _health = GetComponent<HealthComponent>();
 
             // Fallback: If you forget to drag it, try to find one, but warn us
-            if (_mainBodyCollider == null)
+            if (!_mainBodyCollider)
             {
                 _mainBodyCollider = GetComponent<Collider>();
                 Debug.LogWarning($"{name}: MainBodyCollider is missing! Enemies might aim at the wrong part.");

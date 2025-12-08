@@ -2,7 +2,7 @@
 
 namespace Pathing
 {
-    public class RoadSegmentController : MonoBehaviour
+    public sealed class RoadSegmentController : MonoBehaviour
     {
         [SerializeField] private int splineIndex;
         [SerializeField] private GameObject blockerInstance;

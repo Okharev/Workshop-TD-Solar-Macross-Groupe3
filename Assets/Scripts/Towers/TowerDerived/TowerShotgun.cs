@@ -3,16 +3,14 @@ using System.Collections.Generic;
 using Economy;
 using Enemy;
 using UnityEngine;
-// Nécessaire pour le Dictionary
 using Random = UnityEngine.Random;
 
 namespace Towers.TowerDerived
 {
-    public class TowerShotgun : BaseTower
+    public sealed class TowerShotgun : BaseTower
     {
         [Header("Shotgun Config")] public int pelletCount = 6;
-
-        public float knockbackForce = 2f; // Force par plomb
+        public float knockbackForce = 2f;
         public float knockbackDuration = 0.2f;
 
         [Tooltip("Horizontal spread in degrees (Width)")]
@@ -39,29 +37,21 @@ namespace Towers.TowerDerived
                 Target = currentTarget ? currentTarget.gameObject : null
             });
 
-            // 1. On nettoie le tracker avant de tirer
             _hitTracker.Clear();
 
-            // 2. On tire tous les plombs et on enregistre qui est touché
             for (var i = 0; i < pelletCount; i++) FireSingleRayAndTrack(damagePerPellet);
 
-            // 3. On applique le Knockback CUMULÉ
             ApplyAccumulatedKnockback();
         }
 
         private void ApplyAccumulatedKnockback()
         {
-            foreach (var entry in _hitTracker)
+            foreach (var (enemy, hitCount) in _hitTracker)
             {
-                var enemy = entry.Key;
-                var hitCount = entry.Value;
 
-                // La force est multipliée par le nombre de plombs reçus !
-                // Si l'ennemi prend 6 plombs, il recule 6x plus fort.
                 var totalForce = knockbackForce * hitCount;
 
-                // On peut aussi augmenter légèrement la durée si on veut, 
-                // mais augmenter la force est souvent plus "punchy".
+ 
                 enemy.ApplyKnockback(transform.position, totalForce, knockbackDuration);
             }
         }
@@ -115,9 +105,13 @@ namespace Towers.TowerDerived
                 Events.OnHit?.Invoke(new UpgradeProvider.OnHitData()
                 {
                     Origin = gameObject,
-                    Target = gameObject
+                    Target = victim.gameObject
                 });
 
+                
+                if (victim.gameObject.TryGetComponent<EnemyController>(out var movement))
+                    if (!_hitTracker.TryAdd(movement, 1))
+                        _hitTracker[movement]++;
 
                 if (victim.TakeDamage(Mathf.RoundToInt(damage.Value)))
                 {
@@ -128,10 +122,6 @@ namespace Towers.TowerDerived
                     });
                 }
 
-                var movement = hit.collider.GetComponentInParent<EnemyController>();
-                if (movement)
-                    if (!_hitTracker.TryAdd(movement, 1))
-                        _hitTracker[movement]++;
             }
             else
             {

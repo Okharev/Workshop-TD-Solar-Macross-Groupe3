@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace Towers
 {
-    public class StatusHandler : MonoBehaviour
+    public sealed class StatusHandler : MonoBehaviour
     {
         private readonly Dictionary<Type, IStatusEffect> _activeEffects = new();
         private readonly Dictionary<Type, Coroutine> _activeRoutines = new();

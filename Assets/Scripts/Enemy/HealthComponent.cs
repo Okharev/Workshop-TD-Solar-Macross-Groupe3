@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace Enemy
 {
-    public class HealthComponent : MonoBehaviour
+    public sealed class HealthComponent : MonoBehaviour
     {
         [Header("Configuration")]
         [SerializeField]

@@ -22,7 +22,7 @@ namespace Towers
     }
 
     [CreateAssetMenu(menuName = "Upgrades/Bleed")]
-    public class BleedUpgradeSo : UpgradeSo
+    public sealed class BleedUpgradeSo : UpgradeSo
     {
         public float stackDuration = 3f;
         public float tickRate = 0.5f;
@@ -185,7 +185,7 @@ namespace Towers
     }
 
     [CreateAssetMenu(menuName = "Upgrades/ExplosionOnDeath")]
-    public class ExplosionUpgradeSo : UpgradeSo
+    public sealed class ExplosionUpgradeSo : UpgradeSo
     {
         public float radius = 3f;
 
@@ -278,7 +278,7 @@ namespace Towers
     }
 
     [CreateAssetMenu(menuName = "Upgrades/Execute")]
-    public class ExecuteUpgradeSo : UpgradeSo
+    public sealed class ExecuteUpgradeSo : UpgradeSo
     {
         public float executeThreshold = 0.15f;
 
@@ -343,7 +343,7 @@ namespace Towers
     }
 
     [CreateAssetMenu(menuName = "Upgrades/Poison")]
-    public class PoisonUpgradeSo : UpgradeSo
+    public sealed class PoisonUpgradeSo : UpgradeSo
     {
         public float duration = 6f;
 

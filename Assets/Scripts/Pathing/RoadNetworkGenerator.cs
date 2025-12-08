@@ -10,7 +10,7 @@ using UnityEngine.Splines;
 
 namespace Pathing
 {
-    public class RoadNetworkGenerator : MonoBehaviour
+    public sealed class RoadNetworkGenerator : MonoBehaviour
     {
         [Header("Terrain Texturing")] public bool applySplatting;
         public int terrainLayerIndex;
@@ -709,7 +709,7 @@ namespace Pathing
         }
 
         [Serializable]
-        public class RoadProfile
+        public sealed class RoadProfile
         {
             public string name = "Road Settings";
             [Min(0.1f)] public float width = 3.0f;

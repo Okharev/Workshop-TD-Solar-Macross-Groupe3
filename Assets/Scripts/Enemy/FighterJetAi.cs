@@ -8,7 +8,7 @@ using UnityEngine;
 // Pour gérer les listes proprement
 
 [RequireComponent(typeof(EnemyObjectiveTracker))]
-public class FighterJetAi : MonoBehaviour
+public sealed class FighterJetAi : MonoBehaviour
 {
     public enum AIState
     {

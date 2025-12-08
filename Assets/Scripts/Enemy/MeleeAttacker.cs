@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace Enemy
 {
-    public class MeleeAttacker : EnemyAttacker
+    public sealed class MeleeAttacker : EnemyAttacker
     {
         protected override void PerformAttack(GameObject target)
         {

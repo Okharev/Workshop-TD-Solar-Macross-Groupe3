@@ -2,7 +2,7 @@
 
 namespace Economy
 {
-    public class EnergyFieldLink : MonoBehaviour
+    public sealed class EnergyFieldLink : MonoBehaviour
     {
         private EnergyProducer _mainProducer;
 

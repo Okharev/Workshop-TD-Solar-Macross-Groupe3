@@ -4,7 +4,7 @@ using UnityEngine;
 namespace Placement
 {
     [CustomEditor(typeof(PlacementTester))]
-    public class PlacementTesterEditor : Editor
+    public sealed class PlacementTesterEditor : Editor
     {
         public override void OnInspectorGUI()
         {

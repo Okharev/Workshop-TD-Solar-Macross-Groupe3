@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace Placement
 {
-    public class DistrictZone : MonoBehaviour
+    public sealed class DistrictZone : MonoBehaviour
     {
         [Header("Settings")] public string districtName = "District A";
 

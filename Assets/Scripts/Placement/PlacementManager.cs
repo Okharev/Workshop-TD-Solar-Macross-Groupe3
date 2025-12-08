@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using Buildings;
 using Economy;
+using Towers;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
@@ -28,14 +30,14 @@ namespace Placement
 
     public interface IPlacementValidator
     {
-        ValidationResult Validate(Vector3 position, Quaternion rotation, BuildingSo data);
+        ValidationResult Validate(Vector3 position, Quaternion rotation, BuildingEntity data);
     }
 
-    public class CompositeValidator : IPlacementValidator
+    public sealed class CompositeValidator : IPlacementValidator
     {
         private readonly List<IPlacementValidator> _validators = new();
 
-        public ValidationResult Validate(Vector3 p, Quaternion r, BuildingSo d)
+        public ValidationResult Validate(Vector3 p, Quaternion r, BuildingEntity d)
         {
             foreach (var v in _validators)
             {
@@ -51,8 +53,22 @@ namespace Placement
             _validators.Add(v);
         }
     }
+    
+    public sealed class EconomyValidator : IPlacementValidator
+    {
+        public ValidationResult Validate(Vector3 position, Quaternion rotation, BuildingEntity data)
+        {
+            // Check if we have enough money
+            // We use CanAfford (or direct comparison) to check without spending
+            if (!CurrencyManager.Instance.CanAfford(data.cost))
+            {
+                return ValidationResult.Fail($"Insufficient Funds ({data.cost})");
+            }
 
-    public class PhysicsValidator : IPlacementValidator
+            return ValidationResult.Success();        }
+    }
+
+    public sealed class PhysicsValidator : IPlacementValidator
     {
         private readonly Collider[] _cache = new Collider[1];
         private readonly LayerMask _mask;
@@ -64,28 +80,49 @@ namespace Placement
             _padding = padding;
         }
 
-        public ValidationResult Validate(Vector3 pos, Quaternion rot, BuildingSo data)
+        public ValidationResult Validate(Vector3 pos, Quaternion rot, BuildingEntity data)
         {
-            var refCol = data.prefab.GetComponent<BoxCollider>();
-            
-            if (!refCol) refCol = data.prefab.GetComponentInChildren<BoxCollider>();
-            
+            // 1. Safety Check: Ensure the data and prefab exist
+            if (!data || !data.currentLevelPrefab)
+            {
+                // You might want to return Success here if you want to allow placement 
+                // of "invisible" logic objects, but Fail is safer for debugging.
+                return ValidationResult.Fail("Data or Prefab is missing");
+            }
+
+            // 2. Find the collider (Try root first, then children)
+            // Note: We use the prefab directly. This is safe for reading data.
+            var refCol = data.currentLevelPrefab.GetComponent<BoxCollider>();
+            if (!refCol) refCol = data.currentLevelPrefab.GetComponentInChildren<BoxCollider>();
+
+            // If this building has no collider, we assume it can be placed anywhere (e.g. a ground decal)
             if (!refCol) return ValidationResult.Success();
-            
-            var center = pos + rot * refCol.center;
-            
+
+            // 3. Calculate Center and Size accurately
+            // Note: If the collider is on a child, we must account for the child's local position
+            Vector3 localCenter = refCol.center;
+            if (refCol.transform != data.currentLevelPrefab.transform)
+            {
+                // Add child offset if the collider is not on the root
+                localCenter = refCol.transform.localPosition + refCol.center;
+            }
+
+            var center = pos + (rot * localCenter);
             var halfExtents = refCol.size * (0.5f * _padding);
-            
+
+            // 4. Perform the Overlap Check
             if (Physics.OverlapBoxNonAlloc(center, halfExtents, _cache, rot, _mask) > 0)
+            {
                 return ValidationResult.Fail("Obstacle detected");
-            
+            }
+
             return ValidationResult.Success();
         }
     }
 
     #endregion
 
-    public class AdditiveEnergyValidator : IPlacementValidator
+    public sealed class AdditiveEnergyValidator : IPlacementValidator
     {
         private readonly LayerMask _energyLayer;
 
@@ -94,7 +131,7 @@ namespace Placement
             _energyLayer = layer;
         }
 
-        public ValidationResult Validate(Vector3 pos, Quaternion rot, BuildingSo data)
+        public ValidationResult Validate(Vector3 pos, Quaternion rot, BuildingEntity data)
         {
             if (data.energyDrain <= 0) return ValidationResult.Success();
             
@@ -134,7 +171,7 @@ namespace Placement
     }
 
     [DefaultExecutionOrder(-100)]
-    public class PlacementManager : MonoBehaviour
+    public sealed class PlacementManager : MonoBehaviour
     {
         [Header("Layer Configuration")] [SerializeField]
         private LayerMask terrainLayerMask;
@@ -154,15 +191,18 @@ namespace Placement
         public event Action OnPlacementEnded;
         public event Action<int> OnBuildingPlaced;
 
-        private BuildingSo _currentBuilding;
+        private BuildingEntity _currentBuilding;
         private float _currentRotationY;
         private PlacementGhost _ghostHelper;
         private bool _isPlacementMode;
         private UnityEngine.Camera _mainCamera;
         private IPlacementValidator _validator;
 
+        public static PlacementManager Instance { get; private set; }
+        
         private void Awake()
         {
+            Instance = this;
             _mainCamera = UnityEngine.Camera.main;
 
             // Re-initializing masks if needed, or rely on Inspector
@@ -173,6 +213,7 @@ namespace Placement
             var composite = new CompositeValidator();
             // composite.AddValidator(new EconomyValidator());
             composite.AddValidator(new PhysicsValidator(obstacleLayerMask, overlapCheckPadding));
+            composite.AddValidator(new EconomyValidator());
 
             // Don't need but might be good to warn player in placement ui
             // composite.AddValidator(new AdditiveEnergyValidator(energyLayerMask));
@@ -198,8 +239,12 @@ namespace Placement
                 _ghostHelper.SetState(result.IsValid);
 
                 if (Mouse.current.leftButton.wasPressedThisFrame && !IsPointerOverUI())
+                {
                     if (result.IsValid)
-                        PlaceTower(position, rotation);
+                    {
+                        ConfirmPlacement(position, rotation);
+                    }
+                }
             }
             else
             {
@@ -207,8 +252,21 @@ namespace Placement
             }
         }
 
+        private void ConfirmPlacement(Vector3 position, Quaternion rotation)
+        {
+            var newBuilding = BuildingManager.CreateBuilding(_currentBuilding, position, rotation);
 
-        public void StartPlacement(BuildingSo blueprint)
+            if (newBuilding)
+            {
+                OnBuildingPlaced?.Invoke(_currentBuilding.cost);
+                Debug.Log($"Placé : {_currentBuilding.displayName}");
+                
+                StopPlacement();
+            }
+            // Huh ?
+        }
+        
+        public void StartPlacement(BuildingEntity blueprint)
         {
             if (!blueprint) return;
             StopPlacement();
@@ -216,7 +274,7 @@ namespace Placement
             _currentBuilding = blueprint;
             _isPlacementMode = true;
 
-            _ghostHelper.CreateGhost(blueprint.prefab.gameObject);
+            _ghostHelper.CreateGhost(blueprint.currentLevelPrefab.gameObject);
 
             if (blueprint.energyDrain > 0) EnergyHeatmapSystem.Instance?.ToggleHeatmap(true);
 
@@ -248,8 +306,7 @@ namespace Placement
 
         private void PlaceTower(Vector3 position, Quaternion rotation)
         {
-            // Instantiate Real Object
-            var newObj = Instantiate(_currentBuilding.prefab.gameObject, position, rotation);
+            var newObj = Instantiate(_currentBuilding.currentLevelPrefab.gameObject, position, rotation);
 
             OnBuildingPlaced?.Invoke(_currentBuilding.cost);
             Debug.Log($"Placed {_currentBuilding.name}");
@@ -269,7 +326,7 @@ namespace Placement
         }
     }
 
-    public class PlacementGhost
+    public sealed class PlacementGhost
     {
         private readonly Material _invalidMaterial;
         private readonly Material _validMaterial;
@@ -286,12 +343,51 @@ namespace Placement
         public void CreateGhost(GameObject prefab)
         {
             ClearGhost();
+    
+            // Instantiate the object
             _ghostObject = Object.Instantiate(prefab);
             _ghostObject.name = "PlacementGhost";
-            foreach (var c in _ghostObject.GetComponentsInChildren<Collider>()) Object.Destroy(c);
-            foreach (var s in _ghostObject.GetComponentsInChildren<MonoBehaviour>()) Object.Destroy(s);
+
+            // 1. Disable Colliders (don't destroy them, just make them non-interactive)
+            var colliders = _ghostObject.GetComponentsInChildren<Collider>();
+            foreach (var c in colliders) c.enabled = false;
+
+            // 2. Disable Scripts (MonoBehaviours)
+            var scripts = _ghostObject.GetComponentsInChildren<MonoBehaviour>();
+            foreach (var s in scripts)
+            {
+                s.enabled = false; 
+            }
+    
+            // 3. Handle Physics (make Rigidbodies kinematic so they don't fall)
+            var rbs = _ghostObject.GetComponentsInChildren<Rigidbody>();
+            foreach (var rb in rbs)
+            {
+                rb.isKinematic = true;
+                rb.detectCollisions = false;
+            }
+
+            // 4. Disable AudioSources and Animators/ParticleSystems if needed
+            foreach (var audio in _ghostObject.GetComponentsInChildren<AudioSource>()) audio.enabled = false;
+            foreach (var anim in _ghostObject.GetComponentsInChildren<Animator>()) anim.enabled = false;
+            foreach (var ps in _ghostObject.GetComponentsInChildren<ParticleSystem>()) ps.Stop();
+
+            // 5. Gather Renderers for the material swap
             _renderers = _ghostObject.GetComponentsInChildren<Renderer>();
+    
+            // 6. IMPORTANT: Set to IgnoreRaycast layer so the ghost doesn't block the mouse ray
+            SetLayerRecursively(_ghostObject, LayerMask.NameToLayer("Ignore Raycast"));
+
             SetState(true, true);
+        }
+
+        private void SetLayerRecursively(GameObject obj, int newLayer)
+        {
+            obj.layer = newLayer;
+            foreach (Transform child in obj.transform)
+            {
+                SetLayerRecursively(child.gameObject, newLayer);
+            }
         }
 
         public void UpdatePosition(Vector3 position, Quaternion rotation)

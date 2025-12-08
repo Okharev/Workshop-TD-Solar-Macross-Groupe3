@@ -1,6 +1,6 @@
 ﻿using System;
 
-public class Observer<TSource, TResult> : IDisposable
+public sealed class Observer<TSource, TResult> : IDisposable
 {
     private Action<TResult> _onNext;
     private Func<TSource, bool> _predicate;

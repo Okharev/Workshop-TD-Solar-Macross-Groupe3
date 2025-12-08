@@ -2,7 +2,7 @@
 
 namespace Camera
 {
-    public class FreeFlyCamera : MonoBehaviour
+    public sealed class FreeFlyCamera : MonoBehaviour
     {
         [Header("Movement Settings")] public float movementSpeed = 10f;
 

@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace Enemy
 {
-    public class RangedAttacker : EnemyAttacker
+    public sealed class RangedAttacker : EnemyAttacker
     {
         [Header("Ranged Settings")] public GameObject projectilePrefab;
 

@@ -4,7 +4,7 @@ using UnityEngine.AI;
 namespace Pathing
 {
     [RequireComponent(typeof(NavMeshAgent))]
-    public class TestNavMesh : MonoBehaviour
+    public sealed class TestNavMesh : MonoBehaviour
     {
         private NavMeshAgent _agent;
 

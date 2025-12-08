@@ -1,5 +1,6 @@
 ﻿using System;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Economy
 {
@@ -11,14 +12,13 @@ namespace Economy
         Background = 0
     }
 
-    public class EnergyConsumer : MonoBehaviour
+    public sealed class EnergyConsumer : MonoBehaviour
     {
         [Header("Settings")] [SerializeField] private EnergyPriority priority = EnergyPriority.Standard;
 
-        [SerializeField] private ReactiveInt totalRequirement = new(100);
+        [SerializeField] public ReactiveInt totalRequirement = new(100);
 
         private Vector3 _lastPos;
-        public IReadOnlyReactiveProperty<int> TotalRequirement => totalRequirement;
         public EnergyPriority Priority => priority;
 
         public bool IsPowered { get; private set; }

@@ -1,11 +1,44 @@
-﻿using UnityEngine;
+﻿using System;
+using Towers;
+using UnityEngine;
 using UnityEngine.EventSystems;
 
 // Nécessaire pour éviter de cliquer à travers l'UI
 
 namespace UI
 {
-    public class SelectionInputHandler : MonoBehaviour
+    public static class SelectionManager
+    {
+        private static ISelectable _currentSelection;
+
+        public static event Action<ISelectable> OnObjectSelected;
+        public static event Action OnDeselected;
+
+        public static void Select(ISelectable newSelection)
+        {
+            if (_currentSelection == newSelection) return;
+
+            _currentSelection?.OnDeselect();
+
+            _currentSelection = newSelection;
+            _currentSelection.OnSelect();
+
+            OnObjectSelected?.Invoke(newSelection);
+        }
+
+        public static void Deselect()
+        {
+            if (_currentSelection != null)
+            {
+                _currentSelection.OnDeselect();
+                _currentSelection = null;
+            }
+
+            OnDeselected?.Invoke();
+        }
+    }
+    
+    public sealed class SelectionInputHandler : MonoBehaviour
     {
         [Header("Configuration")] [SerializeField]
         private LayerMask selectionLayer;

@@ -12,7 +12,7 @@ namespace Towers
     }
 
     [Serializable]
-    public class StatModifier
+    public sealed class StatModifier
     {
         public readonly object Source;
         public readonly StatModType Type;
@@ -27,11 +27,10 @@ namespace Towers
     }
 
     [Serializable]
-    public class Stat
+    public sealed class Stat
     {
         [SerializeField] private ReactiveFloat _baseValue;
 
-        // On garde _value privé ou protégé
         [SerializeField] private ReactiveFloat _value = new(0);
         private readonly List<StatModifier> _modifiers = new();
 
@@ -42,15 +41,10 @@ namespace Towers
             Initialize();
         }
 
-        // --- CORRECTION SYNTAXE ---
-
-        // 1. Accès direct : permet d'écrire "myStat.Value" (float)
         public float Value => _value.Value;
 
-        // 3. On expose l'observable pour ceux qui veulent s'abonner aux changements
         public IReadOnlyReactiveProperty<float> Observable => _value;
 
-        // (Le reste de tes méthodes BaseValue, AddModifier, Recalculate restent identiques...)
 
         public float BaseValue
         {
@@ -58,30 +52,23 @@ namespace Towers
             set => _baseValue.Value = value;
         }
 
-        // 2. Opérateur Implicite : permet d'écrire "float x = myStat;" ou "if(myStat > 10)"
         public static implicit operator float(Stat s)
         {
             return s.Value;
         }
 
-        // Event for when the FINAL calculated value changes
         public event Action<float> OnValueChanged
         {
             add => _value.OnValueChanged += value;
             remove => _value.OnValueChanged -= value;
         }
 
-        /// <summary>
-        ///     Call this in Awake() or Start() of the owning MonoBehaviour.
-        ///     Ensures internal listeners are hooked up.
-        /// </summary>
+
         public void Initialize()
         {
-            // Ensure we don't double subscribe if Initialize is called multiple times
             _baseValue.OnValueChanged -= OnBaseValueChanged;
             _baseValue.OnValueChanged += OnBaseValueChanged;
 
-            // Initial Calculation
             Recalculate();
         }
 
@@ -90,7 +77,6 @@ namespace Towers
             Recalculate();
         }
 
-        // --- Modifier Management ---
 
         public void AddModifier(StatModifier mod)
         {
@@ -127,7 +113,6 @@ namespace Towers
             }
         }
 
-        // --- Calculation Logic ---
 
         private void Recalculate()
         {
@@ -135,10 +120,7 @@ namespace Towers
             float sumPercentAdd = 0;
             var totalPercentMult = 1f;
 
-            // Iterate list once? Or multiple times? 
-            // Splitting loops usually easier to read and statistically insignificant performance hit here.
 
-            // 1. Flat & Percent Add
             foreach (var mod in _modifiers)
                 switch (mod.Type)
                 {
@@ -160,7 +142,6 @@ namespace Towers
             finalValue *= totalPercentMult;
 
             // 4. Update the Output ReactiveProperty
-            // The ReactiveProperty internal check ensures OnValueChanged only fires if the result is actually different
             _value.Value = (float)Math.Round(finalValue, 4);
         }
     }

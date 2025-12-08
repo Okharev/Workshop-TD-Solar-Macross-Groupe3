@@ -9,7 +9,7 @@ using UnityEngine;
 
 namespace Towers.TowerDerived
 {
-    public class TowerSlow : BaseTower
+    public sealed class TowerSlow : BaseTower
     {
         [Header("Slow Configuration")] [Tooltip("Percentage to slow the enemy. 0.3 = 30% slow.")] [Range(0f, 0.9f)]
         public float slowPercent = 0.3f;
@@ -22,18 +22,16 @@ namespace Towers.TowerDerived
         // Optimization: Reusable lists/arrays to prevent Garbage Collection allocation in the loop
         private readonly List<EnemyController> _currentFrameEnemies = new();
         private readonly List<EnemyController> _enemiesToRemove = new();
-        private readonly Collider[] _hitBuffer = new Collider[32]; // Cap max targets to 50 for performance
-
-        // Track currently slowed enemies to remove the slow when they leave range
+        private readonly Collider[] _hitBuffer = new Collider[32];
+        
         private readonly HashSet<EnemyController> _slowedEnemies = new();
 
         protected override void Start()
         {
-            if (enemyLayer == 0) enemyLayer = LayerMask.GetMask("Enemy");
+            if (enemyLayer == 0) enemyLayer = LayerMask.GetMask("EnemyAir", "EnemyGround");
             StartCoroutine(SlowLoop());
         }
 
-        // Cleanup on Tower Sell/Destroy
         private void OnDestroy()
         {
             RemoveAllSlows();
@@ -42,7 +40,6 @@ namespace Towers.TowerDerived
 
         private void OnDrawGizmosSelected()
         {
-            // Safety check for range in editor mode
             var r = range.Value;
             Gizmos.color = new Color(0, 0, 1, 0.3f);
             Gizmos.DrawSphere(transform.position, range.Value);
@@ -55,9 +52,8 @@ namespace Towers.TowerDerived
         {
             var wait = new WaitForSeconds(checkInterval);
 
-            while (true) // Coroutine continues until GameObject is destroyed
+            while (true)
             {
-                // Check if the R3 View is destroyed to stop the loop safely (optional but good practice)
                 if (!this) yield break;
 
                 // Logic: Only apply slow if powered on
@@ -121,19 +117,13 @@ namespace Towers.TowerDerived
 
         private void ApplySlow(EnemyController target)
         {
-            // R3 Adaptation:
-            // Create a modifier with 'this' as the source.
-            // Value is negative because Type is PercentAdd (Add -0.3 = 70% speed).
             var mod = new StatModifier(-slowPercent, StatModType.PercentAdd, this);
 
-            // Assuming EnemyController has a field 'Speed' of type ReactiveStat
             target.speed.AddModifier(mod);
         }
 
         private void RemoveSlow(EnemyController target)
         {
-            // R3 Adaptation:
-            // Remove all modifiers created by THIS tower instance
             target.speed.RemoveAllModifiersFromSource(this);
         }
 

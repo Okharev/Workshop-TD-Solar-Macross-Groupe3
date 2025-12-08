@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Towers.TowerDerived
 {
-    public class TowerGun : BaseTower
+    public sealed class TowerGun : BaseTower
     {
         [Header("Gun Config")] [Tooltip("Half-size of the projectile box. 0.1 means a box of 0.2x0.2 size.")]
         public float projectileThickness = 0.1f;
@@ -84,8 +84,6 @@ namespace Towers.TowerDerived
 
             foreach (var hit in _colliderCache.AsSpan(0, hits))
             {
-                if (hit) continue;
-
                 if (Physics.Linecast(firePoint.position, hit.transform.position, visionBlockerLayer))
                     continue;
 

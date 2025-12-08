@@ -1,9 +1,7 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
-using System.Globalization;
+using Buildings;
 using Economy;
-using UI;
 using UnityEngine;
 
 namespace Towers
@@ -21,34 +19,15 @@ namespace Towers
         SyncWithReload
     }
 
-    [Serializable]
-    public struct BuildingData
-    {
-        public string name;
-        public string description;
-        public Texture2D icon;
-        [Range(0, 2000)]
-        public int cost;
-        [Range(0.0f, 1.0f)]
-        public float refundRatio;
-        [Range(0, 2000)]
-        public int energyDrain;
-        public GameObject prefab;
-        
-        public int RefundCost => Mathf.RoundToInt(cost * refundRatio);
-    }
-
     [RequireComponent(typeof(EnergyConsumer), typeof(Collider))]
-    public abstract class BaseTower : MonoBehaviour, ISelectable
+    public abstract class BaseTower : BuildingEntity
     {
         [SerializeField] protected EnergyConsumer powerSource;
 
-        [SerializeField] public BuildingData buildingData;
-
-        [SerializeField] public float baseDamage = 10f;
-        [SerializeField] public float baseRange = 15f;
-        [SerializeField] public float baseFireRate = 1f;
-
+        [SerializeField] public int baseDamage;
+        [SerializeField] public float baseRange;
+        [SerializeField] public float baseFireRate;
+        
         [SerializeField] public Stat damage;
         [SerializeField] public Stat range;
         [SerializeField] public Stat fireRate;
@@ -84,15 +63,16 @@ namespace Towers
         [Header("Upgrades")] public readonly UpgradeProvider Events = new();
 
         private List<IUpgradeInstance> _activeUpgrades = new();
-
-
+        
         protected virtual void Awake()
         {
             if (!powerSource) powerSource = GetComponent<EnergyConsumer>();
+            powerSource.totalRequirement.Value = energyDrain;
+            
 
             if (targetLayer == 0) targetLayer = LayerMask.GetMask("EnemyGround");
             if (visionBlockerLayer == 0) visionBlockerLayer = LayerMask.GetMask("Terrain", "PhysicalBlocker");
-
+            
             ApplyBlueprintStats();
         }
 
@@ -132,45 +112,6 @@ namespace Towers
             if (currentTarget) Gizmos.DrawWireSphere(currentTarget.transform.position, 1.0f);
 
             OnDrawGizmosTower();
-        }
-
-
-        public string DisplayName => buildingData.name;
-        public string Description => buildingData.description;
-
-        public Dictionary<string, string> GetStats()
-        {
-            return new Dictionary<string, string>
-            {
-                { "Range", range.Value.ToString(CultureInfo.InvariantCulture) },
-                { "Speed", fireRate.Value.ToString(CultureInfo.InvariantCulture) },
-                { "Damage", damage.Value.ToString(CultureInfo.InvariantCulture) }
-            };
-        }
-
-        public List<InteractionButton> GetInteractions()
-        {
-            return new List<InteractionButton>
-            {
-                new()
-                {
-                    Label = "Upgrade: XXX Gold",
-                    OnClick = UpgradeTower
-                },
-                new()
-                {
-                    Label = "Sell: " + buildingData.RefundCost,
-                    OnClick = SellTower
-                }
-            };
-        }
-
-        public void OnSelect()
-        {
-        }
-
-        public void OnDeselect()
-        {
         }
 
         protected float GetScaledRotationSpeed(float baseSpeed)
@@ -270,21 +211,6 @@ namespace Towers
 
         protected virtual void OnDrawGizmosTower()
         {
-        }
-
-        private void SellTower()
-        {
-            CurrencyManager.Instance.Gain(buildingData.RefundCost);
-            
-            SelectionManager.Deselect();
-            Destroy(gameObject);
-        }
-
-        private void UpgradeTower()
-        {
-            Debug.Log("Upgraded ");
-            
-            SelectionManager.Select(this);
         }
     }
 }

@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Enemy
 {
-    public class AirPath : MonoBehaviour
+    public sealed class AirPath : MonoBehaviour
     {
         [Header("Configuration")] public string pathID;
 
@@ -21,9 +21,9 @@ namespace Enemy
             Gizmos.color = gizmoColor;
             Gizmos.DrawWireSphere(transform.position, 1f);
 
-            if (waypoints.Count > 0 && waypoints[0] != null) Gizmos.DrawLine(transform.position, waypoints[0].position);
+            if (waypoints.Count > 0 && waypoints[0]) Gizmos.DrawLine(transform.position, waypoints[0].position);
 
-            if (waypoints.Count > 0 && localObjective != null)
+            if (waypoints.Count > 0 && localObjective)
             {
                 Gizmos.color = Color.red;
                 Gizmos.DrawLine(waypoints[^1].position, localObjective.transform.position);
@@ -32,21 +32,21 @@ namespace Enemy
             if (waypoints == null || waypoints.Count == 0) return;
             Gizmos.color = gizmoColor;
             for (var i = 0; i < waypoints.Count - 1; i++)
-                if (waypoints[i] != null && waypoints[i + 1] != null)
+                if (waypoints[i] && waypoints[i + 1] != null)
                 {
                     Gizmos.DrawLine(waypoints[i].position, waypoints[i + 1].position);
                     Gizmos.DrawSphere(waypoints[i].position, 0.5f);
                 }
 
-            if (waypoints.Count > 0 && waypoints[^1] != null) Gizmos.DrawSphere(waypoints[^1].position, 0.5f);
+            if (waypoints.Count > 0 && waypoints[^1]) Gizmos.DrawSphere(waypoints[^1].position, 0.5f);
         }
 
         public void Spawn(GameObject prefab, DestructibleObjective targetOverride = null)
         {
-            if (prefab == null) return;
+            if (!prefab) return;
 
             var spawnRotation = transform.rotation;
-            if (waypoints.Count > 0 && waypoints[0] != null)
+            if (waypoints.Count > 0 && waypoints[0])
                 spawnRotation = Quaternion.LookRotation(waypoints[0].position - transform.position);
 
             var newAirUnit = Instantiate(prefab, transform.position, spawnRotation);
@@ -57,8 +57,7 @@ namespace Enemy
             var tracker = newAirUnit.GetComponent<EnemyObjectiveTracker>();
             if (tracker)
             {
-                // Logique de priorité
-                var targetToUse = targetOverride != null ? targetOverride : localObjective;
+                var targetToUse = targetOverride ? targetOverride : localObjective;
 
                 tracker.Initialize(targetToUse, mainBaseObjective);
             }

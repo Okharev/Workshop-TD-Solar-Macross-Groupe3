@@ -9,7 +9,7 @@ using UnityEngine.AI;
 namespace Economy
 {
     [RequireComponent(typeof(NavMeshAgent))]
-    public class EnemyController : MonoBehaviour, ISelectable
+    public sealed class EnemyController : MonoBehaviour, ISelectable
     {
         [SerializeField] public float baseDamage = 10f;
         [SerializeField] public float baseRange = 15f;
@@ -32,13 +32,6 @@ namespace Economy
             InitializeReactiveStats();
 
             _agent = GetComponent<NavMeshAgent>();
-
-            speed.Observable.Subscribe(newSpeed =>
-                {
-                    _agent.speed = Mathf.Max(0, newSpeed);
-                    Debug.Log($"Enemy Speed Updated: {_agent.speed}");
-                })
-                .AddTo(this);
         }
 
         public string DisplayName => "Yaa";
@@ -54,7 +47,7 @@ namespace Economy
             };
         }
 
-        public List<InteractionButton> GetInteractions()
+        public List<InteractionAction> GetInteractions()
         {
             return null;
         }

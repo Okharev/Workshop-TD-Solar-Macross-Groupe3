@@ -1,16 +1,18 @@
 ﻿using System.Collections.Generic;
+using Buildings;
+using Towers;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
 namespace Placement
 {
-    public class PlacementTester : MonoBehaviour
+    public sealed class PlacementTester : MonoBehaviour
     {
         [Header("Dependencies")] [SerializeField]
         private PlacementManager placementManager;
 
         [Header("Test Data")] [Tooltip("Glisse tes Blueprints de tours ici pour les tester")] [SerializeField]
-        private List<BuildingSo> testTowers;
+        private List<BuildingEntity> testTowers;
 
         private void Update()
         {

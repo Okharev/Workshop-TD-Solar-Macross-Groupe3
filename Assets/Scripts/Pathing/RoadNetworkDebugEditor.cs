@@ -8,7 +8,7 @@ using UnityEngine.Splines;
 namespace Pathing
 {
     [CustomEditor(typeof(RoadNetworkGenerator))]
-    public class RoadNetworkDebugEditor : Editor
+    public sealed class RoadNetworkDebugEditor : Editor
     {
         // Settings for the debug view
         private static bool _showIds = true;

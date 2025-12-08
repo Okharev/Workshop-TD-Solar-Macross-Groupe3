@@ -4,8 +4,8 @@ using UnityEngine.Serialization;
 
 namespace Economy
 {
-    [DefaultExecutionOrder(-100)]
-    public class CurrencyManager : MonoBehaviour
+    [DefaultExecutionOrder(-200)]
+    public sealed class CurrencyManager : MonoBehaviour
     {
         [SerializeField]
         private int startingMoney = 500;
@@ -36,15 +36,17 @@ namespace Economy
             return currentMoney.Value >= cost;
         }
 
-        public void TrySpend(int amount)
+        public bool TrySpend(int amount)
         {
             if (currentMoney.Value - amount < 0)
             {
                 FailedToSpend?.Invoke();
 
-                return;
+                return false;
             }
             currentMoney.Value -= amount;
+
+            return true;
         }
 
         public void Gain(int amount)

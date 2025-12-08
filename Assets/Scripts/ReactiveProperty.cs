@@ -49,7 +49,7 @@ public interface IReadOnlyReactiveProperty<out T>
 
 
 [Serializable]
-public class ReactiveInt : ReactiveProperty<int>
+public sealed class ReactiveInt : ReactiveProperty<int>
 {
     public ReactiveInt(int v) : base(v)
     {
@@ -57,7 +57,7 @@ public class ReactiveInt : ReactiveProperty<int>
 }
 
 [Serializable]
-public class ReactiveFloat : ReactiveProperty<float>
+public sealed class ReactiveFloat : ReactiveProperty<float>
 {
     public ReactiveFloat(float v) : base(v)
     {
@@ -65,7 +65,7 @@ public class ReactiveFloat : ReactiveProperty<float>
 }
 
 [Serializable]
-public class ReactiveBool : ReactiveProperty<bool>
+public sealed class ReactiveBool : ReactiveProperty<bool>
 {
     public ReactiveBool(bool v) : base(v)
     {

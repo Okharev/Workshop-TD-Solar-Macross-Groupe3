@@ -7,7 +7,7 @@ using UnityEngine;
 [CustomPropertyDrawer(typeof(ReactiveInt))]
 [CustomPropertyDrawer(typeof(ReactiveFloat))]
 [CustomPropertyDrawer(typeof(ReactiveBool))]
-public class ReactivePropertyDrawer : PropertyDrawer
+public sealed class ReactivePropertyDrawer : PropertyDrawer
 {
     public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
     {
@@ -57,8 +57,8 @@ public class ReactivePropertyDrawer : PropertyDrawer
         foreach (var element in elements)
             if (element.Contains("["))
             {
-                var elementName = element.Substring(0, element.IndexOf("["));
-                var index = Convert.ToInt32(element.Substring(element.IndexOf("[")).Replace("[", "")
+                var elementName = element[..element.IndexOf("[")];
+                var index = Convert.ToInt32(element[element.IndexOf("[")..].Replace("[", "")
                     .Replace("]", ""));
                 obj = GetValue_Imp(obj, elementName, index);
             }

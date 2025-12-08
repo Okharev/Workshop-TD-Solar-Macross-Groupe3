@@ -1,10 +1,10 @@
-﻿using Game.UI;
+﻿using UI;
 using UnityEngine;
 
 namespace Enemy
 {
     [RequireComponent(typeof(HealthComponent))]
-    public class HealthComponentUILinker : MonoBehaviour
+    public sealed class HealthComponentUILinker : MonoBehaviour
 
     {
         private HealthComponent _health;

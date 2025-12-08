@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace Economy
 {
-    public class ElectricityVisualizer : MonoBehaviour
+    public sealed class ElectricityVisualizer : MonoBehaviour
     {
         [SerializeField] private LineRenderer linePrefab;
         [SerializeField] private float verticalOffset = 2.0f;
@@ -37,7 +37,7 @@ namespace Economy
                 // Safety check if object was destroyed but graph not yet rebuilt (rare race condition)
                 if (!consumer) continue;
 
-                var totalReq = consumer.TotalRequirement.Value;
+                var totalReq = consumer.totalRequirement.Value;
 
                 foreach (var (producer, amountProvided) in sources)
                 {

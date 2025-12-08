@@ -3,9 +3,9 @@ using Enemy;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace Game.UI
+namespace UI
 {
-    public class EnemyHealthBarSystem : MonoBehaviour
+    public sealed class EnemyHealthBarSystem : MonoBehaviour
     {
         public static EnemyHealthBarSystem Instance { get; private set; }
 
@@ -25,7 +25,6 @@ namespace Game.UI
         public float minDistance = 5f;
         public float maxDistance = 40f;
 
-        // --- Structures de Données ---
         private class TrackedData
         {
             public MonoBehaviour Key;        
@@ -50,7 +49,7 @@ namespace Game.UI
 
         private void Awake()
         {
-            if (Instance != null && Instance != this) Destroy(this);
+            if (Instance && Instance != this) Destroy(this);
             else Instance = this;
         }
 
@@ -121,17 +120,15 @@ namespace Game.UI
             if (!_isVisible) return;
             
             // SÉCURITÉS ANTI-CRASH
-            if (_mainCam == null) _mainCam = UnityEngine.Camera.main;
-            if (_mainCam == null || _container.panel == null) return;
+            if (!_mainCam) _mainCam = UnityEngine.Camera.main;
+            if (!_mainCam || _container.panel == null) return;
 
             Vector3 camPos = _mainCam.transform.position;
             Vector3 camFwd = _mainCam.transform.forward;
 
-            for (int i = 0; i < _trackedList.Count; i++)
+            foreach (var data in _trackedList)
             {
-                var data = _trackedList[i];
-
-                if (data.Key == null) continue;
+                if (!data.Key) continue;
 
                 // 1. Logique de Santé
                 var current = data.Health.CurrentHealth.Value;
@@ -178,9 +175,7 @@ namespace Game.UI
                 data.Visual.Root.style.scale = new Scale(Vector2.one * Mathf.Lerp(1.5f, 0.5f, Mathf.InverseLerp(minDistance, maxDistance, dist)));
             }
         }
-
-        // --- POOLING & CREATION ---
-
+        
         private HealthBarElement Acquire(MonoBehaviour key)
         {
             HealthBarElement bar;
@@ -210,32 +205,37 @@ namespace Game.UI
 
         private HealthBarElement CreateVisual()
         {
-            var bg = new VisualElement();
-            bg.pickingMode = PickingMode.Ignore;
-            bg.style.position = Position.Absolute;
-            bg.style.width = barWidth;
-            bg.style.height = barHeight;
+            var bg = new VisualElement
+            {
+                pickingMode = PickingMode.Ignore,
+                style =
+                {
+                    position = Position.Absolute,
+                    width = barWidth,
+                    height = barHeight,
+                    transformOrigin = new TransformOrigin(Length.Percent(50), Length.Percent(50), 0),
+                    backgroundColor = new Color(0, 0, 0, 0.5f),
+                    borderTopLeftRadius = 2,
+                    borderTopRightRadius = 2,
+                    borderBottomRightRadius = 2,
+                    borderBottomLeftRadius = 2
+                }
+            };
 
-            // --- CENTRAGE DU PIVOT ---
-            // Important pour que le Scale (zoom) se fasse depuis le milieu
-            bg.style.transformOrigin = new TransformOrigin(Length.Percent(50), Length.Percent(50), 0);
-    
-            // Note : On a retiré le "style.translate" ici car on fait le calcul manuellement
-            // dans le LateUpdate, c'est souvent plus précis pour éviter le flou.
-
-            bg.style.backgroundColor = new Color(0, 0, 0, 0.5f);
-            bg.style.borderTopLeftRadius = 2; bg.style.borderTopRightRadius = 2;
-            bg.style.borderBottomRightRadius = 2; bg.style.borderBottomLeftRadius = 2;
-
-            var fill = new VisualElement();
-            fill.pickingMode = PickingMode.Ignore;
-            fill.style.height = Length.Percent(100);
-            fill.style.width = Length.Percent(100);
-    
-            // Rouge
-            fill.style.backgroundColor = new Color(0.9f, 0.2f, 0.2f, 1f); 
-            fill.style.borderTopLeftRadius = 2; fill.style.borderBottomLeftRadius = 2;
-            fill.style.borderTopRightRadius = 2; fill.style.borderBottomRightRadius = 2;
+            var fill = new VisualElement
+            {
+                pickingMode = PickingMode.Ignore,
+                style =
+                {
+                    height = Length.Percent(100),
+                    width = Length.Percent(100),
+                    backgroundColor = new Color(0.9f, 0.2f, 0.2f, 1f),
+                    borderTopLeftRadius = 2,
+                    borderBottomLeftRadius = 2,
+                    borderTopRightRadius = 2,
+                    borderBottomRightRadius = 2
+                }
+            };
 
             bg.Add(fill);
             return new HealthBarElement { Root = bg, Fill = fill };

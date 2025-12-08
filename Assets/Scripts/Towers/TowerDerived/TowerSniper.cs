@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace Towers.TowerDerived
 {
-    public class TowerSniper : BaseTower
+    public sealed class TowerSniper : BaseTower
     {
         [Header("Sniper Config")] [Tooltip("Minimum distance to shoot (Dead zone radius)")]
         public float minRange = 5f;
@@ -26,8 +26,7 @@ namespace Towers.TowerDerived
             Gizmos.DrawWireSphere(transform.position, minRange);
 
             Gizmos.color = new Color(0, 1, 0, 0.3f); // Vert = Portée Max
-            if (range != null && range.Value != null)
-                Gizmos.DrawWireSphere(transform.position, range.Value);
+            Gizmos.DrawWireSphere(transform.position, range.Value);
 
             // Visualisation de l'épaisseur du tir
             Gizmos.color = Color.magenta;
@@ -92,24 +91,24 @@ namespace Towers.TowerDerived
                 }
 
                 // B. Si on touche un ennemi (Target Layer)
-                if (((1 << hit.collider.gameObject.layer) & targetLayer) != 0)
+                if (((1 << hit.collider.gameObject.layer) & targetLayer) == 0) continue;
+                
+                if (!hit.collider.TryGetComponent<HealthComponent>(out var victim)) return;
+                
+                Events.OnHit?.Invoke(new UpgradeProvider.OnHitData()
                 {
-                    if (!hit.collider.TryGetComponent<HealthComponent>(out var victim)) return;
-                    Events.OnHit?.Invoke(new UpgradeProvider.OnHitData()
+                    Origin = gameObject,
+                    Target = gameObject
+                });
+
+
+                if (victim.TakeDamage(Mathf.RoundToInt(damageAmount)))
+                {
+                    Events.OnKill?.Invoke(new UpgradeProvider.OnKillData()
                     {
                         Origin = gameObject,
                         Target = gameObject
                     });
-
-
-                    if (victim.TakeDamage(Mathf.RoundToInt(damageAmount)))
-                    {
-                        Events.OnKill?.Invoke(new UpgradeProvider.OnKillData()
-                        {
-                            Origin = gameObject,
-                            Target = gameObject
-                        });
-                    }
                 }
             }
         }

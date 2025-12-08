@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace Towers
 {
-    public class UpgradeProvider
+    public sealed class UpgradeProvider
     {
         public enum DamageType
         {

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 // A hidden component that cleans up subscriptions when the GameObject dies
-public class DisposableTracker : MonoBehaviour
+public sealed class DisposableTracker : MonoBehaviour
 {
     private readonly List<IDisposable> _disposables = new();
 
@@ -20,7 +20,7 @@ public class DisposableTracker : MonoBehaviour
 }
 
 // Simple wrapper for basic actions
-public class ActionDisposable : IDisposable
+public sealed class ActionDisposable : IDisposable
 {
     private Action _onDispose;
 

@@ -6,7 +6,7 @@ using UnityEngine.Serialization;
 namespace Enemy
 {
     [RequireComponent(typeof(HealthComponent))]
-    public class LootMoneyOnDeath : MonoBehaviour
+    public sealed class LootMoneyOnDeath : MonoBehaviour
     {
         public int amountToLoot;
         private HealthComponent _healthComponent;

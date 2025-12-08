@@ -829,17 +829,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1fbe160b5a11479dbfbcf68752d72431, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Towers.TowerDerived.MissileTower
+  displayName: Missile
+  description: Missile description
+  icon: {fileID: 10915, guid: 0000000000000000f000000000000000, type: 0}
+  currentLevelPrefab: {fileID: 5607425079627833002}
+  nextLevelPrefab: {fileID: 5607425079627833002}
+  upgradeCost: 100
+  cost: 100
+  energyDrain: 100
+  nextUpgrade: {fileID: 0}
+  refundRatio: 0.9
   powerSource: {fileID: 8506183719910781864}
-  buildingData:
-    name: 
-    description: 
-    icon: {fileID: 0}
-    cost: 0
-    refundRatio: 0
-    energyDrain: 0
-    prefab: {fileID: 0}
-  baseDamage: 10
-  baseRange: 15
+  baseDamage: 33
+  baseRange: 35
   baseFireRate: 1
   damage:
     _baseValue:

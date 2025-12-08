@@ -3,7 +3,7 @@ using UnityEngine.Rendering;
 
 namespace Economy
 {
-    public class EnergyHeatmapSystem : MonoBehaviour
+    public sealed class EnergyHeatmapSystem : MonoBehaviour
     {
         private static readonly int EnergyID = Shader.PropertyToID("_Energy");
         private static readonly int CoreRadiusID = Shader.PropertyToID("_CoreRadius");
@@ -52,6 +52,8 @@ namespace Economy
 
             InitializeResources();
             InitializeProjectorVolume();
+            
+            ToggleHeatmap(false);
         }
 
         private void Start()
@@ -92,26 +94,22 @@ namespace Economy
 
         private void RenderHeatmap()
         {
-            // Safety checks
             if (!_heatmapRT || !_heatmapRT.IsCreated()) return;
             if (!EnergyGridManager.Instance) return;
 
-            // 1. Prepare Buffer
             _cmd.Clear();
             _cmd.SetRenderTarget(_heatmapRT);
             _cmd.ClearRenderTarget(true, true, Color.black);
 
-            // 2. Setup Ortho Camera for the Texture
             var ortho = Matrix4x4.Ortho(0f, 1f, 0f, 1f, -1f, 100f);
             _cmd.SetViewProjectionMatrices(Matrix4x4.identity, ortho);
 
-            // 3. Draw Producers
             foreach (var p in EnergyGridManager.Instance.AllProducers)
             {
                 if (!p || !p.isActiveAndEnabled) continue;
 
                 float energy = p.GetAvailable();
-                // float energy = p.MaxCapacity.Value; // Uncomment to visualize TOTAL RANGE
+                
 
                 if (energy <= 0) continue;
 

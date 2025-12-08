@@ -8,7 +8,7 @@ using UnityEngine.Splines;
 namespace Pathing.EditorTools
 {
     [CustomEditor(typeof(WaveManager))]
-    public class WaveManagerEditor : Editor
+    public sealed class WaveManagerEditor : Editor
     {
         // Static to keep selection between reloads
         private static int _selectedWaveIndex;

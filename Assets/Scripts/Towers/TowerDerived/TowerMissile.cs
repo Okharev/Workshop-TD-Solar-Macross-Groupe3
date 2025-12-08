@@ -3,14 +3,14 @@ using System.Collections.Generic;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
-namespace Towers
+namespace Towers.TowerDerived
 {
-    public class MissileTower : BaseTower
+    public sealed class MissileTower : BaseTower
     {
         [Header("Missile Configuration")] [SerializeField]
         private HomingMissile missilePrefab;
 
-        [SerializeField] private Transform[] launchPoints; // Array of launch tubes
+        [SerializeField] private Transform[] launchPoints;
 
         [Header("Salvo Settings")] [Tooltip("How many missiles to fire per attack cycle.")] [SerializeField]
         private int missileCount = 6;
@@ -31,7 +31,6 @@ namespace Towers
 
         private readonly List<Transform> _lockedTargets = new();
 
-        // Internal
         private readonly Collider[] _targetBuffer = new Collider[32];
         private WaitForSeconds _dispatchWait;
 
@@ -44,12 +43,10 @@ namespace Towers
                 launchPoints = new[] { firePoint };
         }
 
-        // --- Targeting Logic Override ---
 
 
         protected override void AcquireTarget()
         {
-            // Standard logic: Find closest target just to orient the turret
             var hitCount = Physics.OverlapSphereNonAlloc(transform.position, range.Value, _targetBuffer, targetLayer);
             if (hitCount == 0)
             {
@@ -79,7 +76,6 @@ namespace Towers
             StartCoroutine(SalvoRoutine());
         }
 
-        // --- Salvo Routine ---
 
         private IEnumerator SalvoRoutine()
         {
