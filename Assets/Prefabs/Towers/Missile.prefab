@@ -96,12 +96,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Towers.HomingMissile
   source: {fileID: 0}
-  speed: 30
+  startSpeed: 15
+  maxSpeed: 45
+  acceleration: 25
   rotateSpeed: 300
   waypointReachedThreshold: 1.5
   leadTargetMultiplier: 0.5
+  bankingIntensity: 60
+  bankingLerpSpeed: 4
   maxLifetime: 8
-  damage: 25
   explosionRange: 0.5
   canRetarget: 1
   retargetingRange: 20
@@ -154,6 +157,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 80239d488cef4dc438544894c3dd4ad2, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -7511558181221131132, guid: 80239d488cef4dc438544894c3dd4ad2, type: 3}
+      propertyPath: m_CastShadows
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 80239d488cef4dc438544894c3dd4ad2, type: 3}

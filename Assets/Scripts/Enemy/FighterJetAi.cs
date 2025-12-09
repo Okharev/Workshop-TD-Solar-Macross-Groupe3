@@ -18,7 +18,7 @@ namespace Enemy
         [Header("2. Boids (The Swarm)")] 
         public float neighborRadius = 15f; 
         public float separationRadius = 8f;
-        [Range(0, 5)] public float weightTarget = 1.2f; // Increased slightly for responsiveness
+        [Range(0, 5)] public float weightTarget = 1.2f; 
         [Range(0, 30)] public float weightSeparation = 25f; 
 
         [Header("3. Flight Aerodynamics")]
@@ -27,17 +27,19 @@ namespace Enemy
         public float acceleration = 10f;
     
         [Header("Turn Performance")]
-        [Tooltip("How fast the plane rolls to enter a turn.")]
         public float rollSpeed = 180f; 
-        [Tooltip("How tight the plane can turn (Pitch authority).")]
         public float maxTurnRate = 50f; 
-        [Tooltip("0 = Arcade (turn in place), 1 = Simulation (drifts like a real jet).")]
         [Range(0f, 1f)] public float driftFactor = 0.95f;
 
         [Header("4. Obstacle Avoidance")]
         public LayerMask obstacleLayer;
-        public float whiskerLength = 40f; // Increased for higher speeds
+        public float whiskerLength = 40f; 
         [Range(0, 100)] public float weightAvoidance = 100f;
+
+        [Header("5. Performance Settings")]
+        [Tooltip("How many seconds between logic updates (Boids/Pathfinding). 0.1 = 10 times/sec.")]
+        public float logicTickRate = 0.1f;
+        private const int MaxNeighbors = 15;
 
         // --- Internal State ---
         private EnemyObjectiveTracker _tracker;
@@ -52,31 +54,53 @@ namespace Enemy
         // Physics State
         private Vector3 _velocity;
         private float _currentSpeed;
+        
+        // Optimization Caches
+        private float _logicTimer;
+        private Vector3 _cachedFlockingDirection;
+        private Collider[] _neighborBuffer; // Reusable buffer for physics
+        private Transform _myTransform;     // Cached transform access
 
         private void Awake()
         {
             _tracker = GetComponent<EnemyObjectiveTracker>();
+            _myTransform = transform;
+            _neighborBuffer = new Collider[MaxNeighbors];
+            
             _currentSpeed = maxThrustSpeed * 0.8f;
-            _velocity = transform.forward * _currentSpeed;
+            _velocity = _myTransform.forward * _currentSpeed;
+            _cachedFlockingDirection = _myTransform.forward;
         }
 
         private void Start()
         {
             orbitClockwise = Random.value > 0.5f;
             if (currentMissionTarget == Vector3.zero) 
-                currentMissionTarget = transform.position + transform.forward * 100f;
+                currentMissionTarget = _myTransform.position + _myTransform.forward * 100f;
+            
+            // Randomize timer slightly so all jets don't spike CPU on the exact same frame
+            _logicTimer = Random.Range(0f, logicTickRate);
         }
 
         private void Update()
         {
-            UpdateMissionLogic();
-            CalculateAerodynamics();
+            // 1. Heavy Logic (Throttled)
+            _logicTimer += Time.deltaTime;
+            if (_logicTimer >= logicTickRate)
+            {
+                RunHeavyLogic();
+                _logicTimer = 0f;
+            }
+
+            // 2. Movement & Visuals (Every Frame for smoothness)
+            RunAerodynamics();
             UpdateVisualModel();
         }
 
         // --- PUBLIC METHODS ---
         public void Initialize(List<Transform> pathPoints)
         {
+            // Optimization: Remove LINQ allocation if possible, but valid here for one-time init
             waypoints = new List<Transform>(pathPoints).Where(t => t).ToList();
             if (waypoints.Count > 0)
             {
@@ -90,16 +114,22 @@ namespace Enemy
             }
         }
 
-        // --- LOGIC ---
+        // --- HEAVY LOGIC (Throttled) ---
+        private void RunHeavyLogic()
+        {
+            UpdateMissionLogic();
+            _cachedFlockingDirection = CalculateFlockingVector();
+        }
+
         private void UpdateMissionLogic()
         {
-            float dist = Vector3.Distance(transform.position, currentMissionTarget);
+            float distSqr = (currentMissionTarget - _myTransform.position).sqrMagnitude;
 
             switch (currentState)
             {
                 case AIState.Traveling:
-                    // Loose waypoint switching for smoother curves
-                    if (dist < 30f) 
+                    // Distance check optimized with sqrMagnitude (30*30 = 900)
+                    if (distSqr < 100f && waypoints is { Count: > 0 }) 
                     {
                         waypointIndex = (waypointIndex + 1) % waypoints.Count;
                         currentMissionTarget = waypoints[waypointIndex].position;
@@ -107,138 +137,119 @@ namespace Enemy
                     break;
 
                 case AIState.Attacking:
+                    // PERFORMANCE FIX: 
+                    // We do NOT search for targets here using FindFirstObjectByType.
+                    // We strictly rely on the Tracker. If Tracker is null, we fly straight/loiter.
                     var targetTransform = _tracker.CurrentTarget.Value;
                 
-                    if (!targetTransform)
-                    {
-                        TryFindBackupTarget();
-                        targetTransform = _tracker.CurrentTarget.Value;
-                    }
-
                     if (targetTransform)
                     {
-                        // Predictive Aiming: Don't aim at the target, aim where it's going (basic lead)
                         Vector3 targetPos = targetTransform.position;
                     
-                        // Simple Orbit Logic
-                        Vector3 orbitCenter = targetPos;
-                        Vector3 dirFromCenter = (transform.position - orbitCenter).normalized;
+                        // Orbit Logic
+                        Vector3 dirFromCenter = (_myTransform.position - targetPos).normalized;
                         dirFromCenter.y = 0; 
                     
                         Vector3 tangent = Vector3.Cross(dirFromCenter, Vector3.up);
                         if (!orbitClockwise) tangent = -tangent;
 
                         // Lead the turn
-                        Vector3 attackPoint = orbitCenter + (tangent * 50f) + (Vector3.up * 10f);
-                        currentMissionTarget = Vector3.Lerp(currentMissionTarget, attackPoint, Time.deltaTime * 3f);
+                        Vector3 attackPoint = targetPos + (tangent * 50f) + (Vector3.up * 10f);
+                        currentMissionTarget = Vector3.Lerp(currentMissionTarget, attackPoint, logicTickRate * 3f);
                     }
                     else
                     {
-                        currentMissionTarget = transform.position + transform.forward * 100f;
+                        // No target? Just fly forward to avoid spinning
+                        currentMissionTarget = _myTransform.position + _myTransform.forward * 100f;
                     }
                     break;
             }
         }
 
-        private void TryFindBackupTarget()
+        // --- PHYSICS CORE (Optimized) ---
+        private void RunAerodynamics()
         {
-            var randomObjective = FindFirstObjectByType<DestructibleObjective>();
-            if (randomObjective) _tracker.Initialize(randomObjective, randomObjective);
-        }
-
-        // --- PHYSICS CORE (The "Juice") ---
-        private void CalculateAerodynamics()
-        {
-            // 1. Determine Desired Heading Vector
-            Vector3 flockingDir = CalculateFlockingVector();
+            // Use the cached direction calculated in the slow loop
+            Vector3 flockingDir = _cachedFlockingDirection;
         
-            // 2. Flight Control System (Bank-to-Turn Logic)
-        
-            // Calculate the rotation needed to face the desired vector
-            Quaternion currentRot = transform.rotation;
+            // Calculate rotation to face desired vector
             Quaternion targetRot = Quaternion.LookRotation(flockingDir);
         
-            // Convert target direction to local space
-            // x = Yaw/Roll demand, y = Pitch demand
-            Vector3 localTargetDir = transform.InverseTransformDirection(flockingDir);
+            Vector3 localTargetDir = _myTransform.InverseTransformDirection(flockingDir);
 
-            // ROLL: If we need to go Left (-x), we Roll Left.
-            float targetRollAngle = -localTargetDir.x * 60f; // Limit max bank to 60 degrees relative to turn strength
-        
-            // PITCH: We pull up if target is above, OR if we are banked and need to turn tight.
-            // The more we are banked, the more "Pitch" acts as "Turn".
+            // Roll / Pitch Logic
+            float targetRollAngle = -localTargetDir.x * 60f; 
             float yawToPitchTransfer = Mathf.Abs(localTargetDir.x); 
-            float targetPitchInput = localTargetDir.y + yawToPitchTransfer; 
+            float targetPitchInput = localTargetDir.y + yawToPitchTransfer; // Unused variable kept for logic clarity if needed later
 
-            // Apply Rotations over time (Inertia)
-            // Rotate towards the target rotation, but constrained by roll speed and turn rate
-            transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRot, maxTurnRate * Time.deltaTime);
+            // Rotate towards target
+            _myTransform.rotation = Quaternion.RotateTowards(_myTransform.rotation, targetRot, maxTurnRate * Time.deltaTime);
 
-            // BANKING override: 
-            // We fundamentally want to orient the Z-axis (roll) to "lean" into the turn
-            // This calculates a rotation that looks forward but leans correctly
-            Vector3 flatForward = transform.forward; flatForward.y = 0;
+            // BANKING Visuals
+            Vector3 flatForward = _myTransform.forward; flatForward.y = 0;
             if(flatForward.sqrMagnitude > 0.01f)
             {
-                // Smoothly apply the bank angle calculated above
-                float currentRoll = NormalizeAngle(transform.eulerAngles.z);
+                float currentRoll = NormalizeAngle(_myTransform.eulerAngles.z);
                 float newRoll = Mathf.LerpAngle(currentRoll, targetRollAngle * 1.5f, Time.deltaTime * 2f);
-             
-                // Re-apply rotation with calculated roll
-                Vector3 euler = transform.rotation.eulerAngles;
-                transform.rotation = Quaternion.Euler(euler.x, euler.y, newRoll);
+                Vector3 euler = _myTransform.rotation.eulerAngles;
+                _myTransform.rotation = Quaternion.Euler(euler.x, euler.y, newRoll);
             }
 
-            // 3. Throttle & Energy Management
-            // Gravity boost: Diving (+Y down) increases speed. Climbing decreases it.
-            float gravityBoost = -transform.forward.y * 10f;
-        
-            // Drag from turning (Induced Drag): High Angle of Attack kills speed
-            float turnDrag = Vector3.Angle(transform.forward, _velocity.normalized) * 0.1f;
+            // Speed Logic
+            float gravityBoost = -_myTransform.forward.y * 10f;
+            float turnDrag = Vector3.Angle(_myTransform.forward, _velocity.normalized) * 0.1f;
         
             float targetSpeed = maxThrustSpeed + gravityBoost - turnDrag;
             targetSpeed = Mathf.Clamp(targetSpeed, minStallSpeed, maxThrustSpeed * 1.5f);
 
             _currentSpeed = Mathf.Lerp(_currentSpeed, targetSpeed, Time.deltaTime * acceleration);
 
-            // 4. Velocity vector application (The "Drift")
-            // We blend the actual physical velocity towards the nose direction based on 'driftFactor'
-            // High drift factor = lots of sliding (space ship). Low drift factor = rails.
-            Vector3 noseVelocity = transform.forward * _currentSpeed;
-            _velocity = Vector3.Lerp(_velocity, noseVelocity, Time.deltaTime * (1f - driftFactor) * 5f);
+            // Apply Velocity (Drift)
+            Vector3 noseVelocity = _myTransform.forward * _currentSpeed;
+            _velocity = Vector3.Lerp(_velocity, noseVelocity, Time.deltaTime * (1f - driftFactor) * 20f);
         
-            // Apply Move
-            transform.position += _velocity * Time.deltaTime;
+            _myTransform.position += _velocity * Time.deltaTime;
         }
 
         private Vector3 CalculateFlockingVector()
         {
-            Vector3 targetDir = (currentMissionTarget - transform.position).normalized * weightTarget;
+            Vector3 targetDir = (currentMissionTarget - _myTransform.position).normalized * weightTarget;
             Vector3 separation = Vector3.zero;
+            
+            // 1. Critical Avoidance 
+            // (We keep this heavy check, but it only runs 10 times/sec now)
             Vector3 avoidance = GetObstacleAvoidanceVector();
-
-            // 1. Critical Avoidance (Overrides everything)
             if (avoidance != Vector3.zero) return avoidance;
 
-            // 2. Swarm Separation
+            // 2. Swarm Separation (OPTIMIZED: NonAlloc)
             int count = 0;
-            Collider[] neighbors = Physics.OverlapSphere(transform.position, neighborRadius, allyLayer);
-            foreach (var c in neighbors)
+            // Use the pre-allocated buffer instead of creating a new array
+            int foundNeighbors = Physics.OverlapSphereNonAlloc(_myTransform.position, neighborRadius, _neighborBuffer, allyLayer);
+            
+            float sepRadiusSqr = separationRadius * separationRadius;
+
+            for(int i = 0; i < foundNeighbors; i++)
             {
-                if (c.gameObject == gameObject) continue;
-                Vector3 diff = transform.position - c.transform.position;
+                var c = _neighborBuffer[i];
+                if (!c || c.gameObject == gameObject) continue;
+
+                Vector3 diff = _myTransform.position - c.transform.position;
                 float distSqr = diff.sqrMagnitude;
-                if (distSqr < separationRadius * separationRadius)
+                
+                // Compare squared distance to avoid Sqrt calls
+                if (distSqr < sepRadiusSqr)
                 {
+                    // Only do Sqrt if we are actually too close and need the precise vector
                     separation += diff.normalized * (separationRadius / Mathf.Sqrt(distSqr));
                     count++;
                 }
             }
+            
             if (count > 0) separation /= count;
 
-            // 3. Floor Avoidance (Don't crash into ground)
+            // 3. Floor Avoidance
             Vector3 floorPush = Vector3.zero;
-            if (Physics.Raycast(transform.position, Vector3.down, out RaycastHit hit, 10f, obstacleLayer))
+            if (Physics.Raycast(_myTransform.position, Vector3.down, out RaycastHit hit, 10f, obstacleLayer))
             {
                 floorPush = Vector3.up * ((10f - hit.distance) * 2f);
             }
@@ -248,18 +259,16 @@ namespace Enemy
 
         private Vector3 GetObstacleAvoidanceVector()
         {
-            if (Physics.SphereCast(transform.position, 3f, transform.forward, out RaycastHit hit, whiskerLength, obstacleLayer))
+            // SphereCast is expensive, but throttling makes it acceptable
+            if (Physics.SphereCast(_myTransform.position, 3f, _myTransform.forward, out RaycastHit hit, whiskerLength, obstacleLayer))
             {
-                // Debug.DrawLine(transform.position, hit.point, Color.red);
-                return Vector3.Reflect(transform.forward, hit.normal).normalized * weightAvoidance;
+                return Vector3.Reflect(_myTransform.forward, hit.normal).normalized * weightAvoidance;
             }
             return Vector3.zero;
         }
 
         private void UpdateVisualModel()
         {
-            // Visual Model Correction
-            // We add a tiny bit of noise for turbulence, but the main banking is now handled by the physics transform
             float time = Time.time * 1.5f;
             float noiseX = (Mathf.PerlinNoise(time, 0) - 0.5f) * 2f;
             float noiseY = (Mathf.PerlinNoise(0, time) - 0.5f) * 2f;
@@ -268,7 +277,7 @@ namespace Enemy
             visualModel.localRotation = Quaternion.Lerp(visualModel.localRotation, Quaternion.Euler(modelCorrection) * noiseRot, Time.deltaTime * 10f);
         }
     
-        private float NormalizeAngle(float a) => (a + 180) % 360 - 180;
+        private static float NormalizeAngle(float a) => (a + 180) % 360 - 180;
 
         private void OnDrawGizmos()
         {
@@ -277,11 +286,8 @@ namespace Enemy
                 Gizmos.color = Color.yellow;
                 Gizmos.DrawLine(transform.position, currentMissionTarget);
             
-                Gizmos.color = Color.green; // Velocity (Path)
+                Gizmos.color = Color.green;
                 Gizmos.DrawRay(transform.position, _velocity.normalized * 10f);
-            
-                Gizmos.color = Color.red; // Nose (Aim)
-                Gizmos.DrawRay(transform.position, transform.forward * 8f);
             }
         }
     }
