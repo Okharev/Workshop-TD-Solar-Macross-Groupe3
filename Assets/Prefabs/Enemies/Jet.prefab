@@ -191,16 +191,16 @@ MonoBehaviour:
   allyLayer:
     serializedVersion: 2
     m_Bits: 8192
-  neighborRadius: 15
-  separationRadius: 8
+  neighborRadius: 100
+  separationRadius: 3
   weightTarget: 1.2
   weightSeparation: 25
   maxThrustSpeed: 14
   minStallSpeed: 8
   acceleration: 2
-  rollSpeed: 190
+  rollSpeed: 120
   maxTurnRate: 90
-  driftFactor: 0.012
+  driftFactor: 0.15
   obstacleLayer:
     serializedVersion: 2
     m_Bits: 4097

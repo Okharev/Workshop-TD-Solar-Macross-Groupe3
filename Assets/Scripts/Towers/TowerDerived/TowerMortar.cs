@@ -40,7 +40,6 @@ namespace Towers.TowerDerived
         {
             if (!powerSource.IsPowered) return;
 
-            // 1. Refresh Cluster & Calculate REAL velocity (Manual Delta)
             if (_hasValidTarget && _currentTargetCluster.Count > 0)
             {
                 TrackClusterMovement();
@@ -50,17 +49,22 @@ namespace Towers.TowerDerived
                 if (_hasValidTarget) ResetTracking();
             }
 
-            // 2. Aim
-            var isAligned = AimAtTarget(Vector3.zero);
+
+            if (!_hasValidTarget) return; 
+
+
+            var isAligned = AimAtTarget(Vector3.zero); 
 
             fireCountdown -= Time.deltaTime;
 
             if (isAligned && fireCountdown <= 0f)
+            {
                 if (IsPathClear(firePoint.position, _predictedAimPoint, _currentProjectileTravelTime))
                 {
                     Fire();
                     fireCountdown = 1f / fireRate.Value;
                 }
+            }
         }
 
         protected override void Fire()
@@ -120,6 +124,9 @@ namespace Towers.TowerDerived
             _currentTargetCluster.Clear();
             _isTracking = false;
             _calculatedClusterVelocity = Vector3.zero;
+    
+            // Ajout optionnel pour la propreté :
+            _predictedAimPoint = Vector3.zero; 
         }
 
         private void TrackClusterMovement()
@@ -202,7 +209,7 @@ namespace Towers.TowerDerived
             var maxDensity = 0;
             for (var i = 0; i < hitCount; i++)
             {
-                if (_initialScanCache[i] == null) continue;
+                if (!_initialScanCache[i]) continue;
                 var currentDensity = Physics.OverlapSphereNonAlloc(_initialScanCache[i].transform.position,
                     radiusOfImpact, _clusterOptimizationCache, targetLayer);
                 if (currentDensity > maxDensity)
