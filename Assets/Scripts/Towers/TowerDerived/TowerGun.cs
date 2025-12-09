@@ -11,14 +11,17 @@ namespace Towers.TowerDerived
 
         private readonly Collider[] _colliderCache = new Collider[32];
 
-        private void OnDrawGizmosSelected()
-        {
-            if (!firePoint) return;
 
-            Gizmos.color = Color.cyan;
-            Gizmos.matrix = Matrix4x4.TRS(firePoint.position + firePoint.forward * 1f, firePoint.rotation, Vector3.one);
-            Gizmos.DrawWireCube(Vector3.zero,
-                new Vector3(projectileThickness * 2, projectileThickness * 2, projectileThickness * 2));
+        protected override void OnDrawGizmosTower()
+        {
+            
+                if (!firePoint) return;
+
+                Gizmos.color = Color.cyan;
+                Gizmos.matrix = Matrix4x4.TRS(firePoint.position + firePoint.forward * 1f, firePoint.rotation, Vector3.one);
+                Gizmos.DrawWireCube(Vector3.zero,
+                    new Vector3(projectileThickness * 2, projectileThickness * 2, projectileThickness * 2));
+            
         }
 
         protected override void Fire()

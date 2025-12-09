@@ -38,7 +38,7 @@ namespace Towers.TowerDerived
             StopAllCoroutines();
         }
 
-        private void OnDrawGizmosSelected()
+        protected override void OnDrawGizmosTower()
         {
             var r = range.Value;
             Gizmos.color = new Color(0, 0, 1, 0.3f);

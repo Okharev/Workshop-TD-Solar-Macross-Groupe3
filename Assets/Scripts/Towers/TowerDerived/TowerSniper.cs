@@ -17,7 +17,8 @@ namespace Towers.TowerDerived
 
         [Header("Performance")] private readonly RaycastHit[] _piercingHitsCache = new RaycastHit[32];
 
-        private void OnDrawGizmosSelected()
+
+        protected override void OnDrawGizmosTower()
         {
             if (!firePoint) return;
 

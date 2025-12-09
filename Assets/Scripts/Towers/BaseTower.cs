@@ -106,13 +106,15 @@ namespace Towers
 
         private void OnDrawGizmosSelected()
         {
-            Gizmos.DrawWireSphere(transform.position, range.Value);
+            Gizmos.color = new Color(0, 1, 1, 0.3f);
+            Gizmos.DrawSphere(transform.position, range.Value);
 
-
+            Gizmos.color = Color.green;
             if (currentTarget) Gizmos.DrawWireSphere(currentTarget.transform.position, 1.0f);
 
             OnDrawGizmosTower();
         }
+
 
         protected float GetScaledRotationSpeed(float baseSpeed)
         {
@@ -211,6 +213,7 @@ namespace Towers
 
         protected virtual void OnDrawGizmosTower()
         {
+            
         }
     }
 }
