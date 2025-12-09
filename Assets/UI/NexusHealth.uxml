@@ -5,8 +5,12 @@
             <ui:VisualElement name="Health-Bar-Track" class="linear-track top-bar" style="height: 30px;">
                 <ui:VisualElement name="Health-Fill" class="linear-fill health-color" />
             </ui:VisualElement>
-            <ui:VisualElement name="Mana-Bar-Track" class="linear-track bottom-bar" style="height: 30px;">
-                <ui:VisualElement name="Mana-Fill" class="linear-fill mana-color" />
+            <ui:VisualElement name="Mana-Bar-Track" class="linear-track bottom-bar" style="height: 30px; -unity-text-align: upper-left; align-self: auto; align-items: auto; justify-content: center; -unity-font-definition: url(&quot;project://database/Assets/UI/UIAssets/Nunito-VariableFont_wght.ttf?fileID=12800000&amp;guid=6fe7d516eb36ebe4982d4b41197302b1&amp;type=3#Nunito-VariableFont_wght&quot;);">
+                <ui:Label text="100&#10;" name="Amount" style="-unity-text-align: upper-left; color: rgb(230, 230, 230); font-size: 18px; margin-top: 0; margin-right: 0; margin-bottom: 0; margin-left: 0; padding-left: 0; padding-right: 0; padding-top: 0; padding-bottom: 0; -unity-font-style: bold;">
+                    <Bindings>
+                        <ui:DataBinding property="text" data-source-path="currentMoney._value" data-source-type="Economy.CurrencyManager, Assembly-CSharp" binding-mode="ToTarget" />
+                    </Bindings>
+                </ui:Label>
             </ui:VisualElement>
         </ui:VisualElement>
         <ui:VisualElement name="Radial-Wrapper" class="radial-wrapper">

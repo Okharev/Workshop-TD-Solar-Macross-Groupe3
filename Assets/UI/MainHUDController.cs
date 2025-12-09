@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Economy;
 using Enemy;
 using Placement;
 using Towers;
@@ -280,6 +281,9 @@ namespace UI
         [SerializeField] private DestructibleObjective _mainBase;
         [SerializeField] private DestructibleObjective _northPylon;
         [SerializeField] private DestructibleObjective _southPylon;
+        
+        [Header("Currency")]
+        [SerializeField] private CurrencyManager _currencyManager;
 
         [Header("Building System")]
         // Liste configurable dans l'Inspecteur
@@ -293,6 +297,7 @@ namespace UI
         private ObjectivesPanelView _objectivesPanel;
         private WavePanelView _wavePanel;
         private RadialProgress _nexusPanel;
+        private Label _labelAmount;
 
         private void OnEnable()
         {
@@ -318,6 +323,9 @@ namespace UI
 
             _nexusPanel = root.Q<RadialProgress>("NexusHealth");
             _nexusPanel.dataSource = _nexus;
+            
+            _labelAmount = root.Q<Label>("Amount");
+            _labelAmount.dataSource = _currencyManager;
 
             var buildingRoot = root.Q("BuildingBarInstance");
             if (buildingRoot != null)

@@ -32,6 +32,13 @@ namespace Economy
             InitializeReactiveStats();
 
             _agent = GetComponent<NavMeshAgent>();
+
+            speed.Observable.Subscribe(newSpeed =>
+                {
+                    _agent.speed = Mathf.Max(0, newSpeed);
+                    Debug.Log($"Enemy Speed Updated: {_agent.speed}");
+                })
+                .AddTo(this);
         }
 
         public string DisplayName => "Yaa";

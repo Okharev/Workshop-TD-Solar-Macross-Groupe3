@@ -3,10 +3,6 @@ using System.Collections.Generic;
 using Economy;
 using UnityEngine;
 
-// Import R3
-
-// Required to access EnemyController
-
 namespace Towers.TowerDerived
 {
     public sealed class TowerSlow : BaseTower
@@ -19,7 +15,6 @@ namespace Towers.TowerDerived
 
         [SerializeField] private LayerMask enemyLayer;
 
-        // Optimization: Reusable lists/arrays to prevent Garbage Collection allocation in the loop
         private readonly List<EnemyController> _currentFrameEnemies = new();
         private readonly List<EnemyController> _enemiesToRemove = new();
         private readonly Collider[] _hitBuffer = new Collider[32];
