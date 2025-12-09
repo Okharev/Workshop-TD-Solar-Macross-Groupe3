@@ -9,23 +9,28 @@ using UnityEngine;
 
 namespace Enemy
 {
-    public sealed class WaveManager : MonoBehaviour
+public sealed class WaveManager : MonoBehaviour
     {
+        // --- AJOUT : Singleton pour accès facile (Optionnel mais recommandé) ---
+        public static WaveManager Instance { get; private set; }
+
+        private void Awake()
+        {
+            if (Instance != null && Instance != this) Destroy(this);
+            else Instance = this;
+        }
+        // -----------------------------------------------------------------------
+
         [Header("Dependencies")] public RoadNetworkGenerator roadGenerator;
-
         [Header("Configuration")] public List<WaveProfile> waves = new();
-
         public float timeBetweenWaves = 30f;
-
 
         public ReactiveInt enemiesRemaining = new(0);
         public ReactiveInt totalEnemiesInWave = new(0);
         public ReactiveFloat timeToNextWave = new(0);
         private Coroutine _countdownCoroutine;
 
-
         public bool IsWaveActive { get; private set; }
-
         public int CurrentWaveIndex { get; private set; } = -1;
 
         public event Action<int, string> OnWaveStarted;
@@ -59,8 +64,30 @@ namespace Enemy
             }
         }
 
+        // --- AJOUT : Méthode pour enregistrer un ennemi ---
+        public void RegisterEnemy(HealthComponent enemy)
+        {
+            // On s'abonne à l'événement de mort de cet ennemi spécifique
+            enemy.OnDeath += HandleEnemyDeath;
+        }
+
+        // --- AJOUT : Logique quand un ennemi meurt ---
+        private void HandleEnemyDeath(GameObject enemyObj)
+        {
+            // On décrémente le compteur
+            enemiesRemaining.Value--;
+
+            // On vérifie si la vague est finie
+            if (enemiesRemaining.Value <= 0 && IsWaveActive)
+            {
+                OnWaveDefeated();
+            }
+        }
+        // -----------------------------------------------------
+
         private void OnWaveDefeated()
         {
+            Debug.Log("Wave Defeated!"); // Petit log pour vérifier
             IsWaveActive = false;
             OnWaveFinished?.Invoke();
 
@@ -70,6 +97,8 @@ namespace Enemy
                 OnAllWavesCompleted?.Invoke();
         }
 
+        // ... Le reste de ton code (WaveCountdownRoutine, RunWaveRoutine, etc.) reste inchangé ...
+        
         private IEnumerator WaveCountdownRoutine()
         {
             var timer = timeBetweenWaves;
@@ -79,10 +108,8 @@ namespace Enemy
             {
                 yield return null;
                 timer -= Time.deltaTime;
-
                 timeToNextWave.Value = Mathf.Max(0, timer);
             }
-
             StartNextWave();
         }
 
@@ -113,9 +140,10 @@ namespace Enemy
                     activeSpawns.Add(StartCoroutine(SpawnAirSegment(segment)));
 
             foreach (var c in activeSpawns) yield return c;
-
         }
-
+        
+        // ... (Garde tes méthodes SpawnGroundSegment, SpawnAirSegment, ConfigureRoadsForWave telles quelles) ...
+        
         private IEnumerator SpawnGroundSegment(GroundWaveSegment segment)
         {
             if (segment.initialDelay > 0) yield return new WaitForSeconds(segment.initialDelay);
@@ -148,7 +176,6 @@ namespace Enemy
             }
         }
     }
-
 
     [Serializable]
     public sealed class WaveProfile
