@@ -55,27 +55,29 @@ namespace Towers.TowerDerived
                 targetLayer
             );
 
-        if (hasHit)
-        {
-            Debug.DrawLine(firePoint.position, hit.point, Color.green, 0.2f);
-
-            if (!hit.collider.TryGetComponent<HealthComponent>(out var victim)) return;
-            Events.OnHit?.Invoke(new UpgradeProvider.OnHitData()
+            if (hasHit)
             {
-                Origin = gameObject,
-                Target = gameObject
-            });
+                Debug.DrawLine(firePoint.position, hit.point, Color.green, 0.2f);
 
-
-            if (victim.TakeDamage(Mathf.RoundToInt(damage.Value)))
-            {
-                Events.OnKill?.Invoke(new UpgradeProvider.OnKillData()
+                if (!hit.collider.TryGetComponent<HealthComponent>(out var victim)) return;
+        
+                Events.OnHit?.Invoke(new UpgradeProvider.OnHitData()
                 {
                     Origin = gameObject,
-                    Target = gameObject
+                    Target = hit.collider.gameObject
                 });
+
+                if (victim.TakeDamage(Mathf.RoundToInt(damage.Value)))
+                {
+                    Events.OnKill?.Invoke(new UpgradeProvider.OnKillData()
+                    {
+                        Origin = gameObject,
+                        Target = hit.collider.gameObject
+                    });
+
+                    currentTarget = null; 
+                }
             }
-        }
             else Debug.DrawRay(firePoint.position, shootDirection * currentRange, Color.red, 0.2f);
         }
 

@@ -17,6 +17,15 @@ namespace Enemy
 
         public event Action<GameObject> OnDeath;
 
+        private void Start()
+        {
+            var waveManager = FindAnyObjectByType<WaveManager>();
+            if (waveManager)
+            {
+                waveManager.RegisterEnemy(this);
+            }
+        }
+
         public bool TakeDamage(int amount)
         {
             currentHealth.Value = Mathf.Max(0, currentHealth.Value - amount);
