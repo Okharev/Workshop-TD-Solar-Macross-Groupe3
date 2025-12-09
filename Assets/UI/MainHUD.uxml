@@ -2,17 +2,17 @@
     <ui:Template name="ObjectivesHealthPanel" src="project://database/Assets/UI/ObjectivesHealthPanel.uxml?fileID=9197481963319205126&amp;guid=c8b39b41a18b2844f87a6501c7d3f3c6&amp;type=3#ObjectivesHealthPanel" />
     <ui:Template name="InfoPanelTemplate" src="project://database/Assets/UI/InfoPanel.uxml?fileID=9197481963319205126&amp;guid=9845de91a8cc2ba4a97fa959f6e2d2ab&amp;type=3#InfoPanel" />
     <ui:Template name="BuildingBarPanelTemplate" src="project://database/Assets/UI/BuildingBarPanel.uxml?fileID=9197481963319205126&amp;guid=326864c4138978846b20e21745c0a539&amp;type=3#BuildingBarPanel" />
+    <ui:Template name="NexusHealth" src="project://database/Assets/UI/NexusHealth.uxml?fileID=9197481963319205126&amp;guid=8d6364e0fdef93049a72d719f70b38e9&amp;type=3#NexusHealth" />
     <Style src="project://database/Assets/UI/MainHUD.uss?fileID=7433441132597879392&amp;guid=5d8070681b9bcdc4498a14543835ab31&amp;type=3#MainHUD" />
     <ui:VisualElement name="HUD_Root" picking-mode="Ignore" class="hud-root">
         <ui:VisualElement name="LeftSidebar" picking-mode="Ignore" class="left-sidebar" style="width: 200px;">
-            <UI.RadialProgress line-width="25" progress="100" style="height: 150px;" />
-            <ui:VisualElement style="height: 10px;" />
+            <ui:VisualElement name="VisualElement" style="height: 10px;" />
             <ui:Instance template="ObjectivesHealthPanel" />
         </ui:VisualElement>
-        <UI.RadialProgress />
         <ui:VisualElement name="RightSidebar" picking-mode="Ignore" class="right-sidebar">
             <ui:Instance template="InfoPanelTemplate" name="InfoPanelInstance" />
         </ui:VisualElement>
         <ui:Instance template="BuildingBarPanelTemplate" name="BuildingBarInstance" />
     </ui:VisualElement>
+    <ui:Instance template="NexusHealth" />
 </ui:UXML>

@@ -274,6 +274,8 @@ namespace UI
     {
         [Header("Game Dependencies")] [SerializeField]
         private WaveManager _waveManager;
+        
+        [SerializeField] private HealthComponent _nexus;
 
         [SerializeField] private DestructibleObjective _mainBase;
         [SerializeField] private DestructibleObjective _northPylon;
@@ -290,7 +292,7 @@ namespace UI
         private InfoPanelView _infoPanel;
         private ObjectivesPanelView _objectivesPanel;
         private WavePanelView _wavePanel;
-        private WavePanelView _nexsPanel;
+        private RadialProgress _nexusPanel;
 
         private void OnEnable()
         {
@@ -313,6 +315,9 @@ namespace UI
 
             // 3. Initialiser les Objectifs
             _objectivesPanel = new ObjectivesPanelView(root, _mainBase, _northPylon, _southPylon);
+
+            _nexusPanel = root.Q<RadialProgress>("NexusHealth");
+            _nexusPanel.dataSource = _nexus;
 
             var buildingRoot = root.Q("BuildingBarInstance");
             if (buildingRoot != null)

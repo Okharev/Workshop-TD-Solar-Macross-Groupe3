@@ -23,21 +23,21 @@ namespace Enemy
             _backupObjective = backup;
 
             // On commence par cibler le primaire (Pylône ou Override)
-            if (primary != null)
+            if (primary)
                 SetNewTarget(primary);
-            else if (backup != null) SetNewTarget(backup);
+            else if (backup) SetNewTarget(backup);
         }
 
         // Méthode centrale pour changer de cible proprement
         private void SetNewTarget(DestructibleObjective newTarget)
         {
             // 1. Nettoyage de l'ancienne cible (désabonnement)
-            if (_activeObjectiveScript != null) _activeObjectiveScript.OnDestroyed.RemoveListener(OnTargetDestroyed);
+            if (_activeObjectiveScript) _activeObjectiveScript.OnDestroyed.RemoveListener(OnTargetDestroyed);
 
             // 2. Assignation de la nouvelle cible
             _activeObjectiveScript = newTarget;
 
-            if (_activeObjectiveScript != null)
+            if (_activeObjectiveScript)
             {
                 // Mettre à jour la ReactiveProperty pour que Movement/Attacker réagissent
                 CurrentTarget.Value = _activeObjectiveScript.transform;
@@ -63,10 +63,10 @@ namespace Enemy
             }
 
             // Sinon, on passe au backup (la Base Principale)
-            if (_backupObjective != null)
+            if (_backupObjective)
             {
                 // Vérification de sécurité au cas où le backup serait déjà mort aussi
-                if (_backupObjective.gameObject != null)
+                if (_backupObjective.gameObject)
                 {
                     Debug.Log($"[Enemy] {name}: Cible détruite ! Redirection vers {_backupObjective.name}");
                     SetNewTarget(_backupObjective);

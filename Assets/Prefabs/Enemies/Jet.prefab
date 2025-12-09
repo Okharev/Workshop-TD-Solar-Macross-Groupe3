@@ -1,5 +1,37 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!1 &1271006721159918425
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7788883279592867783}
+  m_Layer: 13
+  m_Name: Root
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7788883279592867783
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1271006721159918425}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -1, z: -0, w: 0.00000058114523}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1408619238059244931}
+  m_Father: {fileID: 6778696234163456189}
+  m_LocalEulerAnglesHint: {x: 0, y: -180, z: 0}
 --- !u!1 &5069400229212143550
 GameObject:
   m_ObjectHideFlags: 0
@@ -10,12 +42,12 @@ GameObject:
   m_Component:
   - component: {fileID: 6778696234163456189}
   - component: {fileID: 3991029059045046675}
-  - component: {fileID: 4781459475264519956}
   - component: {fileID: 3594526995502976572}
   - component: {fileID: 3399384273038241848}
   - component: {fileID: 5223861261425597731}
   - component: {fileID: 4774346428336883143}
   - component: {fileID: 2530288568501768135}
+  - component: {fileID: 1004739888977982886}
   m_Layer: 13
   m_Name: Jet
   m_TagString: Enemy
@@ -36,8 +68,8 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 1408619238059244931}
   - {fileID: 7010327970727181967}
+  - {fileID: 7788883279592867783}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!54 &3991029059045046675
@@ -67,37 +99,6 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
---- !u!114 &4781459475264519956
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5069400229212143550}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 214a4eb9c9b74bd290ee16d699fcc31f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Enemy.FighterJetAI
-  visualModel: {fileID: 1408619238059244931}
-  allyLayer:
-    serializedVersion: 2
-    m_Bits: 8192
-  neighborRadius: 25
-  separationRadius: 10
-  weightTarget: 1.5
-  weightSeparation: 5.5
-  baseSpeed: 14
-  turnSpeed: 4
-  maxBankAngle: 60
-  directionSmoothing: 0.2
-  obstacleLayer:
-    serializedVersion: 2
-    m_Bits: 4096
-  whiskerLength: 10
-  whiskerAngle: 35
-  weightAvoidance: 60
-  waypoints: []
 --- !u!65 &3594526995502976572
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -173,6 +174,38 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: aa5467bde24d446f92a3f8c25480ce03, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Enemy.HealthComponentUILinker
+--- !u!114 &1004739888977982886
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5069400229212143550}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 214a4eb9c9b74bd290ee16d699fcc31f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::FighterJetAi
+  visualModel: {fileID: 7788883279592867783}
+  modelCorrection: {x: 0, y: 0, z: 0}
+  allyLayer:
+    serializedVersion: 2
+    m_Bits: 8192
+  neighborRadius: 15
+  separationRadius: 8
+  weightTarget: 1.2
+  weightSeparation: 25
+  maxThrustSpeed: 14
+  minStallSpeed: 8
+  acceleration: 2
+  rollSpeed: 190
+  maxTurnRate: 90
+  driftFactor: 0.012
+  obstacleLayer:
+    serializedVersion: 2
+    m_Bits: 4097
+  whiskerLength: 40
+  weightAvoidance: 100
 --- !u!1 &8828201989002400343
 GameObject:
   m_ObjectHideFlags: 0
@@ -210,7 +243,7 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 6778696234163456189}
+    m_TransformParent: {fileID: 7788883279592867783}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: daec9cf440fcbe747b5cfabc7be68680, type: 3}
       propertyPath: m_LocalScale.x
@@ -242,7 +275,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: daec9cf440fcbe747b5cfabc7be68680, type: 3}
       propertyPath: m_LocalRotation.x
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: daec9cf440fcbe747b5cfabc7be68680, type: 3}
       propertyPath: m_LocalRotation.y

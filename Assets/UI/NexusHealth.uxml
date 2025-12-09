@@ -1,3 +1,22 @@
 <ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
-    <UI.RadialProgress line-width="20" progress="-0.6" style="width: 100%; height: 100%;" />
+    <Style src="project://database/Assets/UI/NexusHealth.uss?fileID=7433441132597879392&amp;guid=bbe5a8acdea6dfa4caf8da7ff17b6337&amp;type=3#NexusHealth" />
+    <ui:VisualElement name="HUD-Container" class="hud-container">
+        <ui:VisualElement name="Linear-Bars-Wrapper" class="bars-wrapper">
+            <ui:VisualElement name="Health-Bar-Track" class="linear-track top-bar" style="height: 30px;">
+                <ui:VisualElement name="Health-Fill" class="linear-fill health-color" />
+            </ui:VisualElement>
+            <ui:VisualElement name="Mana-Bar-Track" class="linear-track bottom-bar" style="height: 30px;">
+                <ui:VisualElement name="Mana-Fill" class="linear-fill mana-color" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement name="Radial-Wrapper" class="radial-wrapper">
+            <UI.RadialProgress line-width="25" progress="100" name="NexusHealth" style="height: 89px; background-size: 100px 100px; width: 94px;">
+                <Bindings>
+                    <ui:DataBinding property="Progress" data-source-path="currentHealth._value" data-source-type="Enemy.HealthComponent, Assembly-CSharp" binding-mode="ToTarget" />
+                    <ui:DataBinding property="MaxValue" data-source-path="maxHealth" data-source-type="Enemy.HealthComponent, Assembly-CSharp" binding-mode="ToTarget" />
+                    <ui:DataBinding property="CurrentValue" data-source-path="currentHealth._value" data-source-type="Enemy.HealthComponent, Assembly-CSharp" binding-mode="ToTarget" />
+                </Bindings>
+            </UI.RadialProgress>
+        </ui:VisualElement>
+    </ui:VisualElement>
 </ui:UXML>

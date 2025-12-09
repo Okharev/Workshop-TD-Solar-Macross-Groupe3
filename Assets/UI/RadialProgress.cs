@@ -1,34 +1,49 @@
-﻿using UnityEngine;
+﻿using Unity.Properties;
+using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace UI
 {
-    // [UxmlElement] automatically handles the registration in UI Builder.
-    // The 'partial' keyword is required for the source generator to work.
     [UxmlElement]
     public partial class RadialProgress : VisualElement
     {
         // --- Backing Fields ---
-        private float _progress = 0f;
+        private float _currentValue = 0f;
+        private float _maxValue = 100f; // Default to 100
         private float _lineWidth = 10f;
         private Color _trackColor = new Color(0.1f, 0.1f, 0.1f);
         private Color _fillColor = Color.green;
 
         // --- Exposed Properties ---
-        // [UxmlAttribute] exposes this property to the UI Builder Inspector.
-        // It automatically converts PascalCase (Progress) to kebab-case (progress) for UXML.
 
-        [UxmlAttribute]
-        public float Progress
+        [UxmlAttribute, CreateProperty]
+        public float CurrentValue
         {
-            get => _progress;
+            get => _currentValue;
             set
             {
-                float clamped = Mathf.Clamp(value, 0f, 100f);
-                if (!Mathf.Approximately(_progress, clamped))
+                // We don't clamp here immediately in case you want to animate
+                // values that overshoot, but we check for changes to repaint.
+                if (!Mathf.Approximately(_currentValue, value))
                 {
-                    _progress = clamped;
-                    MarkDirtyRepaint(); // Tells UI Toolkit to redraw
+                    _currentValue = value;
+                    MarkDirtyRepaint();
+                }
+            }
+        }
+
+        [UxmlAttribute, CreateProperty]
+        public float MaxValue
+        {
+            get => _maxValue;
+            set
+            {
+                // Prevent value from being exactly 0 to avoid division errors later, 
+                // though we also handle that in the draw logic.
+                if (!Mathf.Approximately(_maxValue, value))
+                {
+                    _maxValue = value;
+                    MarkDirtyRepaint();
                 }
             }
         }
@@ -78,9 +93,9 @@ namespace UI
         // --- Constructor ---
         public RadialProgress()
         {
-            // Register the drawing callback
             generateVisualContent += GenerateVisualContent;
         }
+        
 
         // --- Drawing Logic (Painter2D) ---
         private void GenerateVisualContent(MeshGenerationContext context)
@@ -94,12 +109,22 @@ namespace UI
     
             float radius = Mathf.Min(width, height) * 0.5f - (_lineWidth * 0.5f);
             Vector2 center = new Vector2(width * 0.5f, height * 0.5f);
+
+            // Calculate ratio (0.0 to 1.0)
+            float ratio = 0f;
+            if (!Mathf.Approximately(_maxValue, 0f))
+            {
+                ratio = _currentValue / _maxValue;
+            }
+            
+            // Clamp ratio to ensure the circle doesn't draw more than 360 degrees
+            // or backwards if values are negative.
+            ratio = Mathf.Clamp01(ratio);
     
             // -90 degrees is 12 o'clock
             float startAngleDegrees = -90f; 
-            // Calculate the length of the arc based on progress
-            float sweepAngleDegrees = _progress * 3.6f; 
-            // Calculate the absolute end angle
+            // 360 degrees represents a full circle
+            float sweepAngleDegrees = ratio * 360f; 
             float endAngleDegrees = startAngleDegrees + sweepAngleDegrees;
 
             // 1. Draw Track (Full Circle)
@@ -108,18 +133,15 @@ namespace UI
             painter.lineCap = LineCap.Round;
     
             painter.BeginPath();
-            // Draw from 0 to 360 using Angle struct for safety
             painter.Arc(center, radius, Angle.Degrees(0), Angle.Degrees(360));
             painter.Stroke();
 
             // 2. Draw Fill
-            if (_progress > 0)
+            if (ratio > 0.001f)
             {
                 painter.strokeColor = _fillColor;
                 painter.BeginPath();
         
-                // FIX: Use Start Angle and End Angle (not Length)
-                // We explicitly wrap them in Angle.Degrees() to prevent Radian confusion
                 painter.Arc(center, radius, Angle.Degrees(startAngleDegrees), Angle.Degrees(endAngleDegrees));
         
                 painter.Stroke();

@@ -12,6 +12,7 @@ namespace Enemy
         [SerializeField] private int maxHealth = 100;
 
         public IReadOnlyReactiveProperty<int> CurrentHealth => currentHealth;
+        public int CurrentHealthRaw => CurrentHealth.Value;
         public int MaxHealth => maxHealth;
 
         public event Action<GameObject> OnDeath;

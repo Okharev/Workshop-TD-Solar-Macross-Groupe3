@@ -1,19 +1,110 @@
-.health-root {
-    width: 150px;
-    height: 150px;
-    border-radius: 50%;
-    position: relative;
-    background-color: black; /* outline or empty background */
+/* 1. Main Container alignment */
+.hud-container {
+    flex-direction: row; /* Layout items side by side */
+    align-items: center; /* Center them vertically */
+    justify-content: flex-start;
+    padding: 20px;
 }
 
-.health-fill {
+/* 2. The Wrapper for the Linear Bars */
+.bars-wrapper {
+    flex-direction: column; /* Stack bars (Up and Down) */
+    justify-content: center;
+    align-items: flex-end; /* Push bars to the Right (towards the circle) */
+
+    /* THE KISS MECHANIC: */
+    /* Drag this wrapper to the right so it slides BEHIND the circle */
+    margin-right: -30px;
+    z-index: 0; /* Behind the circle */
+}
+
+/* 3. The Linear Track (Background of the bar) */
+.linear-track {
+    width: 250px;
+    height: 20px;
+    background-color: rgba(0, 0, 0, 0.5);
+    margin-bottom: 5px; /* Spacing between up and down bars */
+
+    /* KEY FOR EXPANDING LEFT: */
+    /* We flip the flex direction so items start from the Right */
+    flex-direction: row-reverse;
+
+    /* Visual Styling */
+    border-radius: 4px;
+    overflow: hidden; /* Ensures fill stays inside rounded corners */
+}
+
+/* Optional: Add space between the two bars */
+.top-bar { margin-bottom: 8px; }
+.bottom-bar { margin-top: 8px; }
+
+/* 4. The Fill Element */
+.linear-fill {
+    height: 100%;
+    width: 50%; /* This is what we animate in Code (0% to 100%) */
+
+    /* Because parent is row-reverse, this anchors to the RIGHT */
+    /* and grows towards the LEFT. */
+
+    transition: width 0.2s ease-out; /* Smooth animation */
+}
+
+/* Colors */
+.health-color { background-color: #FF4444; }
+.mana-color { background-color: #4444FF; }
+
+/* 5. The Radial Wrapper */
+.radial-wrapper {
+    width: 100px;
+    height: 100px;
+    justify-content: center;
+    align-items: center;
+    z-index: 1; /* Sit ON TOP of the bars */
+}
+
+/* The custom element size */
+.radial-element {
     width: 100%;
     height: 100%;
-    border-radius: 50%;
-    /* The gradient defines the radial progress */
-    background-image: conic-gradient(
-            red calc(var(--health) * 1%),
-            rgba(255, 0, 0, 0.1) 0
-    );
 }
-    
+
+.linear-track {
+    width: 250px;
+    height: 24px; /* Increased height slightly for better rounding look */
+    background-color: rgba(0, 0, 0, 0.6);
+
+    /* Important: We need row-reverse so the fill starts from the Right */
+    flex-direction: row-reverse;
+
+    /* Ensure the Fill child gets cut off by the rounded corners */
+    overflow: hidden;
+}
+
+.top-bar {
+    /* Round the Top-Left corner significantly */
+    border-top-left-radius: 24px; /* Matches height for a perfect curve */
+
+    /* Keep Bottom-Left sharp (or very slightly rounded) so it "connects" to the bottom bar */
+    border-bottom-left-radius: 2px;
+
+    /* The right side (touching the circle) stays flat */
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+
+    margin-bottom: 2px; /* Tiny gap between bars looks stylish */
+}
+
+/* --- THE BOTTOM BAR (Mana) --- */
+.bottom-bar {
+    /* Round the Bottom-Left corner significantly */
+    border-bottom-left-radius: 24px; /* Matches height */
+
+    /* Keep Top-Left sharp to meet the top bar */
+    border-top-left-radius: 2px;
+
+    /* The right side (touching the circle) stays flat */
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+
+    margin-top: 2px;
+}
