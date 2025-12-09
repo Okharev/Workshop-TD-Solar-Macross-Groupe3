@@ -51,7 +51,7 @@ MeshRenderer:
   m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1
-  m_DynamicOccludee: 1
+  m_DynamicOccludee: 0
   m_StaticShadowCaster: 0
   m_MotionVectors: 1
   m_LightProbeUsage: 1
@@ -172,7 +172,7 @@ NavMeshAgent:
   m_Enabled: 1
   m_AgentTypeID: 0
   m_Radius: 0.5
-  m_Speed: 8
+  m_Speed: 5
   m_Acceleration: 8
   avoidancePriority: 50
   m_AngularSpeed: 120
@@ -200,7 +200,7 @@ MonoBehaviour:
   baseRange: 15
   baseFireRate: 1
   baseHealth: 100
-  baseSpeed: 6
+  baseSpeed: 2
   damage:
     _baseValue:
       _value: 0
@@ -240,8 +240,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Enemy.HealthComponent
   currentHealth:
-    _value: 100
-  maxHealth: 100
+    _value: 40
+  maxHealth: 40
 --- !u!114 &7110423381043756644
 MonoBehaviour:
   m_ObjectHideFlags: 0
