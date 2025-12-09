@@ -144,7 +144,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8781234593180703897, guid: 8b8d71801f036614e9887ef7538737a9, type: 3}
       propertyPath: baseSpeed
-      value: 4
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 8781234593180703897, guid: 8b8d71801f036614e9887ef7538737a9, type: 3}
+      propertyPath: baseHealth
+      value: 40
       objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 1075060716700723535, guid: 8b8d71801f036614e9887ef7538737a9, type: 3}
