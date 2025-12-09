@@ -76,11 +76,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2705688281348489239, guid: 8b8d71801f036614e9887ef7538737a9, type: 3}
       propertyPath: m_Speed
-      value: 6
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 2705688281348489239, guid: 8b8d71801f036614e9887ef7538737a9, type: 3}
       propertyPath: m_Radius
       value: 0.9
+      objectReference: {fileID: 0}
+    - target: {fileID: 3238345694428518885, guid: 8b8d71801f036614e9887ef7538737a9, type: 3}
+      propertyPath: maxHealth
+      value: 40
+      objectReference: {fileID: 0}
+    - target: {fileID: 3238345694428518885, guid: 8b8d71801f036614e9887ef7538737a9, type: 3}
+      propertyPath: currentHealth._value
+      value: 40
       objectReference: {fileID: 0}
     - target: {fileID: 3676794826586101564, guid: 8b8d71801f036614e9887ef7538737a9, type: 3}
       propertyPath: m_LocalScale.x
