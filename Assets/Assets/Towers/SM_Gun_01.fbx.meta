@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 4585a50267886af4f8b37be0813ea9fd
+guid: d6594fbcbc91c984e997b5158c203c2b
 ModelImporter:
   serializedVersion: 24200
   internalIDToNameTable: []
@@ -7,7 +7,7 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
-      name: standardSurface1
+      name: standardSurface16
     second: {fileID: 2100000, guid: 44e8700461304c941afdcc8c375f5070, type: 2}
   materials:
     materialImportMode: 2
@@ -61,7 +61,7 @@ ModelImporter:
     maxBonesPerVertex: 4
     minBoneWeight: 0.001
     optimizeBones: 1
-    generateMeshLods: 1
+    generateMeshLods: 0
     meshLodGenerationFlags: 0
     maximumMeshLod: -1
     meshOptimizationFlags: -1
