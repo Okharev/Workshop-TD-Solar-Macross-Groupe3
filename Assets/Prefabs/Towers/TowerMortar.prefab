@@ -4833,8 +4833,8 @@ MonoBehaviour:
   rotationMode: 1
   referenceTurnAngle: 120
   packRadius: 5
-  minProjectileTravelTime: 0.5
-  maxProjectileTravelTime: 2
+  minProjectileTravelTime: 4
+  maxProjectileTravelTime: 6
   mortarProjectilePrefab: {fileID: 6788501368562467226, guid: 2231c745d65b95c4ba0eada45f131cb6, type: 3}
   radiusOfImpact: 6
 --- !u!1 &7738192934780902551

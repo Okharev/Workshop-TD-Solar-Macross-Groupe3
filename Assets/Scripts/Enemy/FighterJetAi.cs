@@ -60,7 +60,7 @@ namespace Enemy
         private Vector3 _cachedFlockingDirection;
         private Collider[] _neighborBuffer; // Reusable buffer for physics
         private Transform _myTransform;     // Cached transform access
-
+    
         private void Awake()
         {
             _tracker = GetComponent<EnemyObjectiveTracker>();
@@ -121,50 +121,63 @@ namespace Enemy
             _cachedFlockingDirection = CalculateFlockingVector();
         }
 
-        private void UpdateMissionLogic()
-        {
-            float distSqr = (currentMissionTarget - _myTransform.position).sqrMagnitude;
+private void UpdateMissionLogic()
+{
+    // Calcul de la distance au carré (optimisation) vers la cible actuelle (Waypoint ou Objectif)
+    float distSqr = (currentMissionTarget - _myTransform.position).sqrMagnitude;
 
-            switch (currentState)
+    switch (currentState)
+    {
+        case AIState.Traveling:
+            // Si on est assez proche du waypoint (10 unités = 100 en sqrMagnitude)
+            if (distSqr < 100f && waypoints is { Count: > 0 }) 
             {
-                case AIState.Traveling:
-                    // Distance check optimized with sqrMagnitude (30*30 = 900)
-                    if (distSqr < 100f && waypoints is { Count: > 0 }) 
-                    {
-                        waypointIndex = (waypointIndex + 1) % waypoints.Count;
-                        currentMissionTarget = waypoints[waypointIndex].position;
-                    }
-                    break;
+                // On passe au waypoint suivant
+                waypointIndex++;
 
-                case AIState.Attacking:
-                    // PERFORMANCE FIX: 
-                    // We do NOT search for targets here using FindFirstObjectByType.
-                    // We strictly rely on the Tracker. If Tracker is null, we fly straight/loiter.
-                    var targetTransform = _tracker.CurrentTarget.Value;
-                
-                    if (targetTransform)
-                    {
-                        Vector3 targetPos = targetTransform.position;
-                    
-                        // Orbit Logic
-                        Vector3 dirFromCenter = (_myTransform.position - targetPos).normalized;
-                        dirFromCenter.y = 0; 
-                    
-                        Vector3 tangent = Vector3.Cross(dirFromCenter, Vector3.up);
-                        if (!orbitClockwise) tangent = -tangent;
-
-                        // Lead the turn
-                        Vector3 attackPoint = targetPos + (tangent * 50f) + (Vector3.up * 10f);
-                        currentMissionTarget = Vector3.Lerp(currentMissionTarget, attackPoint, logicTickRate * 3f);
-                    }
-                    else
-                    {
-                        // No target? Just fly forward to avoid spinning
-                        currentMissionTarget = _myTransform.position + _myTransform.forward * 100f;
-                    }
-                    break;
+                // MODIFICATION ICI :
+                // Si l'index dépasse le nombre de waypoints, on a fini le chemin.
+                if (waypointIndex >= waypoints.Count)
+                {
+                    // On passe en mode attaque pour viser l'objectif (Tracker)
+                    currentState = AIState.Attacking;
+                }
+                else
+                {
+                    // Sinon, on met à jour la cible vers le prochain waypoint
+                    currentMissionTarget = waypoints[waypointIndex].position;
+                }
             }
-        }
+            break;
+
+        case AIState.Attacking:
+            // PERFORMANCE FIX: 
+            // On ne cherche pas de cible ici. On se fie au Tracker.
+            var targetTransform = _tracker.CurrentTarget.Value;
+        
+            if (targetTransform)
+            {
+                Vector3 targetPos = targetTransform.position;
+            
+                // Logique d'orbite
+                Vector3 dirFromCenter = (_myTransform.position - targetPos).normalized;
+                dirFromCenter.y = 0; 
+            
+                Vector3 tangent = Vector3.Cross(dirFromCenter, Vector3.up);
+                if (!orbitClockwise) tangent = -tangent;
+
+                // On vise un point "devant" la cible pour tourner autour
+                Vector3 attackPoint = targetPos + (tangent * 50f) + (Vector3.up * 10f);
+                currentMissionTarget = Vector3.Lerp(currentMissionTarget, attackPoint, logicTickRate * 3f);
+            }
+            else
+            {
+                // Pas de cible ? On vole tout droit
+                currentMissionTarget = _myTransform.position + _myTransform.forward * 100f;
+            }
+            break;
+    }
+}
 
         // --- PHYSICS CORE (Optimized) ---
         private void RunAerodynamics()

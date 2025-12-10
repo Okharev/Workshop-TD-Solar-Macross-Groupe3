@@ -215,3 +215,23 @@
     background-color: #1e8449;
     scale: 0.95;
 }
+
+.minimap-container {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    width: 200px;
+    height: 200px;
+    background-color: rgb(20, 20, 20);
+    border-width: 2px;
+    border-color: rgb(100, 100, 100);
+    border-radius: 10px;
+    overflow: hidden; /* Important si on veut arrondir les coins de l'image */
+}
+
+.minimap-render {
+    width: 100%;
+    height: 100%;
+    /* On force le fond blanc pour que la Render Texture (qui multiplie la couleur) se voie bien */
+    background-color: white;
+}

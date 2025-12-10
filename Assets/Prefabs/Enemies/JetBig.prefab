@@ -48,6 +48,7 @@ GameObject:
   - component: {fileID: 4774346428336883143}
   - component: {fileID: 2530288568501768135}
   - component: {fileID: 1004739888977982886}
+  - component: {fileID: 1947981790946585290}
   m_Layer: 13
   m_Name: JetBig
   m_TagString: Enemy
@@ -207,6 +208,21 @@ MonoBehaviour:
   whiskerLength: 40
   weightAvoidance: 100
   logicTickRate: 0.1
+--- !u!114 &1947981790946585290
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5069400229212143550}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9a27753ed99edca4ba41470f7089d968, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UI.MinimapIcon
+  _iconSprite: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
+  _color: {r: 1, g: 0, b: 0, a: 1}
+  _size: 125
 --- !u!1 &8828201989002400343
 GameObject:
   m_ObjectHideFlags: 0

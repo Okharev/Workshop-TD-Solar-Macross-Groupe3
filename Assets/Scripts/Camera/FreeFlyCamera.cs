@@ -80,6 +80,16 @@ namespace Camera
             Gizmos.DrawLine(rayOrigin, rayOrigin + Vector3.down * 20f);
             Gizmos.DrawWireSphere(rayOrigin, 0.5f);
         }
+        
+        public void TeleportTo(Vector3 targetPosition)
+        {
+            targetPosition.y = transform.position.y;
+            
+            transform.position = targetPosition;
+            
+            _currentVelocity = Vector3.zero; 
+            _smoothDampVelocityRef = Vector3.zero;
+        }
 
         private void HandleMouseLook()
         {
