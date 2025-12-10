@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using Enemy;
-using UnityEditor.PackageManager;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -10,87 +9,74 @@ namespace Towers
     [RequireComponent(typeof(Rigidbody))]
     public sealed class HomingMissile : BaseProjectile
     {
-        [Header("Ballistics & Movement")] [SerializeField]
-        private float speed = 30f;
+        [Header("Ballistics & Speed")] 
+        [SerializeField] private float startSpeed = 15f;
+        [SerializeField] private float maxSpeed = 45f;
+        [SerializeField] private float acceleration = 25f;
+        
+        [Header("Maneuverability")]
+        [SerializeField] private float rotateSpeed = 400.0f; 
+        [SerializeField] private float waypointReachedThreshold = 3.0f;
+        [SerializeField] [Range(0f, 2f)] private float leadTargetMultiplier = 0.8f;
 
-        [SerializeField] private float rotateSpeed = 300.0f;
-        [SerializeField] private float waypointReachedThreshold = 1.5f;
-        [SerializeField] [Range(0f, 2f)] private float leadTargetMultiplier = 0.5f;
+        [Header("Banking")]
+        [SerializeField] private float bankingIntensity = 60f; 
+        [SerializeField] private float bankingLerpSpeed = 4f;
 
-        [Header("Warhead")] [SerializeField] private float maxLifetime = 8f;
-
-        [SerializeField] public int damage;
+        [Header("Warhead")] 
+        [SerializeField] private float maxLifetime = 8f;
         [SerializeField] public float explosionRange;
 
-        [Header("Re-targeting")] [SerializeField]
-        private bool canRetarget = true;
+        [Header("Re-targeting")] 
+        [SerializeField] private bool canRetarget = true;
+        [SerializeField] private float retargetingRange = 40f; 
+        [SerializeField] private float retargetingCooldown = 0.25f; // Increased default slightly
 
-        [SerializeField] private float retargetingRange = 20f;
-        [SerializeField] private float retargetingCooldown = 0.25f;
+        [Header("Aerodynamics")] 
+        [SerializeField] private float wobbleMagnitude = 1.5f;
+        [SerializeField] private float wobbleFrequency = 8f;
 
-        [Header("Aerodynamics (Wobble)")] [SerializeField]
-        private float wobbleMagnitude = 5.0f;
-
-        [SerializeField] private float wobbleFrequency = 4f;
+        // Optimization: Static buffer to ensure shared memory across ALL missiles
+        // This assumes BaseProjectile.collidersCache might not be static. 
+        // If BaseProjectile.collidersCache IS static, you can use that instead.
+        private static readonly Collider[] _sharedHitBuffer = new Collider[20];
 
         private readonly Queue<Vector3> _flightPath = new();
 
-        // Internal State
+        private enum MissileState { FollowingPath, Homing }
         private MissileState _currentState;
+        
         private Vector3 _currentWaypoint;
         private int _enemyLayer;
+        
         private Transform _finalTarget;
+        private Rigidbody _targetRb;
+        private Vector3 _lastKnownPosition;
 
         private float _lifetimeTimer;
         private float _perlinSeedX, _perlinSeedY;
         private Rigidbody _rb;
-        private Rigidbody _targetRb;
-        private float _timeSinceLastRetargetCheck;
+        private Transform _transform; // Cached Transform
+        
+        private float _retargetTimer;
         private float _waypointReachedThresholdSqr;
+        private float _currentSpeed;
 
         private void Awake()
         {
             _rb = GetComponent<Rigidbody>();
+            _transform = transform; // Cache transform access
+            
             _rb.useGravity = false;
-            _rb.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
+            // Removed CollisionDetectionMode change (Setting this at runtime causes a small spike, better set in Prefab)
+            _rb.linearDamping = 0; 
+            _rb.angularDamping = 0;
 
             _enemyLayer = LayerMask.GetMask("EnemyAir", "EnemyGround");
             _waypointReachedThresholdSqr = waypointReachedThreshold * waypointReachedThreshold;
 
             _perlinSeedX = Random.Range(0f, 100f);
             _perlinSeedY = Random.Range(0f, 100f);
-        }
-
-        private void Update()
-        {
-            _lifetimeTimer += Time.deltaTime;
-            if (_lifetimeTimer > maxLifetime) Destroy(gameObject);
-        }
-
-        private void FixedUpdate()
-        {
-            if (!_finalTarget && _currentState == MissileState.Homing)
-                if (!canRetarget || !TryFindNewTarget())
-                {
-                    _rb.linearVelocity = transform.forward * speed;
-                    return;
-                }
-
-            switch (_currentState)
-            {
-                case MissileState.FollowingPath:
-                    HandlePathFollowing();
-                    break;
-                case MissileState.Homing:
-                    HandleHoming();
-                    break;
-            }
-        }
-
-        private void OnDrawGizmosSelected()
-        {
-            Gizmos.color = Color.yellow;
-            Gizmos.DrawWireSphere(transform.position, explosionRange);
         }
 
         public void Setup(BaseTower tower)
@@ -102,68 +88,108 @@ namespace Towers
         {
             _rb.linearVelocity = Vector3.zero;
             _rb.angularVelocity = Vector3.zero;
+            _currentSpeed = startSpeed;
 
             _flightPath.Clear();
             if (pathPoints != null)
-                foreach (var point in pathPoints)
-                    _flightPath.Enqueue(point);
+                foreach (var point in pathPoints) _flightPath.Enqueue(point);
 
             _finalTarget = target;
-            if (_finalTarget) _finalTarget.TryGetComponent(out _targetRb);
+            
+            if (_finalTarget)
+            {
+                _finalTarget.TryGetComponent(out _targetRb);
+                _lastKnownPosition = _finalTarget.position;
+            }
+            else
+            {
+                _lastKnownPosition = _transform.position + _transform.forward * 50f;
+            }
 
             _lifetimeTimer = 0f;
+            
+            // OPTIMIZATION: Stagger the retarget check.
+            // If 50 missiles spawn, they won't all SphereCast on the same frame later.
+            _retargetTimer = Random.Range(0f, retargetingCooldown);
 
             if (_flightPath.Count > 0)
             {
                 _currentState = MissileState.FollowingPath;
                 _currentWaypoint = _flightPath.Dequeue();
-                transform.LookAt(_currentWaypoint);
+                _transform.LookAt(_currentWaypoint);
             }
             else
             {
                 _currentState = MissileState.Homing;
-                if (_finalTarget) transform.LookAt(_finalTarget);
+                if (_finalTarget) _transform.LookAt(_finalTarget);
             }
         }
 
-        protected override bool IsValidHit(Collider hitObject)
+        // Consolidated Update logic into FixedUpdate to remove Update() overhead
+        private void FixedUpdate()
         {
-            return true;
+            float dt = Time.fixedDeltaTime;
+            
+            // 1. Lifetime Check
+            _lifetimeTimer += dt;
+            if (_lifetimeTimer > maxLifetime)
+            {
+                Destroy(gameObject); // Optimization: Pool this instead of Destroy
+                return; 
+            }
+
+            // 2. Speed
+            _currentSpeed = Mathf.MoveTowards(_currentSpeed, maxSpeed, acceleration * dt);
+
+            // 3. Target Memory
+            // Optimization: Only access transform once per frame
+            bool isAlive = IsTargetAlive();
+            if (isAlive)
+            {
+                _lastKnownPosition = _finalTarget.position;
+            }
+
+            // 4. State Machine
+            if (_currentState == MissileState.FollowingPath)
+            {
+                HandlePathFollowing(isAlive);
+            }
+            else
+            {
+                HandleHoming(isAlive, dt);
+            }
         }
+
+        protected override bool IsValidHit(Collider hitObject) => true;
 
         protected override void HandleImpact(Collider other)
         {
-            // 1. AoE Damage Logic
-            var hitCount = Physics.OverlapSphereNonAlloc(transform.position, explosionRange, collidersCache, _enemyLayer);
-            var validHits = collidersCache.AsSpan(0, hitCount);
+            // Use static buffer
+            var hitCount = Physics.OverlapSphereNonAlloc(_transform.position, explosionRange, _sharedHitBuffer, _enemyLayer);
+            
+            var onHitData = new UpgradeProvider.OnHitData { Origin = gameObject, Target = gameObject };
+            var onKillData = new UpgradeProvider.OnKillData { Origin = gameObject, Target = gameObject };
 
-            foreach (var col in validHits)
+            // Optimization: iterate using standard for loop on array, avoids Span overhead (minor) 
+            // but safer if not using unsafe code settings
+            for (int i = 0; i < hitCount; i++)
             {
-                if (!col.TryGetComponent<HealthComponent>(out var victim)) return;
-                source.Events.OnHit?.Invoke(new UpgradeProvider.OnHitData()
+                var col = _sharedHitBuffer[i];
+                if (!col.TryGetComponent<HealthComponent>(out var victim)) continue;
+                
+                source.Events.OnHit?.Invoke(onHitData);
+                // Math.RoundToInt optimization
+                if (victim.TakeDamage((int)(source.damage.Value + 0.5f))) 
                 {
-                    Origin = gameObject,
-                    Target = gameObject
-                });
-
-
-                if (victim.TakeDamage(Mathf.RoundToInt(source.damage.Value)))
-                {
-                    source.Events.OnKill?.Invoke(new UpgradeProvider.OnKillData()
-                    {
-                        Origin = gameObject,
-                        Target = gameObject
-                    });
+                    source.Events.OnKill?.Invoke(onKillData);
                 }
             }
-
-            Destroy(gameObject);
+            Destroy(gameObject); // Replace with pooling
         }
 
-
-        private void HandlePathFollowing()
+        private void HandlePathFollowing(bool isTargetAlive)
         {
-            FlyTowards(_currentWaypoint);
+            MoveMissile((_currentWaypoint - _rb.position).normalized);
 
             if ((_currentWaypoint - _rb.position).sqrMagnitude < _waypointReachedThresholdSqr)
             {
@@ -174,58 +200,117 @@ namespace Towers
             }
         }
 
-        private void HandleHoming()
+        private void HandleHoming(bool isTargetAlive, float dt)
         {
-            if (!_finalTarget) return;
-
-            var aimPos = _finalTarget.position;
-            if (leadTargetMultiplier > 0 && _targetRb != null)
+            // 1. Live Target
+            if (isTargetAlive)
             {
-                var dist = Vector3.Distance(_rb.position, aimPos);
-                aimPos += _targetRb.linearVelocity * (dist / speed * leadTargetMultiplier);
+                Vector3 aimPos = _lastKnownPosition; // Use cached position
+                
+                if (leadTargetMultiplier > 0 && _targetRb)
+                {
+                    float distance = Vector3.Distance(_rb.position, aimPos);
+                    // Optimization: Approx travel time to avoid division by zero
+                    if (_currentSpeed > 0.1f)
+                    {
+                        float travelTime = distance / _currentSpeed;
+                        aimPos += _targetRb.linearVelocity * (travelTime * leadTargetMultiplier);
+                    }
+                }
+                
+                MoveMissile((aimPos - _rb.position).normalized);
             }
-
-            FlyTowards(aimPos);
+            // 2. Dead Target -> Retarget
+            else if (canRetarget && TryFindNewTarget(dt))
+            {
+                // New target found, fly there next frame
+                // Current frame: keep flying forward or to last known
+                 MoveMissile((_lastKnownPosition - _rb.position).normalized);
+            }
+            // 3. Fallback (Dumb Fire)
+            else
+            {
+                 float distSqr = (_rb.position - _lastKnownPosition).sqrMagnitude;
+                 
+                 // If close to last known pos (approx 2.0f * 2.0f = 4.0f)
+                 if (distSqr < 4.0f)
+                 {
+                     MoveMissile(Vector3.down); 
+                 }
+                 else
+                 {
+                     MoveMissile((_lastKnownPosition - _rb.position).normalized);
+                 }
+            }
         }
 
-        private void FlyTowards(Vector3 targetPos)
+        private void MoveMissile(Vector3 desiredDirection)
         {
-            var dir = targetPos - _rb.position;
-            if (dir == Vector3.zero) dir = transform.forward;
+            if (desiredDirection == Vector3.zero) desiredDirection = _transform.forward;
+            
+            Quaternion targetRotation = Quaternion.LookRotation(desiredDirection);
 
-            var targetRot = Quaternion.LookRotation(dir);
-
+            // Wobble
             if (wobbleMagnitude > 0)
             {
-                var time = Time.time * wobbleFrequency;
-                var x = (Mathf.PerlinNoise(time, _perlinSeedX) - 0.5f) * wobbleMagnitude;
-                var y = (Mathf.PerlinNoise(time, _perlinSeedY) - 0.5f) * wobbleMagnitude;
-                targetRot = Quaternion.Euler(targetRot.eulerAngles + new Vector3(x, y, 0));
+                float time = Time.time * wobbleFrequency;
+                // Optimization: Perlin is okay, but calculation is kept minimal
+                float noiseX = (Mathf.PerlinNoise(time, _perlinSeedX) - 0.5f) * wobbleMagnitude;
+                float noiseY = (Mathf.PerlinNoise(time, _perlinSeedY) - 0.5f) * wobbleMagnitude;
+                
+                // Rotate vector logic is expensive, adding Euler is cheaper here
+                Vector3 currentEuler = targetRotation.eulerAngles;
+                targetRotation = Quaternion.Euler(currentEuler.x + noiseX, currentEuler.y + noiseY, currentEuler.z);
             }
+            
+            // Banking
+            Vector3 localTargetDir = _transform.InverseTransformDirection(desiredDirection);
+            float targetBankAngle = -localTargetDir.x * bankingIntensity;
+            
+            // Use local variable for euler access
+            Vector3 rbEuler = _rb.rotation.eulerAngles;
+            float currentBank = Mathf.LerpAngle(rbEuler.z, targetBankAngle, Time.fixedDeltaTime * bankingLerpSpeed);
 
-            _rb.MoveRotation(Quaternion.RotateTowards(_rb.rotation, targetRot, rotateSpeed * Time.fixedDeltaTime));
-            _rb.linearVelocity = transform.forward * speed;
+            // Apply Rotation
+            Quaternion newRotation = Quaternion.RotateTowards(_rb.rotation, targetRotation, rotateSpeed * Time.fixedDeltaTime);
+            
+            // Overwrite Roll
+            Vector3 finalEuler = newRotation.eulerAngles;
+            finalEuler.z = currentBank;
+            
+            _rb.MoveRotation(Quaternion.Euler(finalEuler));
+            _rb.linearVelocity = _transform.forward * _currentSpeed;
         }
 
-        private bool TryFindNewTarget()
+        private bool IsTargetAlive()
         {
-            _timeSinceLastRetargetCheck += Time.fixedDeltaTime;
-            if (_timeSinceLastRetargetCheck < retargetingCooldown) return false;
-            _timeSinceLastRetargetCheck = 0f;
+            // Optimization: Simplified null check (Unity overrides ==)
+            return _finalTarget && _finalTarget.gameObject.activeInHierarchy;
+        }
 
-            var hitCount = Physics.OverlapSphereNonAlloc(_rb.position, retargetingRange, collidersCache, _enemyLayer);
+        private bool TryFindNewTarget(float dt)
+        {
+            _retargetTimer += dt;
+            if (_retargetTimer < retargetingCooldown) return false;
+            
+            // Reset timer with small variance to prevent re-syncing
+            _retargetTimer = Random.Range(0f, 0.05f); 
+
+            var hitCount = Physics.OverlapSphereNonAlloc(_rb.position, retargetingRange, _sharedHitBuffer, _enemyLayer);
             if (hitCount == 0) return false;
 
             Transform closest = null;
-            var closestDist = float.MaxValue;
-            var hits = collidersCache.AsSpan(0, hitCount);
+            float closestDistSqr = float.MaxValue; // Use Sqr for comparison
 
-            foreach (var hit in hits)
+            for (int i = 0; i < hitCount; i++)
             {
+                var hit = _sharedHitBuffer[i];
+                if (!hit.gameObject.activeInHierarchy) continue;
+
                 var d = (hit.transform.position - _rb.position).sqrMagnitude;
-                if (d < closestDist)
+                if (d < closestDistSqr)
                 {
-                    closestDist = d;
+                    closestDistSqr = d;
                     closest = hit.transform;
                 }
             }
@@ -234,16 +319,11 @@ namespace Towers
             {
                 _finalTarget = closest;
                 _finalTarget.TryGetComponent(out _targetRb);
+                _lastKnownPosition = _finalTarget.position;
                 return true;
             }
 
             return false;
-        }
-
-        private enum MissileState
-        {
-            FollowingPath,
-            Homing
         }
     }
 }

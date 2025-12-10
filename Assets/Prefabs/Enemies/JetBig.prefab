@@ -49,7 +49,7 @@ GameObject:
   - component: {fileID: 2530288568501768135}
   - component: {fileID: 1004739888977982886}
   m_Layer: 13
-  m_Name: Jet
+  m_Name: JetBig
   m_TagString: Enemy
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -195,17 +195,18 @@ MonoBehaviour:
   separationRadius: 3
   weightTarget: 1.2
   weightSeparation: 25
-  maxThrustSpeed: 14
-  minStallSpeed: 8
-  acceleration: 2
-  rollSpeed: 120
-  maxTurnRate: 90
+  maxThrustSpeed: 10
+  minStallSpeed: 6
+  acceleration: 3
+  rollSpeed: 50
+  maxTurnRate: 45
   driftFactor: 0.15
   obstacleLayer:
     serializedVersion: 2
-    m_Bits: 4097
+    m_Bits: 4225
   whiskerLength: 40
   weightAvoidance: 100
+  logicTickRate: 0.1
 --- !u!1 &8828201989002400343
 GameObject:
   m_ObjectHideFlags: 0
