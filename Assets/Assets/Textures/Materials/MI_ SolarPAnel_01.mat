@@ -7,7 +7,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: MI_ Pylone
+  m_Name: MI_ SolarPAnel_01
   m_Shader: {fileID: -6465566751694194690, guid: 6b46e49aa5a084448a685fcf3b4b8a88, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
@@ -25,7 +25,7 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
     - _AO:
-        m_Texture: {fileID: 2800000, guid: 58ccba7c735195140aaf01803b641d97, type: 3}
+        m_Texture: {fileID: 2800000, guid: 849bcfab29757a24c85cab38bbb5f92a, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _BaseMap:
@@ -33,7 +33,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _Basecolor:
-        m_Texture: {fileID: 2800000, guid: a3046657d576ca241b7f17aaf0423761, type: 3}
+        m_Texture: {fileID: 2800000, guid: 68678dcda74192f43904d777a434ea44, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _BumpMap:
@@ -57,7 +57,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _Emissive:
-        m_Texture: {fileID: 2800000, guid: 27c07ebc481028b428b346c1ef339cb2, type: 3}
+        m_Texture: {fileID: 2800000, guid: 4ebf4bcffe009bb44802c3f4b04e464d, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTex:
@@ -65,7 +65,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _Metalic:
-        m_Texture: {fileID: 2800000, guid: 58ccba7c735195140aaf01803b641d97, type: 3}
+        m_Texture: {fileID: 2800000, guid: 849bcfab29757a24c85cab38bbb5f92a, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MetallicGlossMap:
@@ -73,7 +73,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _NormalMap:
-        m_Texture: {fileID: 2800000, guid: f901159d5e20f424198a31fd8bc30cca, type: 3}
+        m_Texture: {fileID: 2800000, guid: 90f1f7682860a51489fed2018358ce6b, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _ORM_Oclusion_Roughtess_Metal:
@@ -89,7 +89,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _Smoothness:
-        m_Texture: {fileID: 2800000, guid: 58ccba7c735195140aaf01803b641d97, type: 3}
+        m_Texture: {fileID: 2800000, guid: 849bcfab29757a24c85cab38bbb5f92a, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _SpecGlossMap:
@@ -148,7 +148,7 @@ Material:
     - _UseBaseColor: 1
     - _UseEmissive: 1
     - _UseMettalic: 0
-    - _UseSmoothness: 0
+    - _UseSmoothness: 1
     - _Use_ORM: 0
     - _WorkflowMode: 1
     - _XRMotionVectorsPass: 1
