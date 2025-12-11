@@ -1,0 +1,51 @@
+﻿#pragma kernel CSMain
+
+// 1. FIX: Changed from float3 to float4
+// We must match the C# buffer stride (16 bytes) exactly.
+StructuredBuffer<float4> _AllInstances;
+AppendStructuredBuffer<float4> _VisibleInstances;
+
+// Variables passed from CPU
+float4x4 _VPMatrix;
+float _MaxDistance;
+float3 _CamPos;
+
+bool IsVisible(float3 pos)
+{
+    // Distance Check
+    if (distance(pos, _CamPos) > _MaxDistance)
+        return false;
+
+    // Frustum Check
+    float4 clipPos = mul(_VPMatrix, float4(pos, 1.0));
+    
+    // Expand the frustum slightly (margin) so grass doesn't "pop" at screen edges
+    float margin = 1.5; 
+
+    // Check if point is inside the clip space box
+    bool inFrustum = (clipPos.x >= -clipPos.w - margin && clipPos.x <= clipPos.w + margin) &&
+                     (clipPos.y >= -clipPos.w - margin && clipPos.y <= clipPos.w + margin) &&
+                     (clipPos.z >= -clipPos.w && clipPos.z <= clipPos.w);
+                     
+    return inFrustum;
+}
+
+[numthreads(64, 1, 1)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+    // Get the number of elements in the buffer
+    uint count, stride;
+    _AllInstances.GetDimensions(count, stride);
+    
+    if (id.x >= count) return;
+
+    // 2. FIX: Read the full float4 (Pos + Seed)
+    float4 instanceData = _AllInstances[id.x];
+    
+    // 3. FIX: Only check visibility on the Position (.xyz)
+    if (IsVisible(instanceData.xyz))
+    {
+        // 4. FIX: Append the full float4 so the Render Shader gets the seed too
+        _VisibleInstances.Append(instanceData);
+    }
+}

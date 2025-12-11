@@ -96,8 +96,6 @@ public sealed class WaveManager : MonoBehaviour
             else
                 OnAllWavesCompleted?.Invoke();
         }
-
-        // ... Le reste de ton code (WaveCountdownRoutine, RunWaveRoutine, etc.) reste inchangé ...
         
         private IEnumerator WaveCountdownRoutine()
         {

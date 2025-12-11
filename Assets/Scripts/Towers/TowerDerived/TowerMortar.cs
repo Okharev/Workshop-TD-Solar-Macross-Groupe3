@@ -2,69 +2,164 @@
 using System.Collections.Generic;
 using Towers.ProjectileDerived;
 using UnityEngine;
+using UnityEngine.AI; // Nécessaire pour NavMeshAgent
 using Random = UnityEngine.Random;
 
 namespace Towers.TowerDerived
 {
-    public sealed class TowerMortar : BaseTower
+    public class TowerMortar : BaseTower
     {
-        [Header("Ballistics")] [Tooltip("Minimum flight time (close range).")] [SerializeField]
+        [Header("Targeting Settings")]
+        [Tooltip("The radius used to determine how many enemies are in a cluster.")]
+        [SerializeField]
+        private float packRadius = 5f;
+
+        [Header("Ballistics")] 
+        [Tooltip("Minimum flight time (close range).")] 
+        [SerializeField]
         private float minProjectileTravelTime = 0.5f;
 
-        [Tooltip("Maximum flight time (max range).")] [SerializeField]
-        private float maxProjectileTravelTime = 2.0f;
-
-        [Tooltip("Extra time (in seconds) to predict ahead. If shells land behind, increase this (e.g. 0.1 or 0.2).")]
+        [Tooltip("Maximum flight time (max range).")] 
         [SerializeField]
-        private float leadTimeBonus = 0.1f;
+        private float maxProjectileTravelTime = 2.0f;
 
         [SerializeField] private MortarBomb mortarProjectilePrefab;
         [SerializeField] private float radiusOfImpact = 6f;
-        private readonly Collider[] _clusterOptimizationCache = new Collider[64];
 
-        // --- Cache ---
-        private readonly List<Collider> _currentTargetCluster = new(64);
-        private readonly Collider[] _initialScanCache = new Collider[64];
-        private Vector3 _calculatedClusterVelocity;
-
+        // --- Cache (Optimization to avoid GC) ---
+        // Cache for the initial wide scan
+        private readonly Collider[] _potentialTargetsCache = new Collider[100]; 
+        // Cache for checking density around a specific target
+        private readonly Collider[] _densityCheckCache = new Collider[30];      
+        
         // --- State ---
         private float _currentProjectileTravelTime;
         private bool _hasValidTarget;
-        private bool _isTracking;
-
-        // --- Velocity Tracking ---
-        private Vector3 _lastFrameCentroid;
         private Vector3 _predictedAimPoint;
 
         protected override void Update()
         {
             if (!powerSource.IsPowered) return;
 
-            if (_hasValidTarget && _currentTargetCluster.Count > 0)
+            // Recalculate aiming if we have a target
+            if (_hasValidTarget)
             {
-                TrackClusterMovement();
-            }
-            else
-            {
-                if (_hasValidTarget) ResetTracking();
+                // Note: In this logic, we aim at a static point calculated during AcquireTarget.
+                // If you want continuous tracking, call AcquireTarget() every frame or use a timer.
+                // For Mortars, usually updating aim only on AcquireTarget or periodically is better for arcs.
             }
 
-
-            if (!_hasValidTarget) return; 
-
-
-            var isAligned = AimAtTarget(Vector3.zero); 
+            // Aim Logic
+            var isAligned = AimAtTarget(Vector3.zero); // aimPoint ignored by override
 
             fireCountdown -= Time.deltaTime;
 
             if (isAligned && fireCountdown <= 0f)
             {
+                // Re-check path before firing
                 if (IsPathClear(firePoint.position, _predictedAimPoint, _currentProjectileTravelTime))
                 {
                     Fire();
                     fireCountdown = 1f / fireRate.Value;
                 }
             }
+        }
+
+        protected override void AcquireTarget()
+        {
+            // 1. Scan for ALL enemies within the tower's range
+            int totalEnemiesInRange = Physics.OverlapSphereNonAlloc(transform.position, range.Value, _potentialTargetsCache, targetLayer);
+
+            if (totalEnemiesInRange == 0)
+            {
+                ResetTargeting();
+                return;
+            }
+
+            Vector3 bestClusterCenter = Vector3.zero;
+            int maxDensity = -1;
+            bool foundCluster = false;
+
+            // 2. BRUTE FORCE SCAN: Check density around EVERY enemy found
+            // This is the "worse complexity" part (O(N^2)), but independent of managers.
+            for (int i = 0; i < totalEnemiesInRange; i++)
+            {
+                var potentialCenter = _potentialTargetsCache[i];
+                if(potentialCenter == null) continue;
+
+                // Count neighbors within packRadius for this specific enemy
+                int currentDensity = Physics.OverlapSphereNonAlloc(potentialCenter.transform.position, packRadius, _densityCheckCache, targetLayer);
+
+                if (currentDensity > maxDensity)
+                {
+                    maxDensity = currentDensity;
+                    bestClusterCenter = potentialCenter.transform.position;
+                    foundCluster = true;
+                }
+            }
+
+            if (!foundCluster)
+            {
+                ResetTargeting();
+                return;
+            }
+
+            // 3. Calculate Physics/Prediction based on the Best Cluster found
+            CalculateClusterProperties(bestClusterCenter);
+
+            // 4. Verify line of fire
+            _hasValidTarget = IsPathClear(firePoint.position, _predictedAimPoint, _currentProjectileTravelTime);
+        }
+
+        private void CalculateClusterProperties(Vector3 clusterCenter)
+        {
+            // Logic imported from Mortar.cs
+            Vector3 totalPosition = Vector3.zero;
+            Vector3 totalVelocity = Vector3.zero;
+            int validCount = 0;
+
+            // Get the actual members of this best cluster
+            int hitCount = Physics.OverlapSphereNonAlloc(clusterCenter, packRadius, _densityCheckCache, targetLayer);
+
+            for (var i = 0; i < hitCount; i++)
+            {
+                var member = _densityCheckCache[i];
+                if(member == null) continue;
+
+                totalPosition += member.transform.position;
+                
+                // Accumulate velocity from Agents or Rigidbodies
+                if (member.TryGetComponent<NavMeshAgent>(out var agent))
+                {
+                    totalVelocity += agent.velocity;
+                }
+                else if (member.TryGetComponent<Rigidbody>(out var rb))
+                {
+                    totalVelocity += rb.linearVelocity;
+                }
+                
+                validCount++;
+            }
+
+            if (validCount == 0)
+            {
+                ResetTargeting();
+                return;
+            }
+
+            var centroid = totalPosition / validCount;
+            var averageVelocity = totalVelocity / validCount;
+
+            _currentProjectileTravelTime = GetDynamicTravelTime(centroid);
+            
+            // Predict where the centroid will be
+            _predictedAimPoint = centroid + averageVelocity * _currentProjectileTravelTime;
+        }
+
+        private void ResetTargeting()
+        {
+            _hasValidTarget = false;
+            _predictedAimPoint = Vector3.zero;
         }
 
         protected override void Fire()
@@ -74,187 +169,27 @@ namespace Towers.TowerDerived
             var shell = Instantiate(mortarProjectilePrefab, firePoint.position, firePoint.rotation);
             shell.Initialize(this, radiusOfImpact);
 
-            // Physics Reset to ensure pure ballistics
+            // Physics Setup
             shell.rigidbody.linearDamping = 0f;
             shell.rigidbody.angularDamping = 0.05f;
             shell.rigidbody.useGravity = true;
 
-            // Calculate Velocity based on where the target WILL be
+            // Calculate Velocity
             shell.rigidbody.linearVelocity = CalculateLaunchVelocity(_predictedAimPoint, _currentProjectileTravelTime);
 
-            // Visuals
+            // Add Torques for visual effect
             const float torqueStrength = 4f;
             var randomTorque = Random.insideUnitSphere * torqueStrength;
             shell.rigidbody.AddTorque(randomTorque, ForceMode.Impulse);
         }
-
-        protected override void AcquireTarget()
-        {
-            var hitCount =
-                Physics.OverlapSphereNonAlloc(transform.position, range.Value, _initialScanCache, targetLayer);
-            if (hitCount == 0)
-            {
-                ResetTracking();
-                return;
-            }
-
-            var bestClusterCenter = FindBestCluster(hitCount);
-            if (!bestClusterCenter)
-            {
-                ResetTracking();
-                return;
-            }
-
-            FillClusterList(bestClusterCenter);
-
-            _isTracking = false;
-            TrackClusterMovement();
-
-            _hasValidTarget = IsPathClear(firePoint.position, _predictedAimPoint, _currentProjectileTravelTime);
-        }
-
-        protected override void OnDrawGizmosTower()
-        {
-            throw new NotImplementedException();
-        }
-
-        private void ResetTracking()
-        {
-            _hasValidTarget = false;
-            _currentTargetCluster.Clear();
-            _isTracking = false;
-            _calculatedClusterVelocity = Vector3.zero;
-    
-            // Ajout optionnel pour la propreté :
-            _predictedAimPoint = Vector3.zero; 
-        }
-
-        private void TrackClusterMovement()
-        {
-            var totalPosition = Vector3.zero;
-            var validCount = 0;
-
-            // Clean list and calculate centroid
-            for (var i = _currentTargetCluster.Count - 1; i >= 0; i--)
-            {
-                var member = _currentTargetCluster[i];
-                if (!member || !member.gameObject.activeInHierarchy)
-                {
-                    _currentTargetCluster.RemoveAt(i);
-                    continue;
-                }
-
-                totalPosition += member.transform.position;
-                validCount++;
-            }
-
-            if (validCount == 0)
-            {
-                ResetTracking();
-                return;
-            }
-
-            var currentCentroid = totalPosition / validCount;
-
-            // --- MANUAL VELOCITY CALCULATION ---
-            // We compare current position to last frame's position. 
-            // This is more accurate than NavMeshAgent.velocity for ballistics.
-            if (_isTracking)
-            {
-                if (Time.deltaTime > 0)
-                {
-                    var instantaneousVelocity = (currentCentroid - _lastFrameCentroid) / Time.deltaTime;
-
-                    // Simple Low-Pass Filter to smooth out jitter (lerp 50% current, 50% old)
-                    _calculatedClusterVelocity = Vector3.Lerp(_calculatedClusterVelocity, instantaneousVelocity, 0.5f);
-                }
-            }
-            else
-            {
-                // First frame of tracking, we can't calculate delta yet, try to guess or wait
-                _calculatedClusterVelocity = Vector3.zero;
-                _isTracking = true;
-            }
-
-            _lastFrameCentroid = currentCentroid;
-
-            UpdatePredictionInternal(currentCentroid, _calculatedClusterVelocity);
-        }
-
-        private void UpdatePredictionInternal(Vector3 currentPos, Vector3 velocity)
-        {
-            var potentialHitPos = currentPos;
-            var timeToTarget = GetDynamicTravelTime(potentialHitPos);
-
-            // 3-Pass Iteration
-            for (var i = 0; i < 3; i++)
-            {
-                // We add 'leadTimeBonus' here to force the aim slightly ahead
-                // We also add 'Time.fixedDeltaTime' to account for the 1-frame physics delay
-                var adjustedTime = timeToTarget + leadTimeBonus + Time.fixedDeltaTime;
-
-                potentialHitPos = currentPos + velocity * adjustedTime;
-                timeToTarget = GetDynamicTravelTime(potentialHitPos);
-            }
-
-            _currentProjectileTravelTime = timeToTarget;
-            _predictedAimPoint = potentialHitPos;
-        }
-
-        // --- Standard Helper Methods (Unchanged Logic, just helper access) ---
-
-        private Transform FindBestCluster(int hitCount)
-        {
-            Transform bestTarget = null;
-            var maxDensity = 0;
-            for (var i = 0; i < hitCount; i++)
-            {
-                if (!_initialScanCache[i]) continue;
-                var currentDensity = Physics.OverlapSphereNonAlloc(_initialScanCache[i].transform.position,
-                    radiusOfImpact, _clusterOptimizationCache, targetLayer);
-                if (currentDensity > maxDensity)
-                {
-                    maxDensity = currentDensity;
-                    bestTarget = _initialScanCache[i].transform;
-                }
-            }
-
-            return bestTarget;
-        }
-
-        private void FillClusterList(Transform clusterCenter)
-        {
-            _currentTargetCluster.Clear();
-            var hitCount = Physics.OverlapSphereNonAlloc(clusterCenter.position, radiusOfImpact,
-                _clusterOptimizationCache, targetLayer);
-            for (var i = 0; i < hitCount; i++)
-                if (_clusterOptimizationCache[i])
-                    _currentTargetCluster.Add(_clusterOptimizationCache[i]);
-        }
+        
+        // --- Helper Calculation Methods ---
 
         private float GetDynamicTravelTime(Vector3 targetPosition)
         {
             var distance = Vector3.Distance(transform.position, targetPosition);
             var travelTimeFactor = Mathf.Clamp01(distance / range.Value);
             return Mathf.Lerp(minProjectileTravelTime, maxProjectileTravelTime, travelTimeFactor);
-        }
-
-        private bool IsPathClear(Vector3 startPoint, Vector3 endPoint, float time)
-        {
-            var launchVelocity = CalculateLaunchVelocity(endPoint, time);
-            if (launchVelocity == Vector3.zero) return false;
-
-            var previousPoint = startPoint;
-            const int trajectorySteps = 15;
-            for (var i = 1; i <= trajectorySteps; i++)
-            {
-                var t = (float)i / trajectorySteps * time;
-                var currentPoint = startPoint + launchVelocity * t + Physics.gravity * (0.5f * t * t);
-                if (Physics.Linecast(previousPoint, currentPoint, visionBlockerLayer)) return false;
-                previousPoint = currentPoint;
-            }
-
-            return true;
         }
 
         private Vector3 CalculateLaunchVelocity(Vector3 targetPoint, float time)
@@ -267,29 +202,62 @@ namespace Towers.TowerDerived
             return new Vector3(velocityX, velocityY, velocityZ);
         }
 
+        private bool IsPathClear(Vector3 startPoint, Vector3 endPoint, float time)
+        {
+            var launchVelocity = CalculateLaunchVelocity(endPoint, time);
+            if (launchVelocity == Vector3.zero) return false;
+
+            var previousPoint = startPoint;
+            const int trajectorySteps = 10; // Slightly reduced steps for optimization
+            for (var i = 1; i <= trajectorySteps; i++)
+            {
+                var t = (float)i / trajectorySteps * time;
+                var currentPoint = startPoint + launchVelocity * t + Physics.gravity * (0.5f * t * t);
+                
+                // Check if blocked by terrain/walls (visionBlockerLayer)
+                if (Physics.Linecast(previousPoint, currentPoint, visionBlockerLayer)) return false;
+                
+                previousPoint = currentPoint;
+            }
+            return true;
+        }
+
         protected override bool AimAtTarget(Vector3 aimPoint)
         {
             if (!yPivot || !xPivot) return true;
 
+            // Always aim at _predictedAimPoint calculated in AcquireTarget
             var launchVelocity = CalculateLaunchVelocity(_predictedAimPoint, _currentProjectileTravelTime);
             if (launchVelocity == Vector3.zero) return false;
 
+            // Horizontal Rotation (Y-Pivot)
             var horizontalDirection = new Vector3(launchVelocity.x, 0, launchVelocity.z);
             if (horizontalDirection.sqrMagnitude < 0.001f) horizontalDirection = Vector3.forward;
 
             var yLookRotation = Quaternion.LookRotation(horizontalDirection);
             yPivot.rotation = Quaternion.RotateTowards(yPivot.rotation, yLookRotation, yPivotSpeed * Time.deltaTime);
 
+            // Vertical Rotation (X-Pivot)
             var localLaunchDirection = yPivot.InverseTransformDirection(launchVelocity);
             if (localLaunchDirection.sqrMagnitude < 0.001f) localLaunchDirection = Vector3.forward;
 
             var xLookRotation = Quaternion.LookRotation(localLaunchDirection);
-            xPivot.localRotation =
-                Quaternion.RotateTowards(xPivot.localRotation, xLookRotation, xPivotSpeed * Time.deltaTime);
+            xPivot.localRotation = Quaternion.RotateTowards(xPivot.localRotation, xLookRotation, xPivotSpeed * Time.deltaTime);
 
+            // Check alignment
             var yAligned = Quaternion.Angle(yPivot.rotation, yLookRotation) < rotationThreshold;
             var xAligned = Quaternion.Angle(xPivot.localRotation, xLookRotation) < rotationThreshold;
             return yAligned && xAligned;
+        }
+
+        protected override void OnDrawGizmosTower()
+        {
+             if (_hasValidTarget)
+             {
+                 Gizmos.color = Color.red;
+                 Gizmos.DrawWireSphere(_predictedAimPoint, 0.5f);
+                 Gizmos.DrawLine(firePoint.position, _predictedAimPoint);
+             }
         }
     }
 }

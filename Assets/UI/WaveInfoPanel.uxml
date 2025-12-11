@@ -1,0 +1,14 @@
+<ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Assets/UI/WaveInfoPanel.uss?fileID=7433441132597879392&amp;guid=1e4ed89ffd114fca84e23d9ab4b2cda1&amp;type=3#WaveInfoPanel" />
+    <ui:VisualElement name="WaveInfoContainer" class="wave-info-panel">
+        <ui:Label name="WaveTitleLabel" text="WAVE 1" class="wave-title" />
+        <ui:VisualElement name="CombatStateContainer">
+            <ui:Label name="EnemyCountLabel" text="Enemies: 12 / 20" class="wave-text" />
+            <ui:ProgressBar name="WaveProgressBar" title="Progress" class="wave-progress" />
+        </ui:VisualElement>
+        <ui:VisualElement name="BuildStateContainer" style="display: none;">
+            <ui:Label name="TimerLabel" text="Next wave in: 15s" class="wave-timer" />
+            <ui:Button name="StartWaveButton" text="START NOW" class="start-wave-btn" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

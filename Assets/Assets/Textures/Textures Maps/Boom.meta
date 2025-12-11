@@ -1,5 +1,9 @@
 fileFormatVersion: 2
+<<<<<<<< Updated upstream:Assets/Assets/Textures/Textures Maps/Boom.meta
 guid: f072d375b2df10a4e9f8a641d1abc426
+========
+guid: b64208290cd852848b1f655b0abdd1ff
+>>>>>>>> Stashed changes:Assets/Assets/Textures/Textures Maps/Gate/02.meta
 folderAsset: yes
 DefaultImporter:
   externalObjects: {}

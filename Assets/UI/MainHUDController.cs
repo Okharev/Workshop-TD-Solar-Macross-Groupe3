@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Camera;
 using Economy;
 using Enemy;
 using Placement;
@@ -77,83 +78,7 @@ namespace UI
             _panel.RemoveFromClassList("side-panel--open");
         }
     }
-
-    public class WavePanelView
-    {
-        private readonly WaveManager _manager;
-        private readonly Button _nextWaveButton;
-        private readonly Label _statusLabel;
-        private readonly Label _waveIndexLabel;
-        private readonly Label _waveNameLabel;
-
-        public WavePanelView(VisualElement root, WaveManager manager)
-        {
-            _manager = manager;
-            _statusLabel = root.Q<Label>("wave-status-label");
-            _waveIndexLabel = root.Q<Label>("wave-index-label");
-            _waveNameLabel = root.Q<Label>("wave-name-label");
-            _nextWaveButton = root.Q<Button>("next-wave-btn");
-
-            if (_nextWaveButton != null) _nextWaveButton.clicked += OnNextWaveClicked;
-
-            if (_manager)
-            {
-                _manager.OnWaveStarted += HandleWaveStarted;
-                _manager.OnWaveFinished += HandleWaveFinished;
-                _manager.OnAllWavesCompleted += HandleAllWavesCompleted;
-                UpdateUIState(false);
-            }
-        }
-
-        public void Dispose()
-        {
-            if (_nextWaveButton != null) _nextWaveButton.clicked -= OnNextWaveClicked;
-            if (_manager)
-            {
-                _manager.OnWaveStarted -= HandleWaveStarted;
-                _manager.OnWaveFinished -= HandleWaveFinished;
-                _manager.OnAllWavesCompleted -= HandleAllWavesCompleted;
-            }
-        }
-
-        private void OnNextWaveClicked()
-        {
-            if (_manager && !_manager.IsWaveActive) _manager.StartNextWave();
-        }
-
-        private void HandleWaveStarted(int index, string name)
-        {
-            _waveIndexLabel.text = $"WAVE {index}";
-            _waveNameLabel.text = name;
-            _statusLabel.text = "IN PROGRESS";
-            _statusLabel.style.color = new StyleColor(Color.red);
-            _nextWaveButton?.AddToClassList("hidden");
-        }
-
-        private void HandleWaveFinished()
-        {
-            _statusLabel.text = "COMPLETE";
-            _statusLabel.style.color = new StyleColor(Color.green);
-            _nextWaveButton?.RemoveFromClassList("hidden");
-        }
-
-        private void HandleAllWavesCompleted()
-        {
-            _statusLabel.text = "VICTORY";
-            _nextWaveButton?.AddToClassList("hidden");
-        }
-
-        private void UpdateUIState(bool active)
-        {
-            var idx = _manager.CurrentWaveIndex + 1;
-            if (idx == 0) idx = 1;
-            _waveIndexLabel.text = $"WAVE {idx}";
-            _waveNameLabel.text = "Ready...";
-            if (active) _nextWaveButton?.AddToClassList("hidden");
-            else _nextWaveButton?.RemoveFromClassList("hidden");
-        }
-    }
-
+    
     public class ObjectivesPanelView
     {
         public ObjectivesPanelView(VisualElement root, DestructibleObjective main, DestructibleObjective north,
@@ -269,7 +194,176 @@ namespace UI
             _tooltipContainer.AddToClassList("tooltip-hidden");
         }
     }
+    
+    public class WavePanelView
+    {
+        private readonly WaveManager _manager;
+        
+        // UI Elements
+        private readonly VisualElement _container;
+        private readonly Label _waveTitleLabel;
+        
+        // Combat Elements
+        private readonly VisualElement _combatContainer;
+        private readonly Label _enemyCountLabel;
+        private readonly ProgressBar _waveProgressBar;
 
+        // Build Elements
+        private readonly VisualElement _buildContainer;
+        private readonly Label _timerLabel;
+        private readonly Button _startWaveButton;
+
+        public WavePanelView(VisualElement root, WaveManager manager)
+        {
+            _manager = manager;
+            
+            // 1. Récupération des éléments UI
+            // Note: Assure-toi que les noms correspondent à ton UXML
+            _container = root.Q("WaveInfoContainer"); // Ou le nom de ton instance
+            
+            // Si le UXML est directement instancié ou si on cherche dans le root global :
+            if (_container == null) _container = root; 
+
+            _waveTitleLabel = _container.Q<Label>("WaveTitleLabel");
+            
+            _combatContainer = _container.Q("CombatStateContainer");
+            _enemyCountLabel = _container.Q<Label>("EnemyCountLabel");
+            _waveProgressBar = _container.Q<ProgressBar>("WaveProgressBar");
+
+            _buildContainer = _container.Q("BuildStateContainer");
+            _timerLabel = _container.Q<Label>("TimerLabel");
+            _startWaveButton = _container.Q<Button>("StartWaveButton");
+
+            // 2. Setup du bouton
+            if (_startWaveButton != null)
+            {
+                _startWaveButton.clicked += OnNextWaveClicked;
+            }
+
+            // 3. Abonnements aux événements du WaveManager
+            if (_manager)
+            {
+                _manager.OnWaveStarted += HandleWaveStarted;
+                _manager.OnWaveFinished += HandleWaveFinished;
+                _manager.OnAllWavesCompleted += HandleAllWavesCompleted;
+                
+                // Abonnements aux valeurs réactives (ReactiveInt / ReactiveFloat)
+                _manager.enemiesRemaining.Subscribe(UpdateEnemyCount);
+                _manager.timeToNextWave.Subscribe(UpdateTimer);
+                
+                // Initialisation de l'état
+                UpdateVisualState(_manager.IsWaveActive);
+                RefreshTitle();
+            }
+        }
+
+        public void Dispose()
+        {
+            if (_startWaveButton != null) _startWaveButton.clicked -= OnNextWaveClicked;
+            
+            if (_manager)
+            {
+                _manager.OnWaveStarted -= HandleWaveStarted;
+                _manager.OnWaveFinished -= HandleWaveFinished;
+                _manager.OnAllWavesCompleted -= HandleAllWavesCompleted;
+                
+                // Note : Si tes ReactiveInt ont une méthode Unsubscribe, utilise-la ici.
+                // Sinon, assure-toi que le WaveManager gère le nettoyage ou que l'Action est nettoyée.
+                // _manager.enemiesRemaining.Unsubscribe(UpdateEnemyCount);
+                // _manager.timeToNextWave.Unsubscribe(UpdateTimer);
+            }
+        }
+
+        private void OnNextWaveClicked()
+        {
+            // Lance la vague (première ou suivante)
+            if (_manager && !_manager.IsWaveActive) 
+            {
+                _manager.StartNextWave();
+            }
+        }
+
+        // --- Mises à jour UI ---
+
+        private void UpdateEnemyCount(int remaining)
+        {
+            if (!_manager.IsWaveActive) return;
+
+            int total = _manager.totalEnemiesInWave.Value;
+            // Éviter la division par zéro
+            if (total <= 0) total = 1; 
+
+            if (_enemyCountLabel != null)
+                _enemyCountLabel.text = $"Enemies: {remaining} / {total}";
+
+            if (_waveProgressBar != null)
+            {
+                float progress = 1f - ((float)remaining / total);
+                _waveProgressBar.value = progress * 100f; // Si ProgressBar utilise %
+                _waveProgressBar.title = $"{Mathf.RoundToInt(progress * 100)}%";
+            }
+        }
+
+        private void UpdateTimer(float timeRemaining)
+        {
+            if (_manager.IsWaveActive) return;
+
+            // Formater le temps (ex: 15.4s)
+            if (_timerLabel != null)
+            {
+                _timerLabel.text = $"Next wave in: {timeRemaining:F1}s";
+            }
+        }
+
+        private void UpdateVisualState(bool isCombat)
+        {
+            if (isCombat)
+            {
+                _combatContainer.style.display = DisplayStyle.Flex;
+                _buildContainer.style.display = DisplayStyle.None;
+            }
+            else
+            {
+                _combatContainer.style.display = DisplayStyle.None;
+                _buildContainer.style.display = DisplayStyle.Flex;
+                // Met à jour le texte du bouton selon si c'est le début ou entre les vagues
+                if (_startWaveButton != null)
+                    _startWaveButton.text = _manager.CurrentWaveIndex == -1 ? "START GAME" : "START NEXT WAVE";
+            }
+        }
+        
+        private void RefreshTitle()
+        {
+            if (_waveTitleLabel == null) return;
+            
+            int displayIndex = _manager.CurrentWaveIndex + 1;
+            // Si on n'a pas encore commencé, on affiche Wave 1 par défaut ou "Ready"
+            if (displayIndex == 0) displayIndex = 1; 
+            
+            _waveTitleLabel.text = $"WAVE {displayIndex}";
+        }
+
+        // --- Event Handlers ---
+
+        private void HandleWaveStarted(int index, string name)
+        {
+            RefreshTitle();
+            UpdateVisualState(true); // Passe en mode Combat
+        }
+
+        private void HandleWaveFinished()
+        {
+            UpdateVisualState(false); // Passe en mode Build/Timer
+        }
+
+        private void HandleAllWavesCompleted()
+        {
+            if (_waveTitleLabel != null) _waveTitleLabel.text = "VICTORY!";
+            _combatContainer.style.display = DisplayStyle.None;
+            _buildContainer.style.display = DisplayStyle.None;
+        }
+    }
+    
     [RequireComponent(typeof(UIDocument))]
     public class MainHUDController : MonoBehaviour
     {
@@ -281,16 +375,20 @@ namespace UI
         [SerializeField] private DestructibleObjective _mainBase;
         [SerializeField] private DestructibleObjective _northPylon;
         [SerializeField] private DestructibleObjective _southPylon;
-        
+        [Header("Minimap")]
+        [SerializeField] private RenderTexture _minimapTexture;
         [Header("Currency")]
         [SerializeField] private CurrencyManager _currencyManager;
 
+        [Header("Minimap Interaction")]
+        [SerializeField] private UnityEngine.Camera _minimapCamera; // Référence à la caméra Ortho du ciel
+        [SerializeField] private FreeFlyCamera _playerCamera;
+        
         [Header("Building System")]
-        // Liste configurable dans l'Inspecteur
         [SerializeField]
         private List<BuildingEntity> _availableBuildings;
 
-        private BuildingBarView _buildingBar; // Nouvelle référence
+        private BuildingBarView _buildingBar;
 
         // Les références aux sous-vues
         private InfoPanelView _infoPanel;
@@ -309,9 +407,12 @@ namespace UI
                 _wavePanel = new WavePanelView(nexusRoot, _waveManager);
             
             // 1. Initialiser le Wave Panel
-            var waveRoot = root.Q("WavePanelInstance");
+            var waveRoot = root.Q("WaveInfoContainer") ?? root.Q("WavePanelInstance");
+            
             if (waveRoot != null)
                 _wavePanel = new WavePanelView(waveRoot, _waveManager);
+            else
+                Debug.LogWarning("WavePanel UI not found!");
 
             // 2. Initialiser l'Info Panel
             var infoRoot = root.Q("InfoPanelInstance");
@@ -331,12 +432,54 @@ namespace UI
             if (buildingRoot != null)
             {
                 Debug.Log("sdfsdfsdfsdfs");
-                // On passe la racine, la liste des données, et la fonction à appeler lors du clic
                 _buildingBar = new BuildingBarView(buildingRoot, _availableBuildings, OnBuildingSelected);
             }
             else
             {
                 Debug.LogWarning("BuildingBarInstance introuvable dans le UXML.");
+            }
+            
+            var minimapRender = root.Q<VisualElement>("MinimapRender");
+            if (minimapRender != null && _minimapTexture != null)
+            {
+                minimapRender.style.backgroundImage = Background.FromRenderTexture(_minimapTexture);
+                
+                // Enregistrement du clic (PointerDown est mieux que Click pour la réactivité)
+                minimapRender.RegisterCallback<PointerDownEvent>(evt => OnMinimapClicked(evt, minimapRender));
+            }
+        }
+        
+        private void OnMinimapClicked(PointerDownEvent evt, VisualElement element)
+        {
+            if (_minimapCamera == null || _playerCamera == null) return;
+
+            // 1. Convertir la position de la souris (pixels locaux) en coordonnées normalisées (0 à 1)
+            // L'origine (0,0) dans UI Toolkit est en HAUT à gauche.
+            Vector2 localPos = evt.localPosition;
+            float normalizedX = localPos.x / element.contentRect.width;
+            float normalizedY = localPos.y / element.contentRect.height;
+
+            // 2. Convertir en Viewport Point pour la caméra Minimap
+            // Dans Unity Caméra, (0,0) est en BAS à gauche. Il faut inverser Y.
+            Vector3 viewportPoint = new Vector3(normalizedX, 1f - normalizedY, 0f);
+
+            // 3. Convertir en point dans le monde
+            // ViewportToWorldPoint projette depuis la caméra.
+            // Z correspond à la distance depuis la caméra. Comme elle est en haut (ex: Y=100), 
+            // on veut projeter sur le sol.
+            
+            // Méthode Raycast (plus précise) :
+            Ray ray = _minimapCamera.ViewportPointToRay(viewportPoint);
+            Plane groundPlane = new Plane(Vector3.up, Vector3.zero); // Plan au sol (Y=0)
+
+            if (groundPlane.Raycast(ray, out float enter))
+            {
+                Vector3 targetWorldPos = ray.GetPoint(enter);
+                
+                // 4. Déplacer le joueur
+                _playerCamera.TeleportTo(targetWorldPos);
+                
+                Debug.Log($"Minimap Clicked! Moving to {targetWorldPos}");
             }
         }
 

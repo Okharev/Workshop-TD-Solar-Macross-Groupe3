@@ -124,13 +124,13 @@ Material:
     - _DetailNormalMapScale: 1
     - _DstBlend: 0
     - _DstBlendAlpha: 0
-    - _EmissiveIntensity: 2
+    - _EmissiveIntensity: 0
     - _EnvironmentReflections: 1
     - _GlossMapScale: 0
     - _Glossiness: 0
     - _GlossyReflections: 0
     - _Metallic: 0
-    - _MettalicValue: 0
+    - _MettalicValue: 0.4
     - _NOAO: 1
     - _OcclusionStrength: 1
     - _Parallax: 0.005
@@ -147,7 +147,7 @@ Material:
     - _UseAO: 1
     - _UseBaseColor: 1
     - _UseEmissive: 1
-    - _UseMettalic: 1
+    - _UseMettalic: 0
     - _UseSmoothness: 0
     - _Use_ORM: 0
     - _WorkflowMode: 1

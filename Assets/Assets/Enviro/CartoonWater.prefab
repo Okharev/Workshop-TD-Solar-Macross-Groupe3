@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 8567485943204150962}
   - component: {fileID: 2755698952046622717}
   - component: {fileID: 6954295291644988532}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: CartoonWater
   m_TagString: Untagged
   m_Icon: {fileID: 0}

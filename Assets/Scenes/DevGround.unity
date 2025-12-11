@@ -412,7 +412,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4092096c78ca420a9670586e135ec2ec, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::JetSwarmSpawner
-  jetPrefab: {fileID: 5069400229212143550, guid: 9df7380db50448b44b860ef01dcf3a9e, type: 3}
+  jetPrefab: {fileID: 1331084000967806856, guid: fa0219f2abd081047b478ecaf841ce54, type: 3}
   jetCount: 16
   waypointCount: 18
   spawnAreaSize: {x: 200, y: 50, z: 200}

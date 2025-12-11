@@ -1,0 +1,53 @@
+﻿.wave-info-panel {
+    position: absolute;
+    top: 10px;
+    align-self: center; /* Centre en haut */
+    background-color: rgba(0, 0, 0, 0.6);
+    padding: 10px;
+    border-radius: 8px;
+    border-width: 2px;
+    border-color: #444;
+    min-width: 250px;
+    align-items: center;
+}
+
+.wave-title {
+    font-size: 24px;
+    -unity-font-style: bold;
+    color: #FFF;
+    margin-bottom: 5px;
+}
+
+.wave-text, .wave-timer {
+    font-size: 16px;
+    color: #DDD;
+    margin-bottom: 5px;
+}
+
+.wave-timer {
+    color: #FFD700; /* Or pour le timer */
+}
+
+.start-wave-btn {
+    background-color: #2ecc71;
+    color: white;
+    font-size: 16px;
+    border-radius: 5px;
+    padding: 5px 15px;
+    margin-top: 5px;
+    border-width: 0;
+}
+
+.start-wave-btn:hover {
+    background-color: #27ae60;
+}
+
+.wave-progress {
+    width: 100%;
+    height: 10px;
+    margin-top: 5px;
+}
+/* Pour masquer/afficher facilement */
+.hidden {
+    display: none;
+}
