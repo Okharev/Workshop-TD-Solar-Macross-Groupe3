@@ -126,7 +126,7 @@ Material:
     - _SpecularHighlights: 1
     - _SrcBlend: 1
     - _SrcBlendAlpha: 1
-    - _SunTint: 0.146
+    - _SunTint: 0
     - _Surface: 0
     - _TintStrength: 1
     - _Turbulence: 0.1

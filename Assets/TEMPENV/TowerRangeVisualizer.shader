@@ -1,23 +1,26 @@
-﻿Shader "Custom/TowerRangeVisualizer "
+﻿Shader "Custom/TowerRangeVisualizer"
 {
     Properties
     {
-        _MainColor ("Couleur Principale", Color) = (0, 0.5, 1, 0.5)
-        _RimColor ("Couleur Fresnel (Bords)", Color) = (0, 1, 1, 1)
-        _RimPower ("Puissance Fresnel", Range(0.5, 8.0)) = 3.0
+        _MainColor ("Main Color", Color) = (0, 0.5, 1, 0.2)
+        _RimColor ("Fresnel Color (Edges)", Color) = (0, 1, 1, 1)
+        _RimPower ("Fresnel Power", Range(0.5, 8.0)) = 3.0
         
-        _MainTex ("Texture (Hex/Noise)", 2D) = "white" {}
-        _ScrollSpeed ("Vitesse de défilement", Vector) = (0.1, 0.1, 0, 0)
-        
-        _IntersectionThreshold ("Seuil Intersection (Profondeur)", Float) = 1.0
-        _IntersectionColor ("Couleur Intersection", Color) = (1, 1, 1, 1)
+        _MainTex ("Pattern Texture (Hex/Noise)", 2D) = "white" {}
+        _ScrollSpeed ("Scroll Speed (X, Y)", Vector) = (0.1, 0.1, 0, 0)
+    
+        _IntersectionThreshold ("Intersection Depth Threshold", Float) = 1.0
+        _IntersectionColor ("Intersection Color", Color) = (1, 1, 1, 1)
     }
     SubShader
     {
-        Tags { "Queue"="Transparent" "RenderType"="Transparent" }
+        // "Queue"="Transparent" assure le rendu après les objets opaques
+        Tags { "Queue"="Transparent" "RenderType"="Transparent" "IgnoreProjector"="True" }
         LOD 100
 
+        // Pas d'écriture dans le Z-Buffer (pour voir à travers)
         ZWrite Off
+        // Mélange Alpha standard (Alpha Blending)
         Blend SrcAlpha OneMinusSrcAlpha
 
         Pass
@@ -50,7 +53,9 @@
             float _RimPower;
             float4 _ScrollSpeed;
             
+            // Variable globale d'Unity pour la profondeur
             sampler2D _CameraDepthTexture;
+            
             float _IntersectionThreshold;
             float4 _IntersectionColor;
 
@@ -60,39 +65,41 @@
                 o.vertex = UnityObjectToClipPos(v.vertex);
                 o.screenPos = ComputeScreenPos(o.vertex);
                 
-                // Fresnel
+                // Normales et Vue pour le Fresnel
                 o.normal = UnityObjectToWorldNormal(v.normal);
                 o.viewDir = normalize(WorldSpaceViewDir(v.vertex));
                 
-                // Texture scroll
+                // Animation de texture (Scroll)
                 o.uv = TRANSFORM_TEX(v.uv, _MainTex) + _Time.y * _ScrollSpeed.xy;
-                
                 return o;
             }
 
             fixed4 frag (v2f i) : SV_Target
             {
-                // 1. Base texture
+                // 1. Couleur de base + Texture
                 fixed4 col = tex2D(_MainTex, i.uv) * _MainColor;
-
-                // 2. Effet Fresnel Shining borders
+                
+                // 2. Effet Fresnel (Bords brillants)
                 float NdotV = 1.0 - saturate(dot(i.normal, i.viewDir));
                 float rim = pow(NdotV, _RimPower);
+                
                 col.rgb += _RimColor.rgb * rim;
-                col.a = max(col.a, rim * _RimColor.a);
+                col.a = max(col.a, rim * _RimColor.a); // On garde l'alpha le plus fort
 
-                // 3. Depth intersection
-                float sceneZ = LinearEyeDepth(tex2Dproj(_CameraDepthTexture, UNITY_PROJ_COORD(i.screenPos)).r);
-                float partZ = i.screenPos.w; // Profondeur de l'objet lui-même
+                // 3. Intersection avec la profondeur (Depth Intersection)
+                // Récupération de la profondeur de la scène derrière le pixel actuel
+                float sceneZ = LinearEyeDepth(SAMPLE_DEPTH_TEXTURE_PROJ(_CameraDepthTexture, UNITY_PROJ_COORD(i.screenPos)));
+                // Profondeur du pixel de notre sphère
+                float partZ = i.screenPos.w; 
                 
                 float diff = sceneZ - partZ;
-                
-                // if close to ground we highlight
+
+                // Si la différence est petite (on est proche d'un objet), on illumine
                 if(diff > 0 && diff < _IntersectionThreshold)
                 {
                     float intersectStrength = 1.0 - (diff / _IntersectionThreshold);
                     col.rgb += _IntersectionColor.rgb * intersectStrength;
-                    col.a += intersectStrength;
+                    col.a += intersectStrength; // Rend l'intersection plus opaque
                 }
 
                 return col;

@@ -1,68 +1,78 @@
 ﻿using UnityEngine;
 using Towers;
 
-    [RequireComponent(typeof(BaseTower))]
-    public class TowerRangeVisualizer : MonoBehaviour
+[RequireComponent(typeof(BaseTower))]
+public class TowerRangeVisualizer : MonoBehaviour
+{
+    [Header("Settings")]
+    [Tooltip("Le prefab contenant la sphère avec le shader")]
+    public GameObject rangeIndicatorPrefab;
+    
+    [Tooltip("Si vrai, l'indicateur est visible uniquement quand la tour est sélectionnée")]
+    public bool showOnlyOnSelect = true;
+
+    private BaseTower _tower;
+    private GameObject _visualInstance;
+    private bool _isSelected;
+
+    void Awake()
     {
-        [Header("Configuration")]
-        [SerializeField] private GameObject rangeSpherePrefab;
-        [SerializeField] private float yOffset = 0.0f;
-        [SerializeField] private bool showOnlyOnSelection = true;
+        _tower = GetComponent<BaseTower>();
+    }
 
-        private BaseTower _tower;
-        private GameObject _currentRangeIndicator;
-        private Transform _indicatorTrans;
-
-        private void Awake()
+    void Start()
+    {
+        // 1. Initialisation de l'instance visuelle (cachée par défaut)
+        if (rangeIndicatorPrefab != null)
         {
-            _tower = GetComponent<BaseTower>();
-            
-            _tower.range.Observable.Subscribe(e => UpdateRangeScale()).AddTo(this);
+            _visualInstance = Instantiate(rangeIndicatorPrefab, transform.position, Quaternion.identity, transform);
+            _visualInstance.SetActive(false);
         }
 
-        private void Start()
+        // 2. Abonnement réactif à la stat "Range"
+        // CORRECTIF DU BUG : On s'assure que _visualInstance existe avant de modifier son scale
+        if (_tower.range != null)
         {
-            if (rangeSpherePrefab)
-            {
-                _currentRangeIndicator = Instantiate(rangeSpherePrefab, transform);
-                _indicatorTrans = _currentRangeIndicator.transform;
-                _indicatorTrans.localPosition = new Vector3(0, yOffset, 0);
-                
-                UpdateRangeScale(); 
-
-                if (showOnlyOnSelection) 
-                    _currentRangeIndicator.SetActive(false);
-            }
-        }
-
-        private void UpdateRangeScale()
-        {
-            float radius = 5f;
-
-            if (_tower.range is { Value: > 0 })
-            {
-                radius = _tower.range.Value;
-            }
-            else if (_tower.baseRange > 0)
-            {
-                radius = _tower.baseRange;
-            }
-
-            float scale = radius * 2.0f;
-            
-            // Application
-            if (!Mathf.Approximately(_indicatorTrans.localScale.x, scale))
-            {
-                _indicatorTrans.localScale = new Vector3(scale, scale, scale);
-            }
-        }
-
-        public void ToggleRangeVisibility(bool isVisible)
-        {
-            if (_currentRangeIndicator)
-            {
-                _currentRangeIndicator.SetActive(isVisible);
-                if (isVisible) UpdateRangeScale();
-            }
+            _tower.range.Observable.Subscribe(newRange => UpdateRangeScale(newRange)).AddTo(this);
         }
     }
+
+    /// <summary>
+    /// Appelé automatiquement quand la stat change via UniRx
+    /// </summary>
+    private void UpdateRangeScale(float rangeValue)
+    {
+        // PROTECTION ANTI-CRASH (NullReferenceException)
+        if (_visualInstance == null) return;
+
+        // La sphère Unity fait 1 unit de diamètre. Scale = Rayon * 2.
+        float diameter = rangeValue * 2.0f;
+        _visualInstance.transform.localScale = new Vector3(diameter, diameter, diameter);
+    }
+
+    // Ces méthodes doivent être appelées par ton système de sélection
+    // Ou tu peux les appeler depuis BaseTower.OnSelect / OnDeselect
+    public void OnSelect()
+    {
+        _isSelected = true;
+        UpdateVisibility();
+    }
+
+    public void OnDeselect()
+    {
+        _isSelected = false;
+        UpdateVisibility();
+    }
+
+    private void UpdateVisibility()
+    {
+        if (_visualInstance == null) return;
+
+        // Affiche si sélectionné OU si on force l'affichage
+        bool shouldShow = _isSelected || !showOnlyOnSelect;
+        _visualInstance.SetActive(shouldShow);
+        
+        // Force une mise à jour du scale au moment de l'affichage pour être sûr
+        if (shouldShow) UpdateRangeScale(_tower.range.Value);
+    }
+}
