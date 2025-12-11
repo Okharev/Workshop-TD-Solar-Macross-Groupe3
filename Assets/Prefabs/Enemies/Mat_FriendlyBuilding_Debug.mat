@@ -21,16 +21,21 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: Mat_FriendlyBuilding_Debug
-  m_Shader: {fileID: -6465566751694194690, guid: eae56f154faa1bd488b5c8dbf213876d, type: 3}
-  m_Parent: {fileID: -876546973899608171, guid: eae56f154faa1bd488b5c8dbf213876d, type: 3}
-  m_ModifiedSerializedProperties: 0
-  m_ValidKeywords: []
+  m_Shader: {fileID: 211, guid: 0000000000000000f000000000000000, type: 0}
+  m_Parent: {fileID: 2100000, guid: eaec2088553c489458b0ef119f00aaa4, type: 2}
+  m_ModifiedSerializedProperties: 2
+  m_ValidKeywords:
+  - EFFECT_BUMP
+  - _ALPHABLEND_ON
+  - _EMISSION
+  - _NORMALMAP
   m_InvalidKeywords: []
-  m_LightmapFlags: 4
+  m_LightmapFlags: 0
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
   m_CustomRenderQueue: -1
-  stringTagMap: {}
+  stringTagMap:
+    RenderType: Transparent
   disabledShaderPasses:
   - MOTIONVECTORS
   m_LockedProperties: 
@@ -41,6 +46,7 @@ Material:
     m_Floats:
     - _QueueControl: 0
     m_Colors:
+    - _CameraFadeParams: {r: 0, g: Infinity, b: 0, a: 0}
     - _Color: {r: 0.1566037, g: 0.805227, b: 1, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

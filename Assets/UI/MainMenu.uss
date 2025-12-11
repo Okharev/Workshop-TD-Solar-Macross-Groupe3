@@ -1,0 +1,24 @@
+:root {
+}
+
+.button-menu {
+    background-color: rgba(53, 215, 255, 0);
+    border-top-left-radius: 52px;
+    border-top-right-radius: 52px;
+    border-bottom-right-radius: 52px;
+    border-bottom-left-radius: 52px;
+    font-size: 58px;
+    -unity-font-definition: url("project://database/Assets/UI/UIAssets/space%20Xrebron.ttf?fileID=12800000&guid=07da749f81306ef4ab98e07a2320e5c6&type=3#space Xrebron");
+    -unity-text-align: upper-left;
+    padding-top: 15px;
+    padding-bottom: 15px;
+    padding-left: 30px;
+    padding-right: 30px;
+    margin-bottom: 30px;
+    color: rgb(255, 255, 255);
+    -unity-font-style: bold;
+    border-left-color: rgba(0, 0, 0, 0);
+    border-right-color: rgba(0, 0, 0, 0);
+    border-top-color: rgba(0, 0, 0, 0);
+    border-bottom-color: rgba(0, 0, 0, 0);
+}
