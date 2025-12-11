@@ -156,7 +156,7 @@
                 // Green to Yellow bottm up
                 float4 baseCol = lerp(_BaseColor, _TipColor, smoothstep(0.3, 1.0, input.uv.y));
                 
-                // Application de la Vertex Color (Peinture manuelle) et Variation
+                // Application of vertex color and variants
                 baseCol *= input.color * brightnessVar;
 
                 // --- 3. Shadow and light ---
@@ -166,7 +166,7 @@
                 
                 // --- 4. THE "FLAIR" ---
                 float sunTouch = input.windGust * _SunTint * shadow * input.uv.y;
-                float3 sunColor = float3(1.0, 0.9, 0.4); // Jaune doré éclatant
+                float3 sunColor = float3(1.0, 0.9, 0.4);
                 
                 // Mix
                 float4 finalColor = baseCol;

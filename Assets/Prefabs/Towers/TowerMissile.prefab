@@ -138,6 +138,7 @@ GameObject:
   - component: {fileID: 8987942396502628012}
   - component: {fileID: 8506183719910781864}
   - component: {fileID: 2416886466139490654}
+  - component: {fileID: 5658357093797522187}
   m_Layer: 8
   m_Name: TowerMissile
   m_TagString: Tower
@@ -256,6 +257,7 @@ MonoBehaviour:
   currentTarget: {fileID: 0}
   fireCountdown: 0
   isBusy: 0
+  rangeIndicatorPrefab: {fileID: 0}
   rotationMode: 1
   referenceTurnAngle: 120
   missilePrefab: {fileID: 7303159094743476213, guid: ed903675cecb39244a27cbbdca1ecafb, type: 3}
@@ -267,8 +269,25 @@ MonoBehaviour:
   missileCount: 6
   dispatchInterval: 0.15
   maxMultiLockTargets: 4
-  launchPitchAngle: -45
-  launchForceDistance: 4
+  launchForwardBias: 2
+  arcHeight: 8
+  curvePathDuration: 0.5
+  arcResolution: 8
+--- !u!114 &5658357093797522187
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5607425079627833002}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fcf7e4e357cb424f8fc660dd37a3f6b7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Visuals.TowerRangeVisualizer
+  rangeSpherePrefab: {fileID: 1399860383304854833, guid: ed475cce1d14fae44b911896847eabfa, type: 3}
+  yOffset: 0
+  showOnlyOnSelection: 1
 --- !u!1 &6035233340053137248
 GameObject:
   m_ObjectHideFlags: 0

@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 8506183719910781864}
   - component: {fileID: -6290923537206660371}
   - component: {fileID: 3092842865332209763}
+  - component: {fileID: 6425537603779408165}
   m_Layer: 8
   m_Name: TowerSlow
   m_TagString: Tower
@@ -131,6 +132,7 @@ MonoBehaviour:
   currentTarget: {fileID: 0}
   fireCountdown: 0
   isBusy: 0
+  rangeIndicatorPrefab: {fileID: 0}
   rotationMode: 1
   referenceTurnAngle: 120
   slowPercent: 0.842
@@ -155,9 +157,23 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: '::'
   toRotate: {fileID: 8099896240154089842}
-  baseSpeed: 20
-  gustStrength: 150
-  gustFrequency: 0.5
+  minSpeed: 20
+  maxSpeed: 300
+--- !u!114 &6425537603779408165
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5607425079627833002}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fcf7e4e357cb424f8fc660dd37a3f6b7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Visuals.TowerRangeVisualizer
+  rangeSpherePrefab: {fileID: 1399860383304854833, guid: ed475cce1d14fae44b911896847eabfa, type: 3}
+  yOffset: 0
+  showOnlyOnSelection: 1
 --- !u!1001 &5182107095617560975
 PrefabInstance:
   m_ObjectHideFlags: 0

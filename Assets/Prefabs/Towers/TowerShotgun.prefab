@@ -74,6 +74,7 @@ GameObject:
   - component: {fileID: 2770589792623923187}
   - component: {fileID: 762822935104049358}
   - component: {fileID: 2372113854924329592}
+  - component: {fileID: -8059006769788668046}
   m_Layer: 8
   m_Name: TowerShotgun
   m_TagString: Untagged
@@ -193,6 +194,7 @@ MonoBehaviour:
   currentTarget: {fileID: 0}
   fireCountdown: 0
   isBusy: 0
+  rangeIndicatorPrefab: {fileID: 0}
   rotationMode: 1
   referenceTurnAngle: 120
   pelletCount: 6
@@ -201,6 +203,21 @@ MonoBehaviour:
   horizontalSpreadAngle: 30
   pelletsThickness: 0.1
   verticalSpreadFactor: 0.2
+--- !u!114 &-8059006769788668046
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7615454975634943867}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fcf7e4e357cb424f8fc660dd37a3f6b7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Visuals.TowerRangeVisualizer
+  rangeSpherePrefab: {fileID: 1399860383304854833, guid: ed475cce1d14fae44b911896847eabfa, type: 3}
+  yOffset: 0
+  showOnlyOnSelection: 1
 --- !u!1001 &2098550435634007231
 PrefabInstance:
   m_ObjectHideFlags: 0

@@ -43,6 +43,7 @@ GameObject:
   - component: {fileID: 8987942396502628012}
   - component: {fileID: 8506183719910781864}
   - component: {fileID: 1515377391665533419}
+  - component: {fileID: 8301971408045579564}
   m_Layer: 8
   m_Name: TowerSniper
   m_TagString: Tower
@@ -161,10 +162,26 @@ MonoBehaviour:
   currentTarget: {fileID: 0}
   fireCountdown: 0
   isBusy: 0
+  rangeIndicatorPrefab: {fileID: 0}
   rotationMode: 1
   referenceTurnAngle: 180
   minRange: 10
   projectileThickness: 0.05
+--- !u!114 &8301971408045579564
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5607425079627833002}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fcf7e4e357cb424f8fc660dd37a3f6b7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Visuals.TowerRangeVisualizer
+  rangeSpherePrefab: {fileID: 1399860383304854833, guid: ed475cce1d14fae44b911896847eabfa, type: 3}
+  yOffset: 0
+  showOnlyOnSelection: 1
 --- !u!1001 &510992500308580130
 PrefabInstance:
   m_ObjectHideFlags: 0
