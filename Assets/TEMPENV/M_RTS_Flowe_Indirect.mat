@@ -121,9 +121,9 @@ Material:
     - _GlossMapScale: 0
     - _Glossiness: 0
     - _GlossyReflections: 0
-    - _MaxScale: 28
+    - _MaxScale: 34
     - _Metallic: 0
-    - _MinScale: 22
+    - _MinScale: 28
     - _OcclusionStrength: 1
     - _Parallax: 0.005
     - _PatchScale: 0.002

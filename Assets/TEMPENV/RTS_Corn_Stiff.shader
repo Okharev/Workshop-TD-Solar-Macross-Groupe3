@@ -1,4 +1,4 @@
-﻿Shader "Custom/RTS_Corn_Stiff"
+﻿Shader "Custom/Corn_Indirect"
 {
     Properties
     {
@@ -35,8 +35,7 @@
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
-
-            // UPDATE: Changed to float4 for baked seed
+            
             StructuredBuffer<float4> _VisibleInstances;
             
             TEXTURE2D(_WindMap); SAMPLER(sampler_WindMap);
