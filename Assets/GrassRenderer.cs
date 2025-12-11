@@ -9,6 +9,10 @@ public sealed class GrassRenderer : MonoBehaviour
     public Material grassMaterial;
     public ComputeShader cullingComputeShader;
     
+    [Header("Terrain Blending")]
+    // Assigne ici la texture "Vue de haut" de ton terrain (Albedo / Splatmap)
+    public Texture2D terrainColorMap; 
+
     [Header("Spawning")]
     public int terrainLayerIndex = 0;
     [Range(0, 1)] public float minDensity = 0.5f;
@@ -18,12 +22,9 @@ public sealed class GrassRenderer : MonoBehaviour
     public float drawDistance = 200f;
     public Terrain terrain;
 
-    // Internal Buffers
     private ComputeBuffer allInstancesBuffer;
     private ComputeBuffer visibleInstancesBuffer;
     private ComputeBuffer argsBuffer;
-    
-    // Arguments for DrawMeshInstancedIndirect
     private uint[] args = new uint[5] { 0, 0, 0, 0, 0 };
 
     void Start()
@@ -34,18 +35,27 @@ public sealed class GrassRenderer : MonoBehaviour
 
     void InitBuffers()
     {
-        if (terrain == null) return;
+        if (!terrain) return;
         
         TerrainData data = terrain.terrainData;
         Vector3 terrainPos = terrain.transform.position;
+
+        if (grassMaterial)
+        {
+            // Send size and pos to buffer
+            grassMaterial.SetVector("_TerrainSize", data.size);
+            grassMaterial.SetVector("_TerrainPos", terrainPos);
+            
+            // send texture info
+            if (terrainColorMap)
+                grassMaterial.SetTexture("_TerrainMap", terrainColorMap);
+        }
 
         int alphamapWidth = data.alphamapWidth;
         int alphamapHeight = data.alphamapHeight;
         float[,,] splatmapData = data.GetAlphamaps(0, 0, alphamapWidth, alphamapHeight);
 
-        // OPTIMIZATION: Changed to Vector4 to store (Pos.x, Pos.y, Pos.z, RandomSeed) [cite: 38]
         List<Vector4> validPositions = new List<Vector4>();
-
         int attempts = instanceCount * 2; 
 
         for (int i = 0; i < attempts; i++)
@@ -69,22 +79,15 @@ public sealed class GrassRenderer : MonoBehaviour
 
                 float heightY = terrain.SampleHeight(new Vector3(worldX, 0, worldZ));
 
-                // OPTIMIZATION: We bake a random value (0 to 1) into the W component.
-                // This saves the Vertex Shader from calculating expensive Hash/Sin/Dot functions.
                 Vector4 finalPos = new Vector4(worldX, terrainPos.y + heightY, worldZ, Random.value);
-
                 validPositions.Add(finalPos);
             }
-
             if (validPositions.Count >= instanceCount) break;
         }
 
         int finalCount = validPositions.Count;
-        if (finalCount == 0) { Debug.LogWarning($"Aucune instance générée pour {gameObject.name}."); return; }
-
-        // --- CREATE BUFFERS ---
+        if (finalCount == 0) { Debug.LogWarning($"Aucune instance générée."); return; }
         
-        // OPTIMIZATION: Stride is now sizeof(float) * 4 (16 bytes) instead of 3 [cite: 38]
         allInstancesBuffer = new ComputeBuffer(finalCount, sizeof(float) * 4);
         allInstancesBuffer.SetData(validPositions.ToArray());
 
