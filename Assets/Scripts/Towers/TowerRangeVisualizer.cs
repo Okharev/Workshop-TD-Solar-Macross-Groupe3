@@ -1,8 +1,6 @@
 ﻿using UnityEngine;
 using Towers;
 
-namespace Visuals
-{
     [RequireComponent(typeof(BaseTower))]
     public class TowerRangeVisualizer : MonoBehaviour
     {
@@ -24,7 +22,7 @@ namespace Visuals
 
         private void Start()
         {
-            if (rangeSpherePrefab != null)
+            if (rangeSpherePrefab)
             {
                 _currentRangeIndicator = Instantiate(rangeSpherePrefab, transform);
                 _indicatorTrans = _currentRangeIndicator.transform;
@@ -41,7 +39,7 @@ namespace Visuals
         {
             float radius = 5f;
 
-            if (_tower.range != null && _tower.range.Value > 0)
+            if (_tower.range is { Value: > 0 })
             {
                 radius = _tower.range.Value;
             }
@@ -53,7 +51,7 @@ namespace Visuals
             float scale = radius * 2.0f;
             
             // Application
-            if (_indicatorTrans.localScale.x != scale)
+            if (!Mathf.Approximately(_indicatorTrans.localScale.x, scale))
             {
                 _indicatorTrans.localScale = new Vector3(scale, scale, scale);
             }
@@ -68,4 +66,3 @@ namespace Visuals
             }
         }
     }
-}
