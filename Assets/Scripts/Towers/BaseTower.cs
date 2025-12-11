@@ -53,6 +53,12 @@ namespace Towers
         [SerializeField] protected float fireCountdown;
         [SerializeField] protected bool isBusy;
 
+        [Header("Visuals")]
+        [Tooltip("Prefab contenant une sphère avec le Shader de portée")]
+        [SerializeField] private GameObject rangeIndicatorPrefab;
+        
+        private GameObject _activeRangeIndicator;
+        
         [Header("Rotation Logic")] [SerializeField]
         protected RotationMode rotationMode = RotationMode.ScaledWithStats;
 
@@ -148,6 +154,65 @@ namespace Towers
             }
         }
 
+        public override void OnSelect()
+        {
+            base.OnSelect(); // Appelle le code de BuildingEntity (sons, shader de sélection)
+
+            ShowRangeIndicator();
+        }
+
+        public override void OnDeselect()
+        {
+            base.OnDeselect();
+
+            HideRangeIndicator();
+        }
+        
+        private void ShowRangeIndicator()
+        {
+            if (rangeIndicatorPrefab == null) return;
+
+            // Si l'indicateur n'existe pas encore, on le crée
+            if (_activeRangeIndicator == null)
+            {
+                _activeRangeIndicator = Instantiate(rangeIndicatorPrefab, transform.position, Quaternion.identity, transform);
+            }
+
+            _activeRangeIndicator.SetActive(true);
+            UpdateRangeVisualScale();
+        }
+
+        private void HideRangeIndicator()
+        {
+            if (_activeRangeIndicator != null)
+            {
+                _activeRangeIndicator.SetActive(false);
+            }
+        }
+
+        /// <summary>
+        /// Met à jour la taille de la sphère visuelle en fonction de la portée actuelle.
+        /// </summary>
+        public void UpdateRangeVisualScale()
+        {
+            if (_activeRangeIndicator == null) return;
+
+            // La portée est un rayon (radius).
+            // La sphère primitive d'Unity a un diamètre de 1 unité par défaut.
+            // Donc Scale = Radius * 2.
+            float diameter = range.Value * 2.0f;
+            _activeRangeIndicator.transform.localScale = new Vector3(diameter, diameter, diameter);
+        }
+
+        // Si tes stats changent pendant le jeu (ex: upgrade), appelle cette méthode
+        protected void OnStatsChanged()
+        {
+            // Logique pour recalculer les stats...
+            if(_activeRangeIndicator && _activeRangeIndicator.activeSelf) 
+            {
+                UpdateRangeVisualScale();
+            }
+        }
 
         protected virtual bool AimAtTarget(Vector3 aimPoint)
         {
