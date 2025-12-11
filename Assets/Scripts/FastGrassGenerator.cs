@@ -57,7 +57,10 @@ public class FastGrassGenerator : EditorWindow
         mesh.uv = uvs;
         mesh.triangles = triangles;
         
-        mesh.RecalculateNormals();
+
+        mesh.normals = null; 
+        mesh.tangents = null;
+        
         mesh.RecalculateBounds();
 
         string path = "Assets/RTS_Opaque_Grass.asset";
