@@ -339,9 +339,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fcf7e4e357cb424f8fc660dd37a3f6b7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Towers.TowerRangeVisualizer
-  rangeSpherePrefab: {fileID: 1399860383304854833, guid: ed475cce1d14fae44b911896847eabfa, type: 3}
-  yOffset: 0
-  showOnlyOnSelection: 1
+  rangeIndicatorPrefab: {fileID: 1399860383304854833, guid: ed475cce1d14fae44b911896847eabfa, type: 3}
+  showOnlyOnSelect: 1
 --- !u!1 &5674994326645783689
 GameObject:
   m_ObjectHideFlags: 0

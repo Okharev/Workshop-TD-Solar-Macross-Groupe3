@@ -7,6 +7,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Splines;
+using Buildings; // Accès à RoadBlocker
 
 namespace Pathing
 {
@@ -21,14 +22,13 @@ namespace Pathing
         public bool useSplineTwist = true;
 
         [Header("Navigation Logic")] public int roadEdgeAreaID = 3; // High Cost
-
         public int roadCenterAreaID = 4; // Low Cost
 
-        [Tooltip("Prefab with a NavMeshObstacle(Carve=True).")]
+        [Tooltip("Le Prefab DOIT contenir le script 'RoadBlocker' à la racine.")]
         public GameObject navigationBlockerPrefab;
 
         [Tooltip("Lifts the blocker up. Useful if your prefab pivot is in the center.")]
-        public float blockerHeightOffset; // <--- NEW: Fixes "half in ground"
+        public float blockerHeightOffset; 
 
         [Range(0.1f, 0.9f)] public float centerLaneWidthPercent = 0.5f;
 
@@ -60,21 +60,26 @@ namespace Pathing
 
         [Header("Per-Spline Configuration")] public List<RoadProfile> roadProfiles = new();
 
+        // Internal Data
         private readonly Dictionary<int, SplineConnectionIds> _connectionMap = new();
-
-        // Registry to look up roads by index at runtime
-        private readonly Dictionary<int, RoadSegmentController> _roadRegistry = new();
         private readonly Dictionary<int, (SeamData StartSeam, SeamData EndSeam)> _seamPositionMap = new();
+        
+        // Registry unique : On passe par le Controller pour tout gérer
+        private readonly Dictionary<int, RoadSegmentController> _roadRegistry = new();
 
         private void Awake()
         {
-            // CRITICAL FIX: Rebuild registry at runtime startup
-            // because Dictionaries are not saved in the scene.
+            // Rebuild registry at runtime startup if objects exist
             _roadRegistry.Clear();
+            
             var controllers = GetComponentsInChildren<RoadSegmentController>();
             foreach (var controller in controllers)
+            {
                 if (!_roadRegistry.ContainsKey(controller.SplineIndex))
+                {
                     _roadRegistry.Add(controller.SplineIndex, controller);
+                }
+            }
         }
 
 #if UNITY_EDITOR
@@ -141,12 +146,16 @@ namespace Pathing
 
         public void SetRoadBlocked(int splineIndex, bool isBlocked)
         {
+            // On cherche le contrôleur de ce segment
             if (_roadRegistry.TryGetValue(splineIndex, out var controller))
-                // We call a specific Internal method to avoid infinite loops
-                // if the controller tries to call back to us.
+            {
+                // On utilise SetBlockedInternal pour éviter que le controller ne nous rappelle en boucle
                 controller.SetBlockedInternal(isBlocked);
+            }
             else
-                Debug.LogWarning($"[RoadNetworkGenerator] Cannot find road for Spline Index {splineIndex}.");
+            {
+                Debug.LogWarning($"[RoadNetworkGenerator] Cannot find RoadController for Spline Index {splineIndex}.");
+            }
         }
 
         // --------------------------------------------------------------------------------
@@ -196,9 +205,9 @@ namespace Pathing
                 var roadGO = CreateMeshObject($"Road_{splineIndex}", combinedRoad, roadEdgeAreaID);
                 roadGO.transform.SetParent(transform, false);
 
-                // --- NEW: Setup Navigation Blocker with Profile Settings ---
-                GameObject blockerInstance = null;
-                var initialBlockedState = profile.defaultBlocked; // Read from profile
+                // --- INSTANTIATE BLOCKER ---
+                RoadBlocker blockerScript = null;
+                var initialBlockedState = profile.defaultBlocked;
 
                 if (navigationBlockerPrefab != null)
                 {
@@ -206,27 +215,33 @@ namespace Pathing
                     spline.Evaluate(midT, out var rawP, out var rawTan, out var rawUp);
 
                     var snappedPos = SnapToGround(rawP);
-
-                    // --- FIX: Apply Height Offset ---
                     snappedPos += Vector3.up * blockerHeightOffset;
 
                     Vector3 forward = math.normalizesafe(rawTan);
                     Vector3 up = useSplineTwist ? math.normalizesafe(rawUp) : Vector3.up;
                     if (forward == Vector3.zero) forward = Vector3.forward;
 
-                    blockerInstance = Instantiate(navigationBlockerPrefab, roadGO.transform);
+                    var blockerInstance = Instantiate(navigationBlockerPrefab, roadGO.transform);
                     blockerInstance.name = "Nav_Blocker";
                     blockerInstance.transform.localPosition = snappedPos;
                     blockerInstance.transform.rotation = Quaternion.LookRotation(forward, up);
+                    
+                    // Toujours garder l'objet actif pour que le script puisse fonctionner
+                    blockerInstance.SetActive(true);
 
-                    // Set initial state based on profile
-                    blockerInstance.SetActive(initialBlockedState);
+                    // Récupération du script RoadBlocker
+                    blockerScript = blockerInstance.GetComponent<RoadBlocker>();
+                    
+                    if (blockerScript == null)
+                    {
+                        Debug.LogError($"Le prefab assigné à 'Navigation Blocker Prefab' n'a pas le composant 'RoadBlocker' ! (Spline: {splineIndex})");
+                    }
                 }
 
-                // Add Controller and Register
+                // --- SETUP CONTROLLER ---
                 var controller = roadGO.AddComponent<RoadSegmentController>();
-                // --- FIX: Pass 'this' (RoadNetworkGenerator) to the controller ---
-                controller.Initialize(this, splineIndex, blockerInstance, initialBlockedState);
+                controller.Initialize(this, splineIndex, blockerScript, initialBlockedState);
+                
                 _roadRegistry[splineIndex] = controller;
 
 #if UNITY_EDITOR
