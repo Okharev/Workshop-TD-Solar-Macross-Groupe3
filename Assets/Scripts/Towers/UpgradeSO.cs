@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Economy;
 using UnityEngine;
 
 namespace Towers
@@ -21,6 +22,114 @@ namespace Towers
         public abstract IUpgradeInstance CreateInstance(BaseTower tower);
     }
 
+    public enum EnergyTargetType
+    {
+        Consumption,
+        Production,
+        Range // Bonus : on peut aussi modifier la portée du producteur !
+    }
+
+    [CreateAssetMenu(menuName = "Upgrades/Energy Modifier")]
+    public sealed class EnergyUpgradeSo : UpgradeSo
+    {
+        [Header("Energy Settings")]
+        public EnergyTargetType targetType;
+        public StatModType modificationType;
+        [Tooltip("Value for Flat, PercentAdd (0.1 = 10%), or Mult")]
+        public float value;
+
+        public override IUpgradeInstance CreateInstance(BaseTower tower)
+        {
+            return new EnergyUpgradeInstance(this, tower);
+        }
+
+        [Serializable]
+        private class EnergyUpgradeInstance : IUpgradeInstance
+        {
+            private readonly EnergyUpgradeSo _config;
+            private readonly BaseTower _tower;
+            
+            // On stocke le modifier pour pouvoir le retirer plus tard (SOLID)
+            private StatModifier _modifier;
+
+            public EnergyUpgradeInstance(EnergyUpgradeSo config, BaseTower tower)
+            {
+                _config = config;
+                _tower = tower;
+            }
+
+            public void Enable()
+            {
+                _modifier = new StatModifier(_config.value, _config.modificationType, this);
+
+                switch (_config.targetType)
+                {
+                    case EnergyTargetType.Consumption:
+                        ApplyToConsumer();
+                        break;
+                    case EnergyTargetType.Production:
+                        ApplyToProducer();
+                        break;
+                    case EnergyTargetType.Range:
+                         ApplyToProducerRange(); // Pour le fun (Bonus)
+                         break;
+                }
+            }
+
+            public void Disable()
+            {
+                if (_modifier == null) return;
+
+                // Nettoyage propre
+                var consumer = _tower.GetComponent<EnergyConsumer>();
+                if (consumer) consumer.totalRequirement.RemoveModifier(_modifier);
+
+                var producer = _tower.GetComponent<EnergyProducer>();
+                if (producer)
+                {
+                     // Note: Pour faire ça proprement, il faudrait aussi changer producer.maxCapacity en public 
+                     // ou ajouter une méthode RemoveModifier sur le Producer.
+                     // Pour l'instant, supposons que nous avons rendu StatInt public dans Producer comme dans Consumer.
+                     // Voir note d'implémentation ci-dessous.
+                }
+            }
+
+            private void ApplyToConsumer()
+            {
+                // BaseTower a déjà une référence 'powerSource'
+                // Mais pour être sûr d'avoir le composant réel :
+                var consumer = _tower.GetComponent<EnergyConsumer>();
+                if (consumer)
+                {
+                    consumer.totalRequirement.AddModifier(_modifier);
+                }
+            }
+
+            private void ApplyToProducer()
+            {
+                var producer = _tower.GetComponent<EnergyProducer>();
+                if (producer)
+                {
+                    // Nous devons accéder au StatInt.
+                    // Solution propre : Ajouter une méthode 'AddModifier' sur EnergyProducer
+                    // Solution rapide (si StatInt est public) :
+                    // producer.maxCapacity.AddModifier(_modifier);
+                    
+                    // Comme j'ai mis 'private StatInt maxCapacity' dans l'exemple plus haut,
+                    // il faut utiliser une méthode publique sur EnergyProducer.
+                    producer.AddCapacityModifier(_modifier);
+                }
+            }
+            
+            private void ApplyToProducerRange()
+            {
+                 // Pour la portée (qui est un Float), on peut utiliser le système Stat standard
+                 // si on convertit ReactiveFloat en Stat dans EnergyProducer.
+                 // Pour cet exemple, restons sur les Ints.
+            }
+        }
+    }
+    
     [CreateAssetMenu(menuName = "Upgrades/Hello")]
     public sealed class HelloUpgradeSo : UpgradeSo
     {

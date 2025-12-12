@@ -19,7 +19,8 @@ namespace Towers
         SyncWithReload
     }
 
-    [RequireComponent(typeof(EnergyConsumer), typeof(Collider))]
+    [RequireComponent(typeof(Collider), typeof(GrassOccluder), typeof(TowerRangeVisualizer))]
+    [RequireComponent(typeof(TowerLevelingManager))]
     public abstract class BaseTower : BuildingEntity
     {
         [SerializeField] protected EnergyConsumer powerSource;
@@ -74,16 +75,18 @@ namespace Towers
         protected override void Awake()
         {
             base.Awake();
-            
+    
             _levelingManager = GetComponent<TowerLevelingManager>();
-            
+    
             if (!powerSource) powerSource = GetComponent<EnergyConsumer>();
-            powerSource.totalRequirement.Value = energyDrain;
             
+            // CORRECTION : On modifie la valeur de base
+            powerSource.totalRequirement.BaseValue = energyDrain;
+    
 
             if (targetLayer == 0) targetLayer = LayerMask.GetMask("EnemyGround");
             if (visionBlockerLayer == 0) visionBlockerLayer = LayerMask.GetMask("Terrain", "PhysicalBlocker");
-            
+    
             ApplyBlueprintStats();
         }
 

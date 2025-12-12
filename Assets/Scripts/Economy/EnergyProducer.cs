@@ -1,4 +1,5 @@
 ﻿using System;
+using Towers;
 using UnityEngine;
 
 namespace Economy
@@ -7,13 +8,13 @@ namespace Economy
     {
         [Header("Configuration")] public bool isMobileGenerator = true;
 
-        [SerializeField] private ReactiveInt maxCapacity = new(100);
+        [SerializeField] private StatInt maxCapacity = new(100);
         [SerializeField] private ReactiveFloat broadcastRadius = new(15f);
 
         private Vector3 _lastPos;
         private SphereCollider _rangeCollider;
 
-        public IReadOnlyReactiveProperty<int> MaxCapacity => maxCapacity;
+        public IReadOnlyReactiveProperty<int> MaxCapacity => maxCapacity.Observable;
         public IReadOnlyReactiveProperty<float> BroadcastRadius => broadcastRadius;
 
         public int CurrentLoad { get; private set; }
@@ -38,7 +39,17 @@ namespace Economy
             EnergyGridManager.Instance?.Register(this);
 
             BroadcastRadius.Subscribe(OnRadiusChanged).AddTo(this);
+            
+            // CHANGEMENT ICI : Abonnement via Observable
             MaxCapacity.Subscribe(OnStatsChanged_Int).AddTo(this);
+        }
+
+        public void Setup(int pmaxCapacity, float pbroadcastRadius, bool pmobileGenerator)
+        {
+            // CHANGEMENT ICI : Accès à BaseValue pour la config initiale
+            maxCapacity.BaseValue = pmaxCapacity;
+            broadcastRadius.Value = pbroadcastRadius;
+            isMobileGenerator = pmobileGenerator;
         }
 
         private void OnDestroy()
@@ -56,13 +67,17 @@ namespace Economy
             Gizmos.color = new Color(0, 1, 1, 0.4f);
             Gizmos.DrawWireSphere(transform.position, BroadcastRadius.Value);
         }
-
-        public void Setup(int pmaxCapacity, float pbroadcastRadius, bool pmobileGenerator)
+        
+        public void AddCapacityModifier(StatModifier mod)
         {
-            maxCapacity.Value = pmaxCapacity;
-            broadcastRadius.Value = pbroadcastRadius;
-            isMobileGenerator = pmobileGenerator;
+            maxCapacity.AddModifier(mod);
         }
+
+        public void RemoveCapacityModifier(StatModifier mod)
+        {
+            maxCapacity.RemoveModifier(mod);
+        }
+
 
         private static void OnStatsChanged_Int(int _)
         {

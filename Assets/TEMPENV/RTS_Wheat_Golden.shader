@@ -73,6 +73,8 @@
                 float _ColorVar;
                 float _YOffset;
                 // ---------------
+                float _TipFlutter; // Force du tremblement rapide du sommet
+                float _Stiffness;  // 0 = Mou (Herbe), 1 = Dur (Maïs)
             CBUFFER_END
 
             struct Attributes
@@ -93,76 +95,119 @@
                 float rnd : TEXCOORD5;
             };
 
-            Varyings vert(Attributes input)
-            {
-                Varyings output;
-                float4 instanceData = _VisibleInstances[input.instanceID];
-                float3 instancePos = instanceData.xyz;
-                float rnd = instanceData.w;
+Varyings vert(Attributes input)
+{
+    Varyings output;
 
-                // Scale & Rotation
-                float angle = rnd * 6.283185;
-                float s, c;
-                sincos(angle, s, c);
-                float scale = lerp(_MinScale, _MaxScale, rnd);
+    // --- 1. SETUP INSTANCE (Identique à votre code) ---
+    float4 instanceData = _VisibleInstances[input.instanceID];
+    float3 instancePos = instanceData.xyz;
+    float rnd = instanceData.w;
 
-                float3 posOS = input.positionOS.xyz * scale;
-                float xNew = posOS.x * c - posOS.z * s;
-                float zNew = posOS.x * s + posOS.z * c;
-                posOS.x = xNew;
-                posOS.z = zNew;
-                
-                float3 positionWS = instancePos + posOS;
-                
-                // On applique l'Offset Y
-                positionWS.y += _YOffset;
+    // Rotation & Scale
+    float angle = rnd * 6.283185;
+    float s, c;
+    sincos(angle, s, c);
+    float scale = lerp(_MinScale, _MaxScale, rnd);
 
-                // --- 1. DEFINIR LE PIVOT ---
-                // Le pivot suit l'instance + l'offset Y pour tourner correctement
-                float3 pivotPos = instancePos + float3(0, _YOffset, 0);
-                
-                // Calculer la longueur d'origine du sommet par rapport au pivot
-                float origLength = length(positionWS - pivotPos);
+    float3 posOS = input.positionOS.xyz * scale;
+    
+    // Rotation Y manuelle
+    float xNew = posOS.x * c - posOS.z * s;
+    float zNew = posOS.x * s + posOS.z * c;
+    posOS.x = xNew;
+    posOS.z = zNew;
 
-                // --- 2. WIND PHYSICS ---
-                float time = _Time.y * _WindSpeed;
-                float2 windUV = positionWS.xz * _WindScale - (_WindDirection * time);
-                float noise = SAMPLE_TEXTURE2D_LOD(_WindMap, sampler_WindMap, windUV, 0).r;
+    // Position Monde de base
+    float3 positionWS = instancePos + posOS;
+    positionWS.y += _YOffset;
 
-                float gust = noise * noise;
-                float heightMask = input.uv.y * input.uv.y; // Courbure quadratique
+    // --- 2. CONFIGURATION PIVOT & LONGUEUR ---
+    // Pivot au sol (avec l'offset Y pris en compte)
+    float3 pivotPos = instancePos + float3(0, _YOffset, 0);
+    // On calcule la distance vertex <-> pivot pour la conserver plus tard (Anti-Stretch)
+    float origLength = length(positionWS - pivotPos);
+    
+    // Si on est exactement au pivot, on ne fait rien (optimisation)
+    if (origLength < 0.001) {
+        output.positionCS = TransformWorldToHClip(positionWS);
+        output.uv = input.uv;
+        output.color = input.color;
+        output.windMask = 0;
+        output.positionWS = positionWS;
+        output.rnd = rnd;
+        return output;
+    }
 
-                float totalPush = gust * _GlobalWindStrength * _WindMultiplier * heightMask;
-                
-                float3 displacement = float3(_WindDirection.x * totalPush, 0, _WindDirection.y * totalPush);
-                
-                // Note : On retire la compensation manuelle "displacement.y -= ..." 
-                // car le Length Locking va gérer la descente Y automatiquement et parfaitement.
+    // --- 3. WIND PHYSICS "NEXT-GEN" ---
 
-                float3 positionWithWind = positionWS + displacement;
+    // A. Vent Global (La direction générale)
+    float time = _Time.y * _WindSpeed;
+    float2 windUV = positionWS.xz * _WindScale - (_WindDirection * time);
+    // On échantillonne le bruit (Rafale principale)
+    float noise = SAMPLE_TEXTURE2D_LOD(_WindMap, sampler_WindMap, windUV, 0).r;
+    
+    // B. Ambient Sway (Le mouvement "au repos")
+    // Crée une ondulation douce même sans vent fort.
+    // On utilise instancePos pour désynchroniser les plantes.
+    float ambientFreq = _Time.y * 0.5; // Lent
+    float ambientSway = sin(ambientFreq + instancePos.x * 0.3 + instancePos.z * 0.3) * 0.05;
 
-                // --- 3. LENGTH PRESERVATION (ANTI-STRETCH) ---
-                // Vecteur du Pivot vers la Nouvelle Position (étirée)
-                float3 pivotToNew = positionWithWind - pivotPos;
+    // C. High Frequency Shiver (Le tremblement des feuilles/épis)
+    // Très rapide, très petit, affecte surtout le sommet.
+    float shiverFreq = _Time.y * 12.0; // Rapide
+    float shiver = sin(shiverFreq + instancePos.x) * _TipFlutter * noise; // Le bruit module le shiver (plus de vent = plus de tremblement)
 
-                // On normalise ce vecteur et on le remet à la longueur d'origine
-                // Si origLength est 0 (à la base), on évite la division par zéro
-                if (origLength > 0.0001)
-                {
-                    positionWithWind = pivotPos + normalize(pivotToNew) * origLength;
-                }
-                
-                positionWS = positionWithWind;
-                // ---------------------------------------------
+    // --- 4. CALCUL DE LA FORCE ---
+    
+    // Masque de hauteur (Quadratique pour une courbure naturelle)
+    float heightMask = pow(input.uv.y, 2.0); 
+    
+    // Pour le maïs/blé, le sommet bouge plus "violemment" par rapport à la tige rigide
+    // On ajoute le "Shiver" uniquement sur la partie haute (UV > 0.6)
+    float tipMask = max(0, input.uv.y - 0.6);
+    
+    // Mix des forces
+    // Force Principale = (Rafale + Ambient) * ForceGlobale * MultiplicateurLocal
+    float mainWindForce = (noise + ambientSway) * _GlobalWindStrength * _WindMultiplier;
+    
+    // Application de la rigidité (_Stiffness)
+    // Plus c'est rigide, moins ça plie, mais le "Shiver" reste.
+    mainWindForce *= (1.0 - _Stiffness * 0.5); 
 
-                output.positionCS = TransformWorldToHClip(positionWS);
-                output.uv = input.uv;
-                output.color = input.color; 
-                output.windMask = gust * _GlobalWindStrength;
-                output.positionWS = positionWS;
-                output.rnd = rnd;
-                return output;
-            }
+    // Calcul du vecteur de déplacement
+    float3 displacement = 0;
+    
+    // Déplacement XZ (Pliage de la tige)
+    displacement.x = _WindDirection.x * mainWindForce * heightMask;
+    displacement.z = _WindDirection.y * mainWindForce * heightMask;
+
+    // Ajout du "Shiver" (Tremblement) au sommet (Ajoute du chaos local)
+    displacement.x += shiver * tipMask * 0.5;
+    displacement.z += shiver * tipMask * 0.5;
+
+    // Position temporaire "étirée"
+    float3 positionWithWind = positionWS + displacement;
+
+    // --- 5. LENGTH LOCKING (CRITIQUE) ---
+    // C'est votre code existant, essentiel pour ne pas étirer la texture.
+    float3 pivotToNew = positionWithWind - pivotPos;
+    positionWithWind = pivotPos + normalize(pivotToNew) * origLength;
+
+    // Mise à jour finale
+    positionWS = positionWithWind;
+
+    // --- SORTIE ---
+    output.positionCS = TransformWorldToHClip(positionWS);
+    output.uv = input.uv;
+    output.color = input.color;
+    // On passe le bruit pour le frag shader (Highlighter les rafales)
+    output.windMask = noise * _GlobalWindStrength;
+    output.positionWS = positionWS;
+    output.rnd = rnd;
+
+    return output;
+}
 
             half4 frag(Varyings input) : SV_Target
             {

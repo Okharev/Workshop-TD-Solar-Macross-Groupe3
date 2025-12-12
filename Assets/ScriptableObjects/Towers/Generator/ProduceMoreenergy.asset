@@ -10,8 +10,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 0}
-  m_Name: UpgradeBehaviourTestHello
-  m_EditorClassIdentifier: Assembly-CSharp:Towers:HelloUpgradeSo
-  icon: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
-  upgradeName: Saying Hello
-  description: does nothing, just says hello :) important to stay polite
+  m_Name: ProduceMoreenergy
+  m_EditorClassIdentifier: Assembly-CSharp:Towers:EnergyUpgradeSo
+  icon: {fileID: 0}
+  upgradeName: sdfsdf
+  description: sdfsdfsdfsdf
+  targetType: 1
+  modificationType: 100
+  value: 100

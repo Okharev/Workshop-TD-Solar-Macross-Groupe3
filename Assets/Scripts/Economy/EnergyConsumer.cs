@@ -1,4 +1,5 @@
 ﻿using System;
+using Towers;
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -14,10 +15,12 @@ namespace Economy
 
     public sealed class EnergyConsumer : MonoBehaviour
     {
-        [Header("Settings")] [SerializeField] private EnergyPriority priority = EnergyPriority.Standard;
-
-        [SerializeField] public ReactiveInt totalRequirement = new(100);
-
+        [Header("Settings")] 
+        [SerializeField] private EnergyPriority priority = EnergyPriority.Standard;
+        
+        [SerializeField] public StatInt totalRequirement = new(100);
+        
+        
         private Vector3 _lastPos;
         public EnergyPriority Priority => priority;
 
@@ -45,7 +48,9 @@ namespace Economy
         private void OnEnable()
         {
             EnergyGridManager.Instance?.Register(this);
-            totalRequirement.Subscribe(OnRequirementChanged).AddTo(this);
+            
+            // CHANGEMENT ICI : On s'abonne à l'Observable du StatInt
+            totalRequirement.Observable.Subscribe(OnRequirementChanged).AddTo(this);
         }
 
         private void OnDisable()
