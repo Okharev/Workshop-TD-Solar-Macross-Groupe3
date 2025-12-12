@@ -11,7 +11,6 @@ GameObject:
   - component: {fileID: 429737672628538332}
   - component: {fileID: 2696536371753458833}
   - component: {fileID: 3272362401547754388}
-  - component: {fileID: 3236340474547277242}
   - component: {fileID: -3000313585720704712}
   m_Layer: 8
   m_Name: Generator
@@ -51,7 +50,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Economy.EnergyProducer
   isMobileGenerator: 1
   maxCapacity:
-    _value: 100
+    _baseValue: 100
   broadcastRadius:
     _value: 15
 --- !u!65 &3272362401547754388
@@ -75,28 +74,6 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 6, y: 6, z: 6}
   m_Center: {x: 0, y: 3, z: 0}
---- !u!114 &3236340474547277242
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7970040095561613927}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7538be259f290524f80b2e8fab1a0c3e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::TowerGenerator
-  displayName: 
-  description: 
-  icon: {fileID: 0}
-  currentLevelPrefab: {fileID: 0}
-  nextLevelPrefab: {fileID: 0}
-  upgradeCost: 0
-  cost: 0
-  energyDrain: 0
-  nextUpgrade: {fileID: 0}
-  refundRatio: 0
 --- !u!114 &-3000313585720704712
 MonoBehaviour:
   m_ObjectHideFlags: 0

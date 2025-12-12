@@ -105,67 +105,73 @@
                 float rnd : TEXCOORD5;
             };
 
-            Varyings vert(Attributes input)
-            {
-                Varyings output;
-                
-                // 1. Récupération des données d'instance (Position + Random Seed)
-                float4 instanceData = _VisibleInstances[input.instanceID];
-                float3 instancePos = instanceData.xyz;
-                float rnd = instanceData.w;
+Varyings vert(Attributes input)
+{
+    Varyings output;
+    
+    // --- 1. INSTANCE DATA (Identique) ---
+    float4 instanceData = _VisibleInstances[input.instanceID];
+    float3 instancePos = instanceData.xyz;
+    float rnd = instanceData.w;
 
-                // 2. Rotation & Scale aléatoires
-                float angle = rnd * 6.283185;
-                float s, c;
-                sincos(angle, s, c);
-                float scale = lerp(_MinScale, _MaxScale, rnd);
+    // Rotation & Scale
+    float angle = rnd * 6.283185;
+    float s, c;
+    sincos(angle, s, c);
+    float scale = lerp(_MinScale, _MaxScale, rnd);
 
-                float3 posOS = input.positionOS.xyz * scale;
-                
-                // Rotation Y simple
-                float xNew = posOS.x * c - posOS.z * s;
-                float zNew = posOS.x * s + posOS.z * c;
-                posOS.x = xNew;
-                posOS.z = zNew;
+    float3 posOS = input.positionOS.xyz * scale;
 
-                float3 positionWS = instancePos + posOS;
+    // Rotation Y
+    float xNew = posOS.x * c - posOS.z * s;
+    float zNew = posOS.x * s + posOS.z * c;
+    posOS.x = xNew;
+    posOS.z = zNew;
+    
+    float3 positionWS = instancePos + posOS;
 
-                // --- 3. PHYSIQUE DU VENT GLOBALE ---
-                // On utilise les variables globales définies par GlobalWindManager
-                
-                float time = _Time.y * _WindSpeed; 
-                
-                // Calcul UV identique à GlobalWindManager.cs : GetWindAtPosition
-                float2 windUV = positionWS.xz * _WindScale - (_WindDirection * time);
-                
-                // Lecture de la texture de bruit globale
-                float noise = SAMPLE_TEXTURE2D_LOD(_WindMap, sampler_WindMap, windUV, 0).r;
+    // --- 2. WIND PHYSICS (ADAPTÉ POUR L'HERBE) ---
+    
+    // A. Vent Global (La direction générale + Rafales)
+    float time = _Time.y * _WindSpeed;
+    float2 windUV = positionWS.xz * _WindScale - (_WindDirection * time);
+    float noise = SAMPLE_TEXTURE2D_LOD(_WindMap, sampler_WindMap, windUV, 0).r;
+    
+    // B. Ambient "Micro-Sway" (NOUVEAU)
+    // Pour l'herbe, on veut un mouvement plus rapide que le blé, mais très subtil.
+    // Freq 2.0 = Assez rapide. 
+    // + instancePos.x * 10 = Désynchronisation très forte (chaos) pour éviter l'effet de "vague uniforme".
+    float ambientFreq = _Time.y * 2.0 + (instancePos.x + instancePos.z) * 5.0; 
+    float ambientSway = sin(ambientFreq) * 0.05; // 0.05 est l'amplitude (très petite)
 
-                // Application de la force
-                float gust = noise * noise; // Accentuer les rafales
-                float heightMask = input.uv.y * input.uv.y; // Le bas ne bouge pas, le haut bouge beaucoup
+    // C. Combinaison des forces
+    float gust = noise * noise; // Courbe de réponse non-linéaire pour les rafales
+    float heightMask = input.uv.y * input.uv.y; // Le bas ne bouge pas
 
-                // Combinaison : Force Globale * Réglage Local * Masque de hauteur * Rafale
-                float combinedStrength = _GlobalWindStrength * _WindMultiplier;
-                float totalPush = gust * combinedStrength * heightMask;
+    // Force Totale = (Rafale * ForceGlobale) + (Ambient * Constante)
+    // On multiplie ambientSway par _WindMultiplier pour garder le contrôle via le slider.
+    float totalPush = (gust * _GlobalWindStrength + ambientSway) * _WindMultiplier * heightMask;
 
-                // Displacement
-                float3 displacement = float3(_WindDirection.x * totalPush, 0, _WindDirection.y * totalPush);
-                
-                // Petite compensation en Y pour simuler la courbure de l'herbe (arc)
-                displacement.y -= totalPush * totalPush * 0.5;
+    // --- 3. DÉPLACEMENT ---
+    float3 displacement = float3(_WindDirection.x * totalPush, 0, _WindDirection.y * totalPush);
 
-                positionWS += displacement;
+    // Compensation Y (Simple arc) - Suffisant pour l'herbe courte
+    // L'herbe est trop courte pour avoir besoin du "Length Locking" coûteux du blé.
+    // Cette approximation suffit et est plus rapide.
+    displacement.y -= totalPush * totalPush * 0.5;
 
-                output.positionCS = TransformWorldToHClip(positionWS);
-                output.uv = input.uv;
-                output.color = input.color;
-                output.windMask = gust * combinedStrength;
-                output.positionWS = positionWS;
-                output.rnd = rnd;
+    positionWS += displacement;
 
-                return output;
-            }
+    // --- SORTIE ---
+    output.positionCS = TransformWorldToHClip(positionWS);
+    output.uv = input.uv;
+    output.color = input.color;
+    output.windMask = gust * _GlobalWindStrength; // Pour le highlight visuel
+    output.positionWS = positionWS;
+    output.rnd = rnd;
+
+    return output;
+}
 
             half4 frag(Varyings input) : SV_Target
             {

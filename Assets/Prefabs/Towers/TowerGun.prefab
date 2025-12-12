@@ -191,6 +191,37 @@ Transform:
   - {fileID: 6090853263714196857}
   m_Father: {fileID: 8673802576221335094}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &5008696358240577526
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2720680866907228217}
+  m_Layer: 8
+  m_Name: UI_Anchor
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2720680866907228217
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5008696358240577526}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 6, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 8023000701933666267}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &5607425079627833002
 GameObject:
   m_ObjectHideFlags: 0
@@ -228,6 +259,7 @@ Transform:
   m_Children:
   - {fileID: 8673802576221335094}
   - {fileID: 8514972640247961609}
+  - {fileID: 2720680866907228217}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!65 &8987942396502628012
@@ -265,7 +297,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Economy.EnergyConsumer
   priority: 50
   totalRequirement:
-    _value: 100
+    _baseValue: 100
+    _currentValueDisplay: 100
+    _modifiers: []
+  references:
+    version: 2
+    RefIds: []
 --- !u!114 &5533547337734330103
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -326,7 +363,7 @@ MonoBehaviour:
   fireCountdown: 0
   isBusy: 0
   rangeIndicatorPrefab: {fileID: 1399860383304854833, guid: ed475cce1d14fae44b911896847eabfa, type: 3}
-  _levelingManager: {fileID: 0}
+  _levelingManager: {fileID: -3402845230094186917}
   rotationMode: 1
   referenceTurnAngle: 120
   _activeUpgrades: []
@@ -373,7 +410,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 96c115983e0c4e5696f4d3808c0dc772, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GrassOccluder
-  radius: 5
+  radius: 7
 --- !u!1 &5674994326645783689
 GameObject:
   m_ObjectHideFlags: 0
