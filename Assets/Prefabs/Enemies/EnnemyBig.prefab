@@ -10,7 +10,11 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 254542755920789878, guid: 975862d4e0621904eb497ce755294990, type: 3}
       propertyPath: baseSpeed
-      value: 2
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 254542755920789878, guid: 975862d4e0621904eb497ce755294990, type: 3}
+      propertyPath: baseHealth
+      value: 600
       objectReference: {fileID: 0}
     - target: {fileID: 3451621445855892313, guid: 975862d4e0621904eb497ce755294990, type: 3}
       propertyPath: m_LocalPosition.y
@@ -76,9 +80,17 @@ PrefabInstance:
       propertyPath: m_ConstrainProportionsScale
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 6243551900759049226, guid: 975862d4e0621904eb497ce755294990, type: 3}
+      propertyPath: maxHealth
+      value: 600
+      objectReference: {fileID: 0}
+    - target: {fileID: 6243551900759049226, guid: 975862d4e0621904eb497ce755294990, type: 3}
+      propertyPath: currentHealth._value
+      value: 600
+      objectReference: {fileID: 0}
     - target: {fileID: 6906813426888105464, guid: 975862d4e0621904eb497ce755294990, type: 3}
       propertyPath: m_Speed
-      value: 2
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 6906813426888105464, guid: 975862d4e0621904eb497ce755294990, type: 3}
       propertyPath: m_Height
