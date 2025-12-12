@@ -19,65 +19,183 @@ namespace UI
         public Sprite Icon;
     }
 
-    public class InfoPanelView
+public class InfoPanelView : IDisposable
+{
+    private readonly VisualElement _panel;
+    private readonly Label _titleLabel;
+    private readonly Label _descLabel;
+    private readonly VisualElement _statsContainer;
+    private readonly VisualElement _actionsContainer;
+
+    private ISelectable _currentTarget;
+    
+    // On garde une trace des boutons et de leur condition de validation (Prix)
+    private readonly List<ActionButtonData> _activeButtons = new();
+    
+    // Pour nettoyer l'abonnement à l'argent
+    private readonly IDisposable _moneySubscription;
+
+    private struct ActionButtonData
     {
-        private readonly VisualElement _actionsContainer;
-        private readonly Label _descLabel;
-        private readonly VisualElement _panel;
-        private readonly VisualElement _statsContainer;
-        private readonly Label _titleLabel;
+        public Button UIElement;
+        public Func<bool> CheckCanExecute;
+    }
 
-        public InfoPanelView(VisualElement root)
+    public InfoPanelView(VisualElement root)
+    {
+        _panel = root.Q("SidePanel");
+        if (_panel == null) return; // Sécurité
+
+        _titleLabel = _panel.Q<Label>("Title");
+        _descLabel = _panel.Q<Label>("Description");
+        _statsContainer = _panel.Q<VisualElement>("StatsContainer");
+        _actionsContainer = _panel.Q<VisualElement>("ActionsContainer");
+
+        // Events de sélection
+        SelectionManager.OnObjectSelected += OnSelectionChanged;
+        SelectionManager.OnDeselected += OnDeselection;
+
+        // --- ÉCONOMIE : On écoute les changements d'argent ---
+        // On utilise Subscribe (de UniRx ou ReactiveProperty standard)
+        if (CurrencyManager.Instance != null)
         {
-            _panel = root.Q("SidePanel");
-
-            if (_panel == null)
-            {
-                Debug.LogError("InfoPanel: SidePanel not found!");
-                return;
-            }
-
-            _titleLabel = _panel.Q<Label>("Title");
-            _descLabel = _panel.Q<Label>("Description");
-            _statsContainer = _panel.Q<VisualElement>("StatsContainer");
-            _actionsContainer = _panel.Q<VisualElement>("ActionsContainer");
-
-            // Events
-            SelectionManager.OnObjectSelected += ShowPanel;
-            SelectionManager.OnDeselected += HidePanel;
-        }
-
-        public void Dispose() 
-        {
-            SelectionManager.OnObjectSelected -= ShowPanel;
-            SelectionManager.OnDeselected -= HidePanel;
-        }
-
-        private void ShowPanel(ISelectable target)
-        {
-            _titleLabel.text = target.DisplayName;
-            _descLabel.text = target.Description;
-
-            _statsContainer.Clear();
-
-            _actionsContainer.Clear();
-            var actions = target.GetInteractions();
-            if (actions != null)
-                foreach (var action in actions)
-                {
-                    var btn = new Button(action.OnExecute) { text = action.Label };
-                    btn.AddToClassList("action-button");
-                    _actionsContainer.Add(btn);
-                }
-
-            _panel.AddToClassList("side-panel--open");
-        }
-
-        private void HidePanel()
-        {
-            _panel.RemoveFromClassList("side-panel--open");
+            _moneySubscription = CurrencyManager.Instance.CurrentMoney
+                .Subscribe(_ => RefreshButtonStates()); // À chaque changement de monnaie, on vérifie
         }
     }
+
+    public void Dispose()
+    {
+        SelectionManager.OnObjectSelected -= OnSelectionChanged;
+        SelectionManager.OnDeselected -= OnDeselection;
+
+        if (_currentTarget != null)
+            _currentTarget.OnDataChanged -= RefreshPanel;
+            
+        _moneySubscription?.Dispose(); // On arrête d'écouter l'argent
+    }
+
+    // ... (OnSelectionChanged et OnDeselection restent identiques à avant) ...
+    private void OnSelectionChanged(ISelectable target)
+    {
+        if (_currentTarget != null) _currentTarget.OnDataChanged -= RefreshPanel;
+        _currentTarget = target;
+        if (_currentTarget != null) _currentTarget.OnDataChanged += RefreshPanel;
+        ShowPanel();
+    }
+
+    private void OnDeselection()
+    {
+        if (_currentTarget != null) _currentTarget.OnDataChanged -= RefreshPanel;
+        _currentTarget = null;
+        HidePanel();
+    }
+    
+    private void RefreshPanel()
+    {
+        // Sécurité Unity : On vérifie si l'objet a été détruit
+        // (L'opérateur == de Unity renvoie true si l'objet est détruit)
+        if (_currentTarget == null || _currentTarget.Equals(null))
+        {
+            HidePanel();
+            return;
+        }
+
+        ShowPanel();
+    }
+
+    private void ShowPanel()
+    {
+        if (_currentTarget == null) return;
+
+        _titleLabel.text = _currentTarget.DisplayName;
+        _descLabel.text = _currentTarget.Description;
+
+        // Stats... (ton code existant)
+        _statsContainer.Clear();
+
+        // Actions
+        _actionsContainer.Clear();
+        _activeButtons.Clear(); // On vide la liste de suivi
+
+        var actions = _currentTarget.GetInteractions();
+        if (actions != null)
+        {
+            foreach (var action in actions)
+            {
+                // 1. Conteneur global (Bouton + Desc)
+                var container = new VisualElement();
+                container.AddToClassList("action-item-container");
+
+                // 2. Bouton
+                var btn = new Button(action.OnExecute) { text = action.Label };
+                btn.AddToClassList("action-button");
+                
+                container.Add(btn);
+
+                // 3. Description (Si elle existe)
+                if (!string.IsNullOrEmpty(action.Description))
+                {
+                    var desc = new Label(action.Description);
+                    desc.AddToClassList("action-description");
+                    container.Add(desc);
+                }
+
+                _actionsContainer.Add(container);
+
+                // 4. Enregistrement pour la mise à jour dynamique
+                // Si l'action a une condition (ex: coût), on la stocke
+                if (action.CanExecute != null)
+                {
+                    _activeButtons.Add(new ActionButtonData
+                    {
+                        UIElement = btn,
+                        CheckCanExecute = action.CanExecute
+                    });
+                }
+            }
+        }
+        
+        // On fait une première passe de vérification (pour griser ce qu'on ne peut pas payer tout de suite)
+        RefreshButtonStates();
+
+        _panel.AddToClassList("side-panel--open");
+    }
+
+    private void HidePanel()
+    {
+        _panel.RemoveFromClassList("side-panel--open");
+    }
+
+    /// <summary>
+    /// Parcourt tous les boutons actifs et vérifie s'ils doivent être grisés ou non.
+    /// Appelée quand l'argent change OU quand on ouvre le panneau.
+    /// </summary>
+    private void RefreshButtonStates()
+    {
+        // Si le panneau est fermé, pas besoin de calculer
+        if (!_panel.ClassListContains("side-panel--open")) return;
+
+        foreach (var data in _activeButtons)
+        {
+            // On exécute la fonction lambda (CurrencyManager.CanAfford)
+            bool isAffordable = data.CheckCanExecute();
+            
+            // UI Toolkit : SetEnabled rend le bouton inclickable
+            data.UIElement.SetEnabled(isAffordable);
+
+            // Gestion visuelle (CSS)
+            if (isAffordable)
+            {
+                data.UIElement.RemoveFromClassList("action-button--disabled");
+            }
+            else
+            {
+                data.UIElement.AddToClassList("action-button--disabled");
+            }
+        }
+    }
+}
     
     public class ObjectivesPanelView
     {

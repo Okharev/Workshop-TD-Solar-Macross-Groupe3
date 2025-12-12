@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 214805952494002057}
   - component: {fileID: 7209894216194942640}
+  - component: {fileID: 8549828270919389129}
   m_Layer: 0
   m_Name: Blocker
   m_TagString: Untagged
@@ -50,6 +51,19 @@ MonoBehaviour:
   isBlocked: 0
   toLockUnlock: {fileID: 7964527489850311841}
   indicator: {fileID: 2099941647880672310}
+--- !u!114 &8549828270919389129
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 141376750600469855}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 96c115983e0c4e5696f4d3808c0dc772, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GrassOccluder
+  radius: 5
 --- !u!1 &2917443860778642042
 GameObject:
   m_ObjectHideFlags: 0

@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 46b64e6b8ee74497ac3ffe45ea015ab4, type: 3}
+  m_Name: MortarUpgradeTree
+  m_EditorClassIdentifier: Assembly-CSharp::Towers.TowerUpgradeTreeSo
+  tiers:
+  - tierName: Level 2
+    options:
+    - labelOverride: Level 2 mortar
+      cost: 50
+      upgradeDefinition: {fileID: 11400000, guid: b15441234b4a73b4dbb65cbd0e7fe94d, type: 2}
+  - tierName: Level 3
+    options:
+    - labelOverride: Say Hello On Hit !!
+      cost: 20
+      upgradeDefinition: {fileID: 11400000, guid: f07857473544df94880b0514405e6e0e, type: 2}
+    - labelOverride: ExecuteUpgrade
+      cost: 100
+      upgradeDefinition: {fileID: 11400000, guid: 6528ca34bf158bd4ab79d5686f388c0b, type: 2}

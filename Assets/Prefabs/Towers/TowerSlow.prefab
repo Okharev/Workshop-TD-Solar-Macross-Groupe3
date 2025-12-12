@@ -14,6 +14,8 @@ GameObject:
   - component: {fileID: -6290923537206660371}
   - component: {fileID: 3092842865332209763}
   - component: {fileID: 6425537603779408165}
+  - component: {fileID: 6884296905430244531}
+  - component: {fileID: -8252929612517609037}
   m_Layer: 8
   m_Name: TowerSlow
   m_TagString: Tower
@@ -133,8 +135,10 @@ MonoBehaviour:
   fireCountdown: 0
   isBusy: 0
   rangeIndicatorPrefab: {fileID: 0}
+  _levelingManager: {fileID: 0}
   rotationMode: 1
   referenceTurnAngle: 120
+  _activeUpgrades: []
   slowPercent: 0.842
   checkInterval: 0.2
   enemyLayer:
@@ -144,6 +148,9 @@ MonoBehaviour:
   idleSpeed: 20
   activeSpeed: 300
   acceleration: 2
+  references:
+    version: 2
+    RefIds: []
 --- !u!114 &3092842865332209763
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -156,9 +163,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2f0a06f863c5de04da3b5e70c8a8b364, type: 3}
   m_Name: 
   m_EditorClassIdentifier: '::'
-  toRotate: {fileID: 8099896240154089842}
-  minSpeed: 20
-  maxSpeed: 300
+  rotorsToRotate:
+  - {fileID: 8099896240154089842}
+  minSpeed: 100
+  maxSpeed: 200
+  spinUpTime: 0.8
+  spinDownTime: 3
+  randomnessFactor: 0.15
 --- !u!114 &6425537603779408165
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -173,6 +184,32 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Visuals.TowerRangeVisualizer
   rangeIndicatorPrefab: {fileID: 1399860383304854833, guid: ed475cce1d14fae44b911896847eabfa, type: 3}
   showOnlyOnSelect: 1
+--- !u!114 &6884296905430244531
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5607425079627833002}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f390aac0acfd4c69a7b9cdc9ac76611a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Towers.TowerLevelingManager
+  upgradeTree: {fileID: 0}
+--- !u!114 &-8252929612517609037
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5607425079627833002}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 96c115983e0c4e5696f4d3808c0dc772, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GrassOccluder
+  radius: 5
 --- !u!1001 &5182107095617560975
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -224,6 +261,14 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 7791bb9ed6033404f91f7eaca1a32563, type: 3}
       propertyPath: m_Name
       value: SM_SlowTurret_002
+      objectReference: {fileID: 0}
+    - target: {fileID: 1677345719766330453, guid: 7791bb9ed6033404f91f7eaca1a32563, type: 3}
+      propertyPath: m_StaticShadowCaster
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6457179684216554181, guid: 7791bb9ed6033404f91f7eaca1a32563, type: 3}
+      propertyPath: m_StaticShadowCaster
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

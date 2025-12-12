@@ -14,9 +14,9 @@
         _BlendStrength ("Terrain Blend Strength", Range(0, 1)) = 0.8
 
         [Header(Wind Physics)]
+        // NOTE: WindMap, Speed, Scale sont maintenant gérés par GlobalWindManager.
+        // On ne garde que le multiplicateur local pour ajuster la rigidité de cette herbe spécifique.
         _WindMultiplier ("Wind Responsiveness", Range(0.0, 5.0)) = 1.0
-
-        _WindMap ("Wind Noise Texture (Unused if Global)", 2D) = "gray" {}
 
         [Header(Wind Visuals)]
         _WaveColor ("Gust Highlight Color", Color) = (0.9, 1.0, 0.7, 1)
@@ -31,7 +31,8 @@
     {
         Tags
         {
-            "RenderType"="Opaque" "RenderPipeline"="UniversalPipeline"
+            "RenderType"="Opaque" 
+            "RenderPipeline"="UniversalPipeline"
         }
         Cull Off
 
@@ -56,16 +57,19 @@
 
             StructuredBuffer<float4> _VisibleInstances;
 
-            // --- GLOBALS ---
+            // --- VARIABLES GLOBALES (Gérées par GlobalWindManager.cs) ---
+            // Elles ne sont pas dans le CBUFFER "UnityPerMaterial" car elles sont partagées par toute la scène.
             TEXTURE2D(_WindMap);
             SAMPLER(sampler_WindMap);
-            TEXTURE2D(_TerrainMap);
-            SAMPLER(sampler_TerrainMap);
-
+            
             float _WindSpeed;
             float _WindScale;
             float2 _WindDirection;
             float _GlobalWindStrength;
+            // -----------------------------------------------------------
+
+            TEXTURE2D(_TerrainMap);
+            SAMPLER(sampler_TerrainMap);
 
             CBUFFER_START(UnityPerMaterial)
                 float4 _BaseColor;
@@ -76,7 +80,7 @@
                 float _BlendStrength;
                 float _WaveOpacity;
 
-                float _WindMultiplier;
+                float _WindMultiplier; // Réglage local
 
                 float _MinScale;
                 float _MaxScale;
@@ -104,17 +108,21 @@
             Varyings vert(Attributes input)
             {
                 Varyings output;
+                
+                // 1. Récupération des données d'instance (Position + Random Seed)
                 float4 instanceData = _VisibleInstances[input.instanceID];
                 float3 instancePos = instanceData.xyz;
                 float rnd = instanceData.w;
 
-                // ROTATION & SCALE
+                // 2. Rotation & Scale aléatoires
                 float angle = rnd * 6.283185;
                 float s, c;
                 sincos(angle, s, c);
                 float scale = lerp(_MinScale, _MaxScale, rnd);
 
                 float3 posOS = input.positionOS.xyz * scale;
+                
+                // Rotation Y simple
                 float xNew = posOS.x * c - posOS.z * s;
                 float zNew = posOS.x * s + posOS.z * c;
                 posOS.x = xNew;
@@ -122,20 +130,29 @@
 
                 float3 positionWS = instancePos + posOS;
 
-                // --- WIND PHYSICS ---
-                float2 windDir = _WindDirection;
-                float time = _Time.y * _WindSpeed;
-                float2 windUV = positionWS.xz * _WindScale - (windDir * time);
+                // --- 3. PHYSIQUE DU VENT GLOBALE ---
+                // On utilise les variables globales définies par GlobalWindManager
+                
+                float time = _Time.y * _WindSpeed; 
+                
+                // Calcul UV identique à GlobalWindManager.cs : GetWindAtPosition
+                float2 windUV = positionWS.xz * _WindScale - (_WindDirection * time);
+                
+                // Lecture de la texture de bruit globale
                 float noise = SAMPLE_TEXTURE2D_LOD(_WindMap, sampler_WindMap, windUV, 0).r;
 
-                float gust = noise * noise;
-                float heightMask = input.uv.y * input.uv.y;
+                // Application de la force
+                float gust = noise * noise; // Accentuer les rafales
+                float heightMask = input.uv.y * input.uv.y; // Le bas ne bouge pas, le haut bouge beaucoup
 
-                // CALCUL DE LA FORCE COMBINÉE
+                // Combinaison : Force Globale * Réglage Local * Masque de hauteur * Rafale
                 float combinedStrength = _GlobalWindStrength * _WindMultiplier;
                 float totalPush = gust * combinedStrength * heightMask;
 
-                float3 displacement = float3(windDir.x * totalPush, 0, windDir.y * totalPush);
+                // Displacement
+                float3 displacement = float3(_WindDirection.x * totalPush, 0, _WindDirection.y * totalPush);
+                
+                // Petite compensation en Y pour simuler la courbure de l'herbe (arc)
                 displacement.y -= totalPush * totalPush * 0.5;
 
                 positionWS += displacement;
@@ -143,7 +160,7 @@
                 output.positionCS = TransformWorldToHClip(positionWS);
                 output.uv = input.uv;
                 output.color = input.color;
-                output.windMask = gust;
+                output.windMask = gust * combinedStrength;
                 output.positionWS = positionWS;
                 output.rnd = rnd;
 
@@ -152,6 +169,7 @@
 
             half4 frag(Varyings input) : SV_Target
             {
+                // Terrain Blending
                 float2 terrainUV = (input.positionWS.xz - _TerrainPos.xz) / _TerrainSize.xz;
                 float4 groundColor = SAMPLE_TEXTURE2D(_TerrainMap, sampler_TerrainMap, terrainUV);
                 float4 rootCol = lerp(_BaseColor, groundColor, _BlendStrength);
@@ -159,17 +177,25 @@
                 float heightGradient = pow(input.uv.y, 0.6);
                 float4 finalColor = lerp(rootCol, _TipColor, heightGradient);
 
+                // Variation de luminosité par brin
                 float brightnessVar = lerp(1.0 - _ColorVar, 1.0 + _ColorVar, input.rnd);
                 finalColor *= brightnessVar;
 
+                // Ombres
                 float4 shadowCoord = TransformWorldToShadowCoord(input.positionWS);
                 Light mainLight = GetMainLight(shadowCoord);
                 float shadow = mainLight.shadowAttenuation;
                 finalColor.rgb *= (mainLight.color * shadow);
 
-                float highlight = input.windMask * input.uv.y * _WaveOpacity * shadow;
-                finalColor = lerp(finalColor, _WaveColor, highlight);
+                // Highlight des rafales de vent (Wind Visuals)
+                float highlight = input.windMask * input.uv.y * _WaveOpacity; 
 
+                // --- CORRECTION : Mode Additif ---
+                // Au lieu de mélanger, on AJOUTE la couleur du vent comme de la lumière.
+                // On multiplie par 2.0 ou 3.0 pour compenser le "noise * noise" du vertex shader.
+                finalColor.rgb += _WaveColor.rgb * highlight * 4.0;
+
+                // Fake Ambient Occlusion / Lumière basique
                 finalColor.rgb += float3(0.05, 0.1, 0.05) * heightGradient;
                 finalColor.rgb = min(finalColor.rgb, float3(0.95, 0.95, 0.95));
 

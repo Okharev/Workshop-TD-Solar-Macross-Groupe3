@@ -140,7 +140,7 @@ Material:
     - _WaveOpacity: 0.4
     - _WindScale: 0.006
     - _WindSpeed: 0.04
-    - _WindStrength: 6
+    - _WindStrength: 0.3
     - _WorkflowMode: 1
     - _XRMotionVectorsPass: 1
     - _ZWrite: 1

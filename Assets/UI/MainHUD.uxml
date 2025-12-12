@@ -1,21 +1,20 @@
 <ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
     <ui:Template name="NexusHealth" src="project://database/Assets/UI/NexusHealth.uxml?fileID=9197481963319205126&amp;guid=8d6364e0fdef93049a72d719f70b38e9&amp;type=3#NexusHealth" />
     <ui:Template name="ObjectivesHealthPanel" src="project://database/Assets/UI/ObjectivesHealthPanel.uxml?fileID=9197481963319205126&amp;guid=c8b39b41a18b2844f87a6501c7d3f3c6&amp;type=3#ObjectivesHealthPanel" />
+    <ui:Template name="WaveInfoPanel" src="project://database/Assets/UI/WaveInfoPanel.uxml?fileID=9197481963319205126&amp;guid=4b5099e6efec83b4b91ca58d10a91ec2&amp;type=3#WaveInfoPanel" />
     <ui:Template name="InfoPanelTemplate" src="project://database/Assets/UI/InfoPanel.uxml?fileID=9197481963319205126&amp;guid=9845de91a8cc2ba4a97fa959f6e2d2ab&amp;type=3#InfoPanel" />
     <ui:Template name="BuildingBarPanelTemplate" src="project://database/Assets/UI/BuildingBarPanel.uxml?fileID=9197481963319205126&amp;guid=326864c4138978846b20e21745c0a539&amp;type=3#BuildingBarPanel" />
-    <ui:Template name="WaveInfoPanel" src="project://database/Assets/UI/WaveInfoPanel.uxml?fileID=9197481963319205126&amp;guid=4b5099e6efec83b4b91ca58d10a91ec2&amp;type=3#WaveInfoPanel" />
     <Style src="project://database/Assets/UI/MainHUD.uss?fileID=7433441132597879392&amp;guid=5d8070681b9bcdc4498a14543835ab31&amp;type=3#MainHUD" />
     <ui:VisualElement name="HUD_Root" picking-mode="Ignore" class="hud-root">
         <ui:VisualElement name="LeftSidebar" picking-mode="Ignore" class="left-sidebar" style="width: 200px;">
-            <ui:Instance template="NexusHealth" />
+            <ui:Instance template="NexusHealth" name="TemplateContainer" />
             <ui:VisualElement name="VisualElement" style="height: 10px;" />
             <ui:Instance template="ObjectivesHealthPanel" />
         </ui:VisualElement>
         <ui:Instance template="WaveInfoPanel" />
-        <ui:VisualElement name="RightSidebar" picking-mode="Ignore" class="right-sidebar">
-            <ui:VisualElement name="MinimapContainer" class="minimap-container">
-                <ui:VisualElement name="MinimapRender" class="minimap-render" />
-                <ui:Label text="MAP" style="position: absolute; top: 2px; left: 5px; color: white; font-size: 10px;" />
+        <ui:VisualElement name="RightSidebar" picking-mode="Ignore" class="right-sidebar" style="border-left-color: rgba(0, 0, 0, 0); border-right-color: rgba(0, 0, 0, 0); border-top-color: rgba(0, 0, 0, 0); border-bottom-color: rgba(0, 0, 0, 0); color: rgb(224, 224, 224);">
+            <ui:VisualElement name="MinimapContainer" class="minimap-container" style="border-left-color: rgba(100, 100, 100, 0); border-right-color: rgba(100, 100, 100, 0); border-top-color: rgba(100, 100, 100, 0); border-bottom-color: rgba(100, 100, 100, 0); border-top-left-radius: 100px; border-top-right-radius: 100px; border-bottom-right-radius: 100px; border-bottom-left-radius: 100px;">
+                <ui:VisualElement name="MinimapRender" class="minimap-render" style="background-color: rgba(255, 255, 255, 0);" />
             </ui:VisualElement>
             <ui:Instance template="InfoPanelTemplate" name="InfoPanelInstance" />
         </ui:VisualElement>

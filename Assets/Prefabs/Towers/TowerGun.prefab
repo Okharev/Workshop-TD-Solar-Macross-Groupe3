@@ -204,6 +204,8 @@ GameObject:
   - component: {fileID: 8506183719910781864}
   - component: {fileID: 5533547337734330103}
   - component: {fileID: 6956754297495603721}
+  - component: {fileID: -3402845230094186917}
+  - component: {fileID: 7118159691281927813}
   m_Layer: 8
   m_Name: TowerGun
   m_TagString: Tower
@@ -324,9 +326,14 @@ MonoBehaviour:
   fireCountdown: 0
   isBusy: 0
   rangeIndicatorPrefab: {fileID: 1399860383304854833, guid: ed475cce1d14fae44b911896847eabfa, type: 3}
+  _levelingManager: {fileID: 0}
   rotationMode: 1
   referenceTurnAngle: 120
+  _activeUpgrades: []
   projectileThickness: 0.1
+  references:
+    version: 2
+    RefIds: []
 --- !u!114 &6956754297495603721
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -341,6 +348,32 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Towers.TowerRangeVisualizer
   rangeIndicatorPrefab: {fileID: 1399860383304854833, guid: ed475cce1d14fae44b911896847eabfa, type: 3}
   showOnlyOnSelect: 1
+--- !u!114 &-3402845230094186917
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5607425079627833002}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f390aac0acfd4c69a7b9cdc9ac76611a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Towers.TowerLevelingManager
+  upgradeTree: {fileID: 11400000, guid: b6f7041d65fefde43b25034b07ef9c22, type: 2}
+--- !u!114 &7118159691281927813
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5607425079627833002}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 96c115983e0c4e5696f4d3808c0dc772, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GrassOccluder
+  radius: 5
 --- !u!1 &5674994326645783689
 GameObject:
   m_ObjectHideFlags: 0

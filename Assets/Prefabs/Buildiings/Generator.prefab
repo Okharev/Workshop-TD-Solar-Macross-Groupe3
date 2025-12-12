@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 2696536371753458833}
   - component: {fileID: 3272362401547754388}
   - component: {fileID: 3236340474547277242}
+  - component: {fileID: -3000313585720704712}
   m_Layer: 8
   m_Name: Generator
   m_TagString: Untagged
@@ -96,6 +97,19 @@ MonoBehaviour:
   energyDrain: 0
   nextUpgrade: {fileID: 0}
   refundRatio: 0
+--- !u!114 &-3000313585720704712
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7970040095561613927}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 96c115983e0c4e5696f4d3808c0dc772, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GrassOccluder
+  radius: 5
 --- !u!1 &8165865896317137463
 GameObject:
   m_ObjectHideFlags: 0

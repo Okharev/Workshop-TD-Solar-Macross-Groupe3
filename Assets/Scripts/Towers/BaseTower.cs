@@ -58,6 +58,7 @@ namespace Towers
         [SerializeField] private GameObject rangeIndicatorPrefab;
         
         private GameObject _activeRangeIndicator;
+        [SerializeField] private TowerLevelingManager _levelingManager;
         
         [Header("Rotation Logic")] [SerializeField]
         protected RotationMode rotationMode = RotationMode.ScaledWithStats;
@@ -68,10 +69,14 @@ namespace Towers
 
         [Header("Upgrades")] public readonly UpgradeProvider Events = new();
 
-        private List<IUpgradeInstance> _activeUpgrades = new();
+        [SerializeReference] private List<IUpgradeInstance> _activeUpgrades = new();
         
-        protected virtual void Awake()
+        protected override void Awake()
         {
+            base.Awake();
+            
+            _levelingManager = GetComponent<TowerLevelingManager>();
+            
             if (!powerSource) powerSource = GetComponent<EnergyConsumer>();
             powerSource.totalRequirement.Value = energyDrain;
             
@@ -270,6 +275,39 @@ namespace Towers
             damage.Initialize();
             range.Initialize();
             fireRate.Initialize();
+        }
+        
+        public void RegisterUpgrade(IUpgradeInstance instance, UpgradeSo sourceDefinition)
+        {
+            // 1. On ajoute l'instance logique à la liste privée (pour le fonctionnement interne)
+            _activeUpgrades.Add(instance);
+
+            // 2. On ajoute la définition à la liste publique (pour que tu le voies dans l'Inspecteur Unity)
+            if (!upgrades.Contains(sourceDefinition))
+            {
+                upgrades.Add(sourceDefinition);
+            }
+    
+            // 3. Optionnel : Si l'upgrade modifie des stats, on peut déclencher un recalcul
+            OnStatsChanged();
+        }
+        
+        public override List<InteractionAction> GetInteractions()
+        {
+            // 1. Récupère les interactions de base (Vendre)
+            var actions = base.GetInteractions();
+
+            // 2. Si on a un manager d'upgrade, on ajoute ses options
+            if (_levelingManager != null)
+            {
+                actions.AddRange(_levelingManager.GetUpgradeInteractions());
+            }
+    
+            // Note: Si tu veux désactiver le système "nextUpgrade" de BuildingEntity
+            // assure-toi que le champ 'nextUpgrade' est vide dans l'inspecteur Unity,
+            // ou filtre la liste 'actions' ici.
+
+            return actions;
         }
 
         protected abstract void Fire();
