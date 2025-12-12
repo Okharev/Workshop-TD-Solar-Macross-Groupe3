@@ -37,6 +37,8 @@ namespace Economy
         private Renderer _projectorRenderer;
         private MaterialPropertyBlock _propBlock;
         private Mesh _quadMesh;
+        private Vector4? _previewData;
+        private float _previewRadius;
 
         public static EnergyHeatmapSystem Instance { get; private set; }
 
@@ -65,6 +67,20 @@ namespace Economy
             RefreshHeatmap();
         }
 
+        public void SetPreview(Vector3 pos, float radius, float maxCapacity)
+        {
+            _previewData = new Vector4(pos.x, pos.y, pos.z, maxCapacity);
+            _previewRadius = radius;
+            // Force a render next frame if autoRefresh is off, or let Update handle it
+            if(autoRefresh) RenderHeatmap();
+        }
+        
+        public void ClearPreview()
+        {
+            _previewData = null;
+            if(autoRefresh) RenderHeatmap();
+        }
+        
         private void OnDestroy()
         {
             if (EnergyGridManager.Instance)
@@ -134,6 +150,31 @@ namespace Economy
                 _cmd.DrawMesh(_quadMesh, matrix, _brushMaterial, 0, 0, _propBlock);
             }
 
+            if (_previewData.HasValue)
+            {
+                var pPos = new Vector3(_previewData.Value.x, _previewData.Value.y, _previewData.Value.z);
+                var pEnergy = _previewData.Value.w;
+    
+                // 1. Reuse the same math as the loop
+                var u = (pPos.x - mapCenterOffset.x) / mapSize.x + 0.5f;
+                var v = (pPos.z - mapCenterOffset.y) / mapSize.y + 0.5f;
+                var sX = _previewRadius * 2f / mapSize.x;
+                var sY = _previewRadius * 2f / mapSize.y;
+
+                // 2. Draw
+                // Only draw if on screen (optional optimization)
+                if (u + sX >= 0 && u - sX <= 1 && v + sY >= 0 && v - sY <= 1)
+                {
+                    var matrix = Matrix4x4.TRS(new Vector3(u, v, 0), Quaternion.identity, new Vector3(sX, sY, 1));
+        
+                    _propBlock.Clear();
+                    _propBlock.SetFloat(EnergyID, pEnergy);
+                    _propBlock.SetFloat(CoreRadiusID, brushCoreRadius); // Uses existing brush settings
+
+                    _cmd.DrawMesh(_quadMesh, matrix, _brushMaterial, 0, 0, _propBlock);
+                }
+            }
+            
             Graphics.ExecuteCommandBuffer(_cmd);
             UpdateProjectorUniforms();
         }

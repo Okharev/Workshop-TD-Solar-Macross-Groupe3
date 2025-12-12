@@ -78,9 +78,8 @@ namespace Towers
     
             _levelingManager = GetComponent<TowerLevelingManager>();
     
-            if (!powerSource) powerSource = GetComponent<EnergyConsumer>();
+            powerSource = GetComponent<EnergyConsumer>();
             
-            // CORRECTION : On modifie la valeur de base
             powerSource.totalRequirement.BaseValue = energyDrain;
     
 
