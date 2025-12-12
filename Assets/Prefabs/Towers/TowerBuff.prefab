@@ -345,6 +345,7 @@ GameObject:
   - component: {fileID: 8987942396502628012}
   - component: {fileID: 8506183719910781864}
   - component: {fileID: 1538797142999164029}
+  - component: {fileID: -7933594910996321817}
   m_Layer: 8
   m_Name: TowerBuff
   m_TagString: Tower
@@ -463,6 +464,8 @@ MonoBehaviour:
   currentTarget: {fileID: 0}
   fireCountdown: 0
   isBusy: 0
+  rangeIndicatorPrefab: {fileID: 0}
+  _levelingManager: {fileID: 0}
   rotationMode: 1
   referenceTurnAngle: 120
   damagePercentBuff: 0.403
@@ -472,6 +475,19 @@ MonoBehaviour:
   towerLayer:
     serializedVersion: 2
     m_Bits: 0
+--- !u!114 &-7933594910996321817
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5607425079627833002}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f390aac0acfd4c69a7b9cdc9ac76611a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Towers.TowerLevelingManager
+  upgradeTree: {fileID: 0}
 --- !u!1 &6357774045865020806
 GameObject:
   m_ObjectHideFlags: 0

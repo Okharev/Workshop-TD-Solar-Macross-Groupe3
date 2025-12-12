@@ -1,41 +1,41 @@
-﻿Shader "Custom/Wheat_Indirect"
+﻿Shader "Custom/RTS_Wheat_VertexColor"
 {
     Properties
     {
-        [Header(Wheat Colors)]
-        _BaseColor ("Root Color (Green/Brown)", Color) = (0.2, 0.25, 0.1, 1)
-        _TipColor ("Head Color (Golden)", Color) = (0.9, 0.7, 0.2, 1)
-        _SunTint ("Sun Highlight Strength", Range(0,1)) = 0.3
+        [Header(Main Settings)]
+        _TintColor ("Global Tint", Color) = (1, 1, 1, 1)
+        
+        [Header(Terrain Blending)]
+        _TerrainMap ("Terrain Color Map (Top Down)", 2D) = "white" {}
+        _TerrainSize ("Terrain Size (XZ)", Vector) = (1000, 1000, 0, 0)
+        _TerrainPos ("Terrain Position (XZ)", Vector) = (0, 0, 0, 0)
+        _BlendStrength ("Terrain Blend Strength", Range(0, 1)) = 0.5
 
         [Header(Wind Physics)]
-        _WindStrength ("Sway Strength", Float) = 1.5
+        _WindMultiplier ("Wind Responsiveness", Range(0.0, 5.0)) = 1.2 
+
+        [Header(Wind Visuals)]
+        _WaveColor ("Gust Highlight Color", Color) = (1.0, 1.0, 0.8, 1)
+        _WaveOpacity ("Gust Visual Strength", Range(0,1)) = 0.3
 
         [Header(Variation)]
-        _MinScale ("Min Scale", Float) = 0.9
-        _MaxScale ("Max Scale", Float) = 1.3
-        _ColorVar ("Color Variation", Range(0, 0.5)) = 0.2
-
-        [Header(Wind Physics)]
-        _WindMultiplier ("Sway Responsiveness", Float) = 1.5
-
+        _MinScale ("Min Scale Variance", Float) = 0.9
+        _MaxScale ("Max Scale Variance", Float) = 1.1
+        // --- NOUVEAU ---
+        _ColorVar ("Random Darken/Lighten", Range(0, 0.5)) = 0.2
         _YOffset ("Mesh Vertical Offset", Float) = 0.0
+        // ---------------
     }
 
     SubShader
     {
-        Tags
-        {
-            "RenderType"="Opaque" "RenderPipeline"="UniversalPipeline"
-        }
+        Tags { "RenderType"="Opaque" "RenderPipeline"="UniversalPipeline" }
         Cull Off
 
         Pass
         {
             Name "ForwardLit"
-            Tags
-            {
-                "LightMode"="UniversalForward"
-            }
+            Tags { "LightMode"="UniversalForward" }
 
             HLSLPROGRAM
             #pragma vertex vert
@@ -49,23 +49,30 @@
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
 
             StructuredBuffer<float4> _VisibleInstances;
-            TEXTURE2D(_WindMap);
-            SAMPLER(sampler_WindMap);
+
+            // GLOBALS (Wind Manager)
+            TEXTURE2D(_WindMap); SAMPLER(sampler_WindMap);
             float _WindSpeed;
             float _WindScale;
             float2 _WindDirection;
             float _GlobalWindStrength;
 
+            TEXTURE2D(_TerrainMap); SAMPLER(sampler_TerrainMap);
+
             CBUFFER_START(UnityPerMaterial)
-                float4 _BaseColor;
-                float4 _TipColor;
-                float _SunTint;
-                float _WindStrength;
+                float4 _TintColor;
+                float4 _WaveColor;
+                float4 _TerrainSize;
+                float4 _TerrainPos;
+                float _BlendStrength;
+                float _WaveOpacity;
                 float _WindMultiplier;
                 float _MinScale;
                 float _MaxScale;
+                // --- NOUVEAU ---
                 float _ColorVar;
                 float _YOffset;
+                // ---------------
             CBUFFER_END
 
             struct Attributes
@@ -81,114 +88,110 @@
                 float4 positionCS : SV_POSITION;
                 float2 uv : TEXCOORD0;
                 float4 color : TEXCOORD1;
-                float3 positionWS : TEXCOORD3;
-                float windGust : TEXCOORD4;
+                float windMask : TEXCOORD3;
+                float3 positionWS : TEXCOORD4;
                 float rnd : TEXCOORD5;
             };
 
             Varyings vert(Attributes input)
             {
                 Varyings output;
-
-                // --- 1. DATA & INSTANCING ---
-                // Get data from GPU buff
                 float4 instanceData = _VisibleInstances[input.instanceID];
                 float3 instancePos = instanceData.xyz;
                 float rnd = instanceData.w;
 
-                // --- 2. VARIATION (Scale & Rotation) ---
-                float scale = lerp(_MinScale, _MaxScale, rnd);
+                // Scale & Rotation
                 float angle = rnd * 6.283185;
                 float s, c;
                 sincos(angle, s, c);
+                float scale = lerp(_MinScale, _MaxScale, rnd);
 
-                // Initialisation de la position locale
-                float3 posOS = input.positionOS.xyz;
-
-                // Height adjustement for meshses with center pivot point
-                //TODO Not optimized, needs good pivoted models
-                posOS.y += _YOffset;
-
-                // appply scale
-                posOS *= scale;
-
-                // apply rotation
+                float3 posOS = input.positionOS.xyz * scale;
                 float xNew = posOS.x * c - posOS.z * s;
                 float zNew = posOS.x * s + posOS.z * c;
                 posOS.x = xNew;
                 posOS.z = zNew;
+                
+                float3 positionWS = instancePos + posOS;
+                
+                // On applique l'Offset Y
+                positionWS.y += _YOffset;
 
-                // --- 3. Global WIND PHYSICS ---
-                float2 windDir = _WindDirection;
-                if (length(windDir) == 0) windDir = float2(1, 0.5); // Sécurité
+                // --- 1. DEFINIR LE PIVOT ---
+                // Le pivot suit l'instance + l'offset Y pour tourner correctement
+                float3 pivotPos = instancePos + float3(0, _YOffset, 0);
+                
+                // Calculer la longueur d'origine du sommet par rapport au pivot
+                float origLength = length(positionWS - pivotPos);
 
+                // --- 2. WIND PHYSICS ---
                 float time = _Time.y * _WindSpeed;
-                float2 windUV = instancePos.xz * _WindScale - (windDir * time);
-
-                // a. Noise Texture wind
+                float2 windUV = positionWS.xz * _WindScale - (_WindDirection * time);
                 float noise = SAMPLE_TEXTURE2D_LOD(_WindMap, sampler_WindMap, windUV, 0).r;
 
-                // b. specific wheat wave pattern
-                float wave = sin(time * 2.0 + instancePos.x + instancePos.z);
+                float gust = noise * noise;
+                float heightMask = input.uv.y * input.uv.y; // Courbure quadratique
 
-                // c. combine
-                float combinedWind = noise + (wave * 0.2);
+                float totalPush = gust * _GlobalWindStrength * _WindMultiplier * heightMask;
+                
+                float3 displacement = float3(_WindDirection.x * totalPush, 0, _WindDirection.y * totalPush);
+                
+                // Note : On retire la compensation manuelle "displacement.y -= ..." 
+                // car le Length Locking va gérer la descente Y automatiquement et parfaitement.
 
-                // d. local + global force 
-                float finalWindStrength = _GlobalWindStrength * _WindMultiplier;
+                float3 positionWithWind = positionWS + displacement;
 
-                // e. apply bend, the higher, the bendier
-                float bend = combinedWind * finalWindStrength * input.uv.y;
+                // --- 3. LENGTH PRESERVATION (ANTI-STRETCH) ---
+                // Vecteur du Pivot vers la Nouvelle Position (étirée)
+                float3 pivotToNew = positionWithWind - pivotPos;
 
-                float3 displacement = float3(windDir.x, 0, windDir.y) * bend;
+                // On normalise ce vecteur et on le remet à la longueur d'origine
+                // Si origLength est 0 (à la base), on évite la division par zéro
+                if (origLength > 0.0001)
+                {
+                    positionWithWind = pivotPos + normalize(pivotToNew) * origLength;
+                }
+                
+                positionWS = positionWithWind;
+                // ---------------------------------------------
 
-                // compensate vertically
-                displacement.y -= abs(bend) * 0.3;
-
-                // final world pos
-                float3 positionWS = instancePos + posOS + displacement;
-
-                // --- 4. OUTPUT ---
                 output.positionCS = TransformWorldToHClip(positionWS);
                 output.uv = input.uv;
-                output.color = input.color;
+                output.color = input.color; 
+                output.windMask = gust * _GlobalWindStrength;
                 output.positionWS = positionWS;
-                output.windGust = noise;
                 output.rnd = rnd;
-
                 return output;
             }
 
             half4 frag(Varyings input) : SV_Target
             {
-                // --- 1. RANDOM VARIATION ---
-                float brightnessVar = lerp(1.0 - _ColorVar, 1.0 + _ColorVar, input.rnd);
+                // 1. Base Color = Vertex Color * Tint
+                float4 baseColor = input.color * _TintColor;
 
-                // --- 2. GRADIENT ---
-                float heightGradient = pow(input.uv.y, 0.7);
-                float4 baseCol = lerp(_BaseColor, _TipColor, heightGradient);
+                // --- NOUVEAU : VARIATION DE LUMINOSITÉ ALÉATOIRE ---
+                // input.rnd est unique par brin (vient du buffer Compute)
+                float brightness = lerp(1.0 - _ColorVar, 1.0 + _ColorVar, input.rnd);
+                baseColor.rgb *= brightness;
+                // ---------------------------------------------------
 
-                float4 finalColor = baseCol * brightnessVar;
+                // 2. Terrain Blending
+                float2 terrainUV = (input.positionWS.xz - _TerrainPos.xz) / _TerrainSize.xz;
+                float4 groundColor = SAMPLE_TEXTURE2D(_TerrainMap, sampler_TerrainMap, terrainUV);
+                float blendFactor = (1.0 - input.uv.y) * _BlendStrength; 
+                baseColor = lerp(baseColor, groundColor, blendFactor * 0.5);
 
-                // --- 3. LIGHTING & SHADOWS ---
+                // 3. Lighting
                 float4 shadowCoord = TransformWorldToShadowCoord(input.positionWS);
                 Light mainLight = GetMainLight(shadowCoord);
                 float shadow = mainLight.shadowAttenuation;
+                baseColor.rgb *= (mainLight.color * shadow);
 
-                // --- 4. CONTROLLED HIGHLIGHT ---
-                float sunTouch = input.windGust * _SunTint * shadow * heightGradient;
-                float3 sunColor = float3(0.9, 0.8, 0.2);
-                finalColor.rgb = lerp(finalColor.rgb, sunColor, sunTouch * 0.5);
+                // 4. Wind Highlights
+                float highlight = input.windMask * input.uv.y * _WaveOpacity * shadow;
+                baseColor = lerp(baseColor, _WaveColor, highlight);
 
-                // Apply Main Light + Shadow
-                finalColor.rgb *= (mainLight.color * shadow);
-
-                // --- 5. DEEP AMBIENT ---
-                float3 ambient = float3(0.1, 0.1, 0.05) * smoothstep(0.0, 0.5, input.uv.y);
-                finalColor.rgb += ambient;
-                finalColor.rgb = min(finalColor.rgb, float3(0.95, 0.95, 0.95));
-
-                return finalColor;
+                return baseColor;
             }
             ENDHLSL
         }

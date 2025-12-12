@@ -44,6 +44,8 @@ GameObject:
   - component: {fileID: 8506183719910781864}
   - component: {fileID: 1515377391665533419}
   - component: {fileID: 8301971408045579564}
+  - component: {fileID: 496506559688038134}
+  - component: {fileID: 9092791527712303579}
   m_Layer: 8
   m_Name: TowerSniper
   m_TagString: Tower
@@ -163,10 +165,15 @@ MonoBehaviour:
   fireCountdown: 0
   isBusy: 0
   rangeIndicatorPrefab: {fileID: 0}
+  _levelingManager: {fileID: 0}
   rotationMode: 1
   referenceTurnAngle: 180
+  _activeUpgrades: []
   minRange: 10
   projectileThickness: 0.05
+  references:
+    version: 2
+    RefIds: []
 --- !u!114 &8301971408045579564
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -181,6 +188,32 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Visuals.TowerRangeVisualizer
   rangeIndicatorPrefab: {fileID: 1399860383304854833, guid: ed475cce1d14fae44b911896847eabfa, type: 3}
   showOnlyOnSelect: 1
+--- !u!114 &496506559688038134
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5607425079627833002}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f390aac0acfd4c69a7b9cdc9ac76611a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Towers.TowerLevelingManager
+  upgradeTree: {fileID: 0}
+--- !u!114 &9092791527712303579
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5607425079627833002}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 96c115983e0c4e5696f4d3808c0dc772, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GrassOccluder
+  radius: 5
 --- !u!1001 &510992500308580130
 PrefabInstance:
   m_ObjectHideFlags: 0

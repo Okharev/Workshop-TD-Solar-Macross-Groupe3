@@ -12,7 +12,7 @@ public class GlobalWindManager : MonoBehaviour
     public float windScale = 0.05f;
 
     [Tooltip("Force générale du vent pour toute la scène.")]
-    [Range(0f, 5f)]
+    [Range(0f, 1000f)]
     public float globalWindStrength = 1.0f;
 
     [Header("Debug")]
@@ -54,8 +54,8 @@ public class GlobalWindManager : MonoBehaviour
         float timeOffset = Time.time * windSpeed;
 
         // UV = Position * Scale + (Direction * Temps)
-        float u = (worldPosition.x * windScale) + (dir.x * timeOffset);
-        float v = (worldPosition.z * windScale) + (dir.y * timeOffset);
+        float u = (worldPosition.x * windScale) - (dir.x * timeOffset);
+        float v = (worldPosition.z * windScale) - (dir.y * timeOffset);
 
         // 2. Gestion du Tiling (Repeat)
         // Texture2D.GetPixelBilinear ne boucle pas automatiquement, il faut utiliser Repeat

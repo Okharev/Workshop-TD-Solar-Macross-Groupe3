@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using Towers;
@@ -43,6 +44,7 @@ namespace Economy
 
         public string DisplayName => "Yaa";
         public string Description => "SDFSDF";
+        public event Action OnDataChanged;
 
         public Dictionary<string, string> GetStats()
         {

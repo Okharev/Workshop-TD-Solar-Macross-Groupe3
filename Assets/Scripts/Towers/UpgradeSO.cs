@@ -21,6 +21,45 @@ namespace Towers
         public abstract IUpgradeInstance CreateInstance(BaseTower tower);
     }
 
+    [CreateAssetMenu(menuName = "Upgrades/Hello")]
+    public sealed class HelloUpgradeSo : UpgradeSo
+    {
+        public override IUpgradeInstance CreateInstance(BaseTower tower)
+        {
+            return new HelloUpgrade(this, tower);
+        }
+
+        [Serializable]
+        private class HelloUpgrade : IUpgradeInstance
+        {
+            private readonly HelloUpgradeSo _config;
+            private readonly BaseTower _tower;
+
+            public HelloUpgrade(HelloUpgradeSo config, BaseTower tower)
+            {
+                _config = config;
+                _tower = tower;
+            }
+
+            public void Enable()
+            {
+                if (_tower.Events != null)
+                    _tower.Events.OnHit += SayHello;
+            }
+
+            public void Disable()
+            {
+                if (_tower.Events != null)
+                    _tower.Events.OnHit -= SayHello;
+            }
+
+            private void SayHello(UpgradeProvider.OnHitData data)
+            {
+                Debug.Log("Hello ! i hit something");
+            }
+        }
+    }
+
     [CreateAssetMenu(menuName = "Upgrades/Bleed")]
     public sealed class BleedUpgradeSo : UpgradeSo
     {

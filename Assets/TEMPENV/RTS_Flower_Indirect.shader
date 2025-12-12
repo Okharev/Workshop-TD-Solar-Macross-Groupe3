@@ -50,6 +50,7 @@
             float _WindSpeed;
             float _WindScale;
             float2 _WindDirection;
+            float _GlobalWindStrength;
 
             CBUFFER_START(UnityPerMaterial)
                 float4 _StemColor;
@@ -108,7 +109,7 @@
                 float noise = SAMPLE_TEXTURE2D_LOD(_WindMap, sampler_WindMap, windUV, 0).r;
 
                 // Bend Calculation
-                float bendAngle = noise * _WindStrength * 0.5;
+                float bendAngle = noise * _WindStrength * _GlobalWindStrength * 0.5;
                 float h = posOS.y;
 
                 // Rigid movement logic (prevents stretching)

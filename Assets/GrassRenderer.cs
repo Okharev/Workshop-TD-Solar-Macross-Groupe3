@@ -4,13 +4,18 @@ using System.Collections.Generic;
 
 public sealed class GrassRenderer : MonoBehaviour
 {
+    // --- AJOUT : Gestion statique des Occluders ---
+    public static List<GrassOccluder> activeOccluders = new List<GrassOccluder>();
+    public static void RegisterOccluder(GrassOccluder o) { if(!activeOccluders.Contains(o)) activeOccluders.Add(o); }
+    public static void UnregisterOccluder(GrassOccluder o) { activeOccluders.Remove(o); }
+    // ----------------------------------------------
+
     [Header("Settings")]
     public Mesh grassMesh;
     public Material grassMaterial;
     public ComputeShader cullingComputeShader;
     
     [Header("Terrain Blending")]
-    // Assigne ici la texture "Vue de haut" de ton terrain (Albedo / Splatmap)
     public Texture2D terrainColorMap; 
 
     [Header("Spawning")]
@@ -25,6 +30,12 @@ public sealed class GrassRenderer : MonoBehaviour
     private ComputeBuffer allInstancesBuffer;
     private ComputeBuffer visibleInstancesBuffer;
     private ComputeBuffer argsBuffer;
+    
+    // --- AJOUT : Buffer pour les occluders ---
+    private ComputeBuffer occluderBuffer;
+    private Vector4[] occluderData; // Tableau temporaire pour envoyer les données
+    // -----------------------------------------
+
     private uint[] args = new uint[5] { 0, 0, 0, 0, 0 };
 
     void Start()
@@ -32,7 +43,6 @@ public sealed class GrassRenderer : MonoBehaviour
         if (terrain == null) terrain = Terrain.activeTerrain;
         InitBuffers();
     }
-
     void InitBuffers()
     {
         if (!terrain) return;
@@ -105,16 +115,28 @@ public sealed class GrassRenderer : MonoBehaviour
         grassMaterial.SetBuffer("_VisibleInstances", visibleInstancesBuffer);
         
         this.instanceCount = finalCount; 
+        
+        occluderData = new Vector4[200]; 
+        occluderBuffer = new ComputeBuffer(200, sizeof(float) * 4);
     }
 
-    void Update()
+void Update()
     {
         if (allInstancesBuffer == null || instanceCount == 0) return;
+
+        // --- AJOUT : Mise à jour des Occluders ---
+        UpdateOccluders();
+        // -----------------------------------------
 
         visibleInstancesBuffer.SetCounterValue(0);
 
         cullingComputeShader.SetBuffer(0, "_AllInstances", allInstancesBuffer);
         cullingComputeShader.SetBuffer(0, "_VisibleInstances", visibleInstancesBuffer);
+        
+        // --- AJOUT : Envoi des occluders au Shader ---
+        cullingComputeShader.SetBuffer(0, "_Occluders", occluderBuffer);
+        cullingComputeShader.SetInt("_OccluderCount", activeOccluders.Count);
+        // ---------------------------------------------
 
         Matrix4x4 vp = UnityEngine.Camera.main.projectionMatrix * UnityEngine.Camera.main.worldToCameraMatrix;
         cullingComputeShader.SetMatrix("_VPMatrix", vp);
@@ -135,10 +157,41 @@ public sealed class GrassRenderer : MonoBehaviour
         );
     }
 
+    // --- AJOUT : Fonction utilitaire ---
+    void UpdateOccluders()
+    {
+        int count = activeOccluders.Count;
+        if (count == 0) return;
+
+        // Sécurité si on dépasse la taille du buffer
+        if (count > occluderData.Length)
+        {
+            occluderBuffer.Release();
+            occluderData = new Vector4[count + 50];
+            occluderBuffer = new ComputeBuffer(occluderData.Length, sizeof(float) * 4);
+        }
+
+        // On remplit le tableau de données
+        for (int i = 0; i < count; i++)
+        {
+            if(activeOccluders[i] != null)
+            {
+                Vector3 pos = activeOccluders[i].transform.position;
+                float r = activeOccluders[i].radius;
+                occluderData[i] = new Vector4(pos.x, pos.y, pos.z, r);
+            }
+        }
+        
+        // On envoie au GPU
+        occluderBuffer.SetData(occluderData);
+    }
+
     void OnDisable()
     {
         if (allInstancesBuffer != null) allInstancesBuffer.Release();
         if (visibleInstancesBuffer != null) visibleInstancesBuffer.Release();
         if (argsBuffer != null) argsBuffer.Release();
+        // --- AJOUT : Release ---
+        if (occluderBuffer != null) occluderBuffer.Release();
     }
 }

@@ -13,6 +13,8 @@ GameObject:
   - component: {fileID: 762822935104049358}
   - component: {fileID: 3560480792987421245}
   - component: {fileID: 7771856077746717984}
+  - component: {fileID: -2019472055458064676}
+  - component: {fileID: -7998626078859333240}
   m_Layer: 8
   m_Name: TowerMortar
   m_TagString: Tower
@@ -132,13 +134,18 @@ MonoBehaviour:
   fireCountdown: 0
   isBusy: 0
   rangeIndicatorPrefab: {fileID: 0}
+  _levelingManager: {fileID: 0}
   rotationMode: 1
   referenceTurnAngle: 120
+  _activeUpgrades: []
   packRadius: 5
   minProjectileTravelTime: 4
   maxProjectileTravelTime: 6
   mortarProjectilePrefab: {fileID: 6788501368562467226, guid: 2231c745d65b95c4ba0eada45f131cb6, type: 3}
   radiusOfImpact: 6
+  references:
+    version: 2
+    RefIds: []
 --- !u!114 &7771856077746717984
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -153,6 +160,32 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Visuals.TowerRangeVisualizer
   rangeIndicatorPrefab: {fileID: 1399860383304854833, guid: ed475cce1d14fae44b911896847eabfa, type: 3}
   showOnlyOnSelect: 1
+--- !u!114 &-2019472055458064676
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7615454975634943867}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f390aac0acfd4c69a7b9cdc9ac76611a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Towers.TowerLevelingManager
+  upgradeTree: {fileID: 11400000, guid: b6f7041d65fefde43b25034b07ef9c22, type: 2}
+--- !u!114 &-7998626078859333240
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7615454975634943867}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 96c115983e0c4e5696f4d3808c0dc772, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GrassOccluder
+  radius: 5
 --- !u!1 &8788277968841946892
 GameObject:
   m_ObjectHideFlags: 0

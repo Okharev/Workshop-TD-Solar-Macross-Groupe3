@@ -13,6 +13,7 @@ namespace Towers
     {
         public string Label;
         public Sprite Icon;
+        public string Description;
         public Action OnExecute;
         public Func<bool> CanExecute;
     }
@@ -21,6 +22,8 @@ namespace Towers
     {
         string DisplayName { get; }
         string Description { get; }
+        
+        event Action OnDataChanged;
         
         void OnSelect();
         void OnDeselect();
@@ -48,7 +51,31 @@ namespace Towers
         [Range(0.0f, 1.0f)]
         public float refundRatio;
         
-        public int RefundCost => Mathf.RoundToInt(cost * refundRatio);
+        private int _totalInvested;
+        
+        
+        public event Action OnDataChanged;
+        
+        public int RefundCost => Mathf.RoundToInt(_totalInvested * refundRatio);
+
+        // Méthode pour ajouter de la valeur (appelée par le système d'upgrade)
+        public void AddInvestment(int amount)
+        {
+            _totalInvested += amount;
+            NotifyChange(); // On prévient que la valeur a changé
+        }
+
+        // Méthode utilitaire pour déclencher l'événement
+        public void NotifyChange()
+        {
+            OnDataChanged?.Invoke();
+        }
+        
+        
+        protected virtual void Awake()
+        {
+            _totalInvested = cost;
+        }
         
         public virtual List<InteractionAction> GetInteractions()
         {
@@ -77,6 +104,11 @@ namespace Towers
 
         protected virtual void Sell()
         {
+            // 1. On force la désélection. 
+            // Cela va déclencher l'événement OnDeselected que l'InfoPanel écoute.
+            SelectionManager.Deselect(); 
+
+            // 2. Ensuite, on vend/détruit le bâtiment
             BuildingManager.SellBuilding(this);
         }
 

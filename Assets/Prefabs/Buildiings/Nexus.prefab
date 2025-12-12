@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 3485218150375934897}
   - component: {fileID: 2254874439775709254}
   - component: {fileID: 5627214211521358744}
+  - component: {fileID: -9163792475921355872}
   m_Layer: 0
   m_Name: Nexus
   m_TagString: Nexus
@@ -101,6 +102,19 @@ MonoBehaviour:
     _value: 100
   broadcastRadius:
     _value: 60
+--- !u!114 &-9163792475921355872
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 576159419492445392}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 96c115983e0c4e5696f4d3808c0dc772, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GrassOccluder
+  radius: 5
 --- !u!1 &2698652000474220343
 GameObject:
   m_ObjectHideFlags: 0
