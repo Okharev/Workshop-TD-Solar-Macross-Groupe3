@@ -88,11 +88,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3238345694428518885, guid: 8b8d71801f036614e9887ef7538737a9, type: 3}
       propertyPath: maxHealth
-      value: 40
+      value: 112
       objectReference: {fileID: 0}
     - target: {fileID: 3238345694428518885, guid: 8b8d71801f036614e9887ef7538737a9, type: 3}
       propertyPath: currentHealth._value
-      value: 40
+      value: 112
       objectReference: {fileID: 0}
     - target: {fileID: 3676794826586101564, guid: 8b8d71801f036614e9887ef7538737a9, type: 3}
       propertyPath: m_LocalScale.x
@@ -154,13 +154,17 @@ PrefabInstance:
       propertyPath: m_Name
       value: EnnemyMedium
       objectReference: {fileID: 0}
+    - target: {fileID: 6175552696363962038, guid: 8b8d71801f036614e9887ef7538737a9, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 6
+      objectReference: {fileID: 0}
     - target: {fileID: 8781234593180703897, guid: 8b8d71801f036614e9887ef7538737a9, type: 3}
       propertyPath: baseSpeed
       value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 8781234593180703897, guid: 8b8d71801f036614e9887ef7538737a9, type: 3}
       propertyPath: baseHealth
-      value: 40
+      value: 112
       objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 1075060716700723535, guid: 8b8d71801f036614e9887ef7538737a9, type: 3}
