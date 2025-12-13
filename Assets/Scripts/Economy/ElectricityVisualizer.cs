@@ -11,7 +11,8 @@ namespace Economy
         [SerializeField] private float maxWidth = 0.3f;
 
         private readonly List<LineRenderer> _linePool = new();
-
+        private readonly List<LineRenderer> _previewLinePool = new();
+        
         private void Start()
         {
             if (EnergyGridManager.Instance)
@@ -48,6 +49,44 @@ namespace Economy
 
                     DrawLine(lineIndex++, producer.transform.position, consumer.transform.position, contributionRatio);
                 }
+            }
+        }
+        
+        public void PreviewConnections(Vector3 start, List<Vector3> targets)
+        {
+            // 1. On cache tout d'abord
+            foreach (var line in _previewLinePool) line.gameObject.SetActive(false);
+
+            // 2. On affiche les nouvelles
+            for (int i = 0; i < targets.Count; i++)
+            {
+                // Agrandissement du pool si nécessaire
+                if (i >= _previewLinePool.Count)
+                {
+                    var newItem = Instantiate(linePrefab, transform);
+                    newItem.name = $"PreviewLine_{i}";
+                    _previewLinePool.Add(newItem);
+                }
+
+                var line = _previewLinePool[i];
+                line.gameObject.SetActive(true);
+        
+                // Configuration visuelle (peut-être plus fine ou transparente pour le preview)
+                line.SetPosition(0, start + Vector3.up * verticalOffset);
+                line.SetPosition(1, targets[i] + Vector3.up * verticalOffset);
+                line.startWidth = minWidth;
+                line.endWidth = minWidth;
+        
+                // Optionnel : Changer la couleur du matériau pour indiquer "Preview"
+                // line.material.color = Color.cyan; 
+            }
+        }
+
+        public void ClearPreview()
+        {
+            foreach (var line in _previewLinePool)
+            {
+                line.gameObject.SetActive(false);
             }
         }
 

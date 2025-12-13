@@ -64,6 +64,8 @@ namespace Towers
             _totalInvested += amount;
             NotifyChange(); // On prévient que la valeur a changé
         }
+        
+        
 
         // Méthode utilitaire pour déclencher l'événement
         public void NotifyChange()
@@ -122,12 +124,31 @@ namespace Towers
 
         public virtual void OnSelect()
         {
-            // Do fancy shader & audio stuff
+            // 1. Existing visual selection logic (shaders, outlines, etc.)
+            // base.OnSelect() if you have logic in a parent, but here this IS the parent.
+
+            // 2. Turn on Heatmap
+            // We only show it if the system exists AND the building uses energy
+            if (EnergyHeatmapSystem.Instance && UsesEnergy())
+            {
+                EnergyHeatmapSystem.Instance.ToggleHeatmap(true);
+            }
         }
 
         public virtual void OnDeselect()
         {
-            // Remove fancy shader stuff
+
+            // 2. Turn off Heatmap
+            if (EnergyHeatmapSystem.Instance)
+            {
+                EnergyHeatmapSystem.Instance.ToggleHeatmap(false);
+            }
+        }
+        
+        private bool UsesEnergy()
+        {
+            // Returns true if we have a Consumer (Tower) or Producer (Generator)
+            return GetComponent<EnergyConsumer>() || GetComponent<EnergyProducer>();
         }
     }
 }

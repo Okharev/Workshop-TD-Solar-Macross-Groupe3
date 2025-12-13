@@ -173,6 +173,8 @@ namespace Placement
     [DefaultExecutionOrder(-100)]
     public sealed class PlacementManager : MonoBehaviour
     {
+        [SerializeField] private ElectricityVisualizer visualizer; // Drag in inspector
+        
         [Header("Layer Configuration")] [SerializeField]
         private LayerMask terrainLayerMask;
 
@@ -197,7 +199,9 @@ namespace Placement
         private bool _isPlacementMode;
         private UnityEngine.Camera _mainCamera;
         private IPlacementValidator _validator;
-
+        private EnergyProducer _cachedProducer;
+        private EnergyConsumer _cachedConsumer;
+        
         public static PlacementManager Instance { get; private set; }
         
         private void Awake()
@@ -234,6 +238,7 @@ namespace Placement
                 var rotation = Quaternion.Euler(0, _currentRotationY, 0);
 
                 _ghostHelper.UpdatePosition(position, rotation);
+                UpdateEnergyPreview(position);
 
                 var result = _validator.Validate(position, rotation, _currentBuilding);
                 _ghostHelper.SetState(result.IsValid);
@@ -252,6 +257,82 @@ namespace Placement
             }
         }
 
+private void UpdateEnergyPreview(Vector3 ghostPosition)
+{
+    // CAS A : Producteur (Heatmap)
+    if (_cachedProducer != null)
+    {
+        float radius = _cachedProducer.BroadcastRadius.Value > 0 ? _cachedProducer.BroadcastRadius.Value : 15f;
+        EnergyHeatmapSystem.Instance?.SetPreview(ghostPosition, radius, _cachedProducer.MaxCapacity.Value);
+    }
+
+    // CAS B : Consommateur (Simulation de connexion fidèle)
+    if (_cachedConsumer != null && visualizer != null)
+    {
+        // 1. Récupérer le besoin du bâtiment fantôme
+        int energyNeeded = _cachedConsumer.totalRequirement.BaseValue;
+        
+        // 2. Trouver les candidats
+        var hits = Physics.OverlapSphere(ghostPosition, 20f, energyLayerMask);
+        var candidates = new List<EnergyProducer>();
+
+        foreach (var hit in hits)
+        {
+            EnergyProducer provider = null;
+            if (hit.TryGetComponent(out EnergyProducer p)) provider = p;
+            else if (hit.TryGetComponent(out EnergyFieldLink l)) provider = l.GetProducer();
+
+            if (provider != null)
+            {
+                // Vérification stricte de la portée
+                if (Vector3.Distance(ghostPosition, provider.transform.position) <= provider.BroadcastRadius.Value)
+                {
+                    // On évite les doublons si le collider est touché plusieurs fois
+                    if (!candidates.Contains(provider)) candidates.Add(provider);
+                }
+            }
+        }
+
+        // 3. TRIER comme le EnergyGridManager
+        // (Mobile d'abord, puis plus grosse Capacité)
+        candidates.Sort((a, b) => {
+            // Mobile en premier (descending : true > false)
+            int mobileComp = (b.isMobileGenerator ? 1 : 0).CompareTo(a.isMobileGenerator ? 1 : 0);
+            if (mobileComp != 0) return mobileComp;
+            
+            // Capacité en second (descending : 100 > 50)
+            // Note: On utilise Value car les producteurs existants ont leurs upgrades
+            return b.MaxCapacity.Value.CompareTo(a.MaxCapacity.Value);
+        });
+
+        // 4. SIMULATION "GLOUTONNE" (Greedy Allocation)
+        var targets = new List<Vector3>();
+        
+        foreach (var prod in candidates)
+        {
+            if (energyNeeded <= 0) break; // Si on est rassasié, on arrête de chercher !
+
+            // Combien ce producteur a-t-il de libre ?
+            int available = prod.GetAvailable();
+
+            if (available > 0)
+            {
+                // On prend ce qu'on peut
+                int take = Mathf.Min(available, energyNeeded);
+                
+                // On valide la ligne visuelle
+                targets.Add(prod.transform.position);
+                
+                // On réduit le besoin restant
+                energyNeeded -= take;
+            }
+        }
+        
+        // 5. Dessiner seulement les lignes utiles
+        visualizer.PreviewConnections(ghostPosition, targets);
+    }
+}
+        
         private void ConfirmPlacement(Vector3 position, Quaternion rotation)
         {
             var newBuilding = BuildingManager.CreateBuilding(_currentBuilding, position, rotation);
@@ -269,14 +350,24 @@ namespace Placement
         public void StartPlacement(BuildingEntity blueprint)
         {
             if (!blueprint) return;
-            StopPlacement();
+            StopPlacement(); // Nettoie l'état précédent
 
             _currentBuilding = blueprint;
             _isPlacementMode = true;
 
-            _ghostHelper.CreateGhost(blueprint.currentLevelPrefab.gameObject);
+            // --- OPTIMISATION : ON CACHE LES COMPOSANTS ICI ---
+            // On le fait une seule fois au début, pas dans l'Update
+            _cachedProducer = _currentBuilding.GetComponent<EnergyProducer>();
+            _cachedConsumer = _currentBuilding.GetComponent<EnergyConsumer>();
+            // --------------------------------------------------
 
-            if (blueprint.energyDrain > 0) EnergyHeatmapSystem.Instance?.ToggleHeatmap(true);
+            _ghostHelper.CreateGhost(blueprint.currentLevelPrefab.gameObject);  
+
+            // Si c'est un consommateur ou producteur, on active la Heatmap
+            if (_cachedConsumer != null || _cachedProducer != null) 
+            {
+                EnergyHeatmapSystem.Instance?.ToggleHeatmap(true);
+            }
 
             OnPlacementStarted?.Invoke();
         }
@@ -285,9 +376,24 @@ namespace Placement
         {
             _isPlacementMode = false;
             _currentBuilding = null;
+    
+            // On vide le cache par sécurité
+            _cachedProducer = null;
+            _cachedConsumer = null;
+
             _ghostHelper.ClearGhost();
 
+            // --- CORRECTION : NETTOYAGE IMPÉRATIF ---
+            // 1. Couper la Heatmap
             EnergyHeatmapSystem.Instance?.ToggleHeatmap(false);
+            EnergyHeatmapSystem.Instance?.ClearPreview(); // Enlève le "fantôme" rouge/vert sur la map
+
+            // 2. Cacher les lignes de prévisualisation
+            if (visualizer != null)
+            {
+                visualizer.ClearPreview();
+            }
+            // ----------------------------------------
 
             OnPlacementEnded?.Invoke();
         }

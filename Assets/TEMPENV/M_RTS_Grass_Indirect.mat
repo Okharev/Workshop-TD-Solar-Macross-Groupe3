@@ -144,7 +144,7 @@ Material:
     - _Surface: 0
     - _TintStrength: 0.5
     - _TranslucencyPower: 5
-    - _WaveOpacity: 0.06
+    - _WaveOpacity: 0.2
     - _WindDirX: 1
     - _WindDirZ: 0.4
     - _WindMultiplier: 0.7

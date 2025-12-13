@@ -22,7 +22,7 @@ Material:
   m_PrefabAsset: {fileID: 0}
   m_Name: Mat_FriendlyBuilding_Debug
   m_Shader: {fileID: 211, guid: 0000000000000000f000000000000000, type: 0}
-  m_Parent: {fileID: 2100000, guid: eaec2088553c489458b0ef119f00aaa4, type: 2}
+  m_Parent: {fileID: 2100000, guid: 2d9ba2d1b19023a43a041e3199515b85, type: 2}
   m_ModifiedSerializedProperties: 2
   m_ValidKeywords:
   - EFFECT_BUMP
