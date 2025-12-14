@@ -21,7 +21,7 @@ namespace Towers.TowerDerived
 
         protected override void Start()
         {
-            if (towerLayer == 0) towerLayer = LayerMask.GetMask("PlacementBlockers"); 
+            if (towerLayer == 0) towerLayer = LayerMask.GetMask("PlacementBlockers");
 
             StartCoroutine(BuffLoop());
         }

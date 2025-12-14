@@ -8,21 +8,15 @@ namespace Towers
     public sealed class StatInt
     {
         // La valeur que tu configures (Base)
-        [Tooltip("Valeur de base (sans upgrades)")]
-        [SerializeField] private int _baseValue;
-        
-        // --- NOUVEAU : Champ de visualisation ---
-        // On utilise [SerializeField] pour le voir dans l'inspecteur
-        // On le garde privé pour ne pas qu'on puisse l'utiliser par erreur dans le code
-        [Header("Debug Info")]
-        [Tooltip("Valeur finale actuelle (Lecture seule)")]
-        [SerializeField] private int _currentValueDisplay;
-        // ----------------------------------------
+        [Tooltip("Valeur de base (sans upgrades)")] [SerializeField]
+        private int _baseValue;
+
+        [Header("Debug Info")] [Tooltip("Valeur finale actuelle (Lecture seule)")] [SerializeField]
+        private int _currentValueDisplay;
+
+        [SerializeReference] private List<StatModifier> _modifiers = new();
 
         private readonly ReactiveInt _value = new(0);
-        
-        [SerializeReference] // Permet de voir la liste des modificateurs dans l'inspecteur (optionnel mais utile)
-        private List<StatModifier> _modifiers = new();
 
         public StatInt(int initialBaseValue = 0)
         {
@@ -32,7 +26,7 @@ namespace Towers
         }
 
         public int Value => _value.Value;
-        
+
         public int BaseValue
         {
             get => _baseValue;
@@ -58,14 +52,29 @@ namespace Towers
             return removed;
         }
 
+        /// <summary>
+        ///     Retire tous les modificateurs liés à une source spécifique (ex: un Upgrade précis).
+        /// </summary>
+        public void RemoveAllModifiersFromSource(object source)
+        {
+            var changed = false;
+            for (var i = _modifiers.Count - 1; i >= 0; i--)
+                if (_modifiers[i].Source == source)
+                {
+                    _modifiers.RemoveAt(i);
+                    changed = true;
+                }
+
+            if (changed) Recalculate();
+        }
+
         private void Recalculate()
         {
             float finalValue = _baseValue;
             float sumPercentAdd = 0;
-            float totalPercentMult = 1f;
+            var totalPercentMult = 1f;
 
             foreach (var mod in _modifiers)
-            {
                 switch (mod.Type)
                 {
                     case StatModType.Flat:
@@ -78,20 +87,19 @@ namespace Towers
                         totalPercentMult *= mod.Value;
                         break;
                 }
-            }
 
             finalValue *= 1 + sumPercentAdd;
             finalValue *= totalPercentMult;
 
-            int result = Mathf.RoundToInt(finalValue);
-            
+            var result = Mathf.RoundToInt(finalValue);
+
             _value.Value = result;
-            
-            // --- MISE À JOUR VISUELLE ---
             _currentValueDisplay = result;
-            // ----------------------------
         }
-        
-        public static implicit operator int(StatInt s) => s.Value;
+
+        public static implicit operator int(StatInt s)
+        {
+            return s.Value;
+        }
     }
 }

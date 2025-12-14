@@ -39,7 +39,7 @@ namespace Towers.ProjectileDerived
                 var obj = collidersCache[i];
 
                 if (!obj.TryGetComponent<HealthComponent>(out var victim)) return;
-                source.Events.OnHit?.Invoke(new UpgradeProvider.OnHitData()
+                source.Events.OnHit?.Invoke(new UpgradeProvider.OnHitData
                 {
                     Origin = gameObject,
                     Target = gameObject
@@ -47,13 +47,11 @@ namespace Towers.ProjectileDerived
 
 
                 if (victim.TakeDamage(Mathf.RoundToInt(source.damage.Value)))
-                {
-                    source.Events.OnKill?.Invoke(new UpgradeProvider.OnKillData()
+                    source.Events.OnKill?.Invoke(new UpgradeProvider.OnKillData
                     {
                         Origin = gameObject,
                         Target = gameObject
                     });
-                }
             }
 
             Destroy(gameObject);

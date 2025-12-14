@@ -5,8 +5,7 @@ namespace Enemy
 {
     public sealed class HealthComponent : MonoBehaviour
     {
-        [Header("Configuration")]
-        [SerializeField]
+        [Header("Configuration")] [SerializeField]
         private ReactiveInt currentHealth = new(100);
 
         [SerializeField] private int maxHealth = 100;
@@ -15,16 +14,13 @@ namespace Enemy
         public int CurrentHealthRaw => CurrentHealth.Value;
         public int MaxHealth => maxHealth;
 
-        public event Action<GameObject> OnDeath;
-
         private void Start()
         {
             var waveManager = FindAnyObjectByType<WaveManager>();
-            if (waveManager)
-            {
-                waveManager.RegisterEnemy(this);
-            }
+            if (waveManager) waveManager.RegisterEnemy(this);
         }
+
+        public event Action<GameObject> OnDeath;
 
         public bool TakeDamage(int amount)
         {
@@ -36,7 +32,7 @@ namespace Enemy
                 Destroy(gameObject);
                 return true;
             }
-            
+
             return false;
         }
 

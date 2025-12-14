@@ -1,35 +1,45 @@
 ﻿using System;
 using System.Collections.Generic;
+using Economy;
 using UnityEngine;
+// Nécessaire pour accéder à EnergyConsumer
 
 namespace Towers.Upgrades
 {
-    // OCP : On étend le système sans modifier BaseTower ou UpgradeSo
+    // OCP : On étend le système pour inclure l'énergie sans casser l'existant
     [CreateAssetMenu(menuName = "Upgrades/Stat Bundle")]
     public sealed class StatUpgradeSo : UpgradeSo
     {
-        [Serializable]
-        public struct StatConfig
+        // On ajoute EnergyConsumption à la liste des cibles
+        public enum StatTarget
         {
-            public StatModType modifierType;
-            public float value;
-            public StatTarget targetStat; // Enum défini ci-dessous pour savoir quelle stat viser
+            Damage,
+            Range,
+            FireRate,
+            EnergyConsumption
         }
 
-        public enum StatTarget { Damage, Range, FireRate }
-
-        public List<StatConfig> modifiers = new List<StatConfig>();
+        public List<StatConfig> modifiers = new();
 
         public override IUpgradeInstance CreateInstance(BaseTower tower)
         {
             return new StatUpgradeInstance(this, tower);
         }
 
+        [Serializable]
+        public struct StatConfig
+        {
+            public StatModType modifierType;
+            public float value;
+            public StatTarget targetStat;
+        }
+
         private class StatUpgradeInstance : IUpgradeInstance
         {
+            // On garde une trace pour le debug, même si on utilise RemoveAllModifiersFromSource pour le nettoyage
+            private readonly List<StatModifier> _appliedModifiers = new();
             private readonly StatUpgradeSo _config;
             private readonly BaseTower _tower;
-            private readonly List<StatModifier> _appliedModifiers = new();
 
             public StatUpgradeInstance(StatUpgradeSo config, BaseTower tower)
             {
@@ -41,8 +51,22 @@ namespace Towers.Upgrades
             {
                 foreach (var modConfig in _config.modifiers)
                 {
-                    // On choisit la stat cible sur la tour
-                    Stat statToMod = modConfig.targetStat switch
+                    // CAS SPECIAL : Consommation d'énergie (StatInt sur un autre composant)
+                    if (modConfig.targetStat == StatTarget.EnergyConsumption)
+                    {
+                        var consumer = _tower.GetComponent<EnergyConsumer>();
+                        if (consumer != null)
+                        {
+                            var mod = new StatModifier(modConfig.value, modConfig.modifierType, this);
+                            consumer.totalRequirement.AddModifier(mod);
+                            _appliedModifiers.Add(mod);
+                        }
+
+                        continue; // On passe au modifier suivant
+                    }
+
+                    // CAS STANDARD : Stats de la tour (StatFloat)
+                    var statToMod = modConfig.targetStat switch
                     {
                         StatTarget.Damage => _tower.damage,
                         StatTarget.Range => _tower.range,
@@ -52,7 +76,6 @@ namespace Towers.Upgrades
 
                     if (statToMod != null)
                     {
-                        // On crée le modificateur en utilisant cette instance comme "Source"
                         var mod = new StatModifier(modConfig.value, modConfig.modifierType, this);
                         statToMod.AddModifier(mod);
                         _appliedModifiers.Add(mod);
@@ -62,10 +85,15 @@ namespace Towers.Upgrades
 
             public void Disable()
             {
-                // Nettoyage propre (utile si on vend ou reset la tour)
+                // 1. Nettoyage des stats de la tour
                 _tower.damage.RemoveAllModifiersFromSource(this);
                 _tower.range.RemoveAllModifiersFromSource(this);
                 _tower.fireRate.RemoveAllModifiersFromSource(this);
+
+                // 2. Nettoyage de la consommation d'énergie
+                var consumer = _tower.GetComponent<EnergyConsumer>();
+                if (consumer != null) consumer.totalRequirement.RemoveAllModifiersFromSource(this);
+
                 _appliedModifiers.Clear();
             }
         }

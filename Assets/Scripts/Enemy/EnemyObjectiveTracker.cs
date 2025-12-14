@@ -9,6 +9,9 @@ namespace Enemy
 
         [SerializeField] private DestructibleObjective _backupObjective; // La base principale (généralement)
 
+        public DestructibleObjective CurrentObjective => _activeObjectiveScript;
+        public DestructibleObjective BackupObjective => _backupObjective;
+
         // La propriété réactive que Movement et Attacker écoutent
         public ReactiveProperty<Transform> CurrentTarget { get; } = new();
 

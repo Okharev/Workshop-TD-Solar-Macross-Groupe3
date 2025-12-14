@@ -1,16 +1,20 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Buildings;
 using Unity.AI.Navigation;
 using Unity.Mathematics;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Splines;
-using Buildings; // Accès à RoadBlocker
+// Nécessaire pour NavMeshSurface
+
+// Accès à RoadBlocker
 
 namespace Pathing
 {
+    [RequireComponent(typeof(SplineContainer))]
     public sealed class RoadNetworkGenerator : MonoBehaviour
     {
         [Header("Terrain Texturing")] public bool applySplatting;
@@ -21,14 +25,24 @@ namespace Pathing
         public float groundOffset = 0.05f;
         public bool useSplineTwist = true;
 
-        [Header("Navigation Logic")] public int roadEdgeAreaID = 3; // High Cost
+        [Header("Global Quality Override")]
+        [Tooltip("Si activé, écrase les réglages de résolution de tous les profils de route.")]
+        public bool overrideGlobalQuality;
+
+        [Min(0.1f)] public float globalVertexSpacing = 1.0f;
+        [Range(1, 12)] public int globalCrossResolution = 4;
+
+        [Header("Navigation Logic")] public NavMeshSurface navMeshSurface; // Référence au composant de baking
+
+        public bool autoBakeNavMesh = true; // Toggle pour activer le baking auto
+        public int roadEdgeAreaID = 3; // High Cost
         public int roadCenterAreaID = 4; // Low Cost
 
         [Tooltip("Le Prefab DOIT contenir le script 'RoadBlocker' à la racine.")]
         public GameObject navigationBlockerPrefab;
 
         [Tooltip("Lifts the blocker up. Useful if your prefab pivot is in the center.")]
-        public float blockerHeightOffset; 
+        public float blockerHeightOffset;
 
         [Range(0.1f, 0.9f)] public float centerLaneWidthPercent = 0.5f;
 
@@ -62,24 +76,21 @@ namespace Pathing
 
         // Internal Data
         private readonly Dictionary<int, SplineConnectionIds> _connectionMap = new();
-        private readonly Dictionary<int, (SeamData StartSeam, SeamData EndSeam)> _seamPositionMap = new();
-        
-        // Registry unique : On passe par le Controller pour tout gérer
+
+        // Liste temporaire pour stocker les blockers générés afin de gérer le baking
+        private readonly List<RoadBlocker> _generatedBlockers = new();
         private readonly Dictionary<int, RoadSegmentController> _roadRegistry = new();
+        private readonly Dictionary<int, (SeamData StartSeam, SeamData EndSeam)> _seamPositionMap = new();
 
         private void Awake()
         {
             // Rebuild registry at runtime startup if objects exist
             _roadRegistry.Clear();
-            
+
             var controllers = GetComponentsInChildren<RoadSegmentController>();
             foreach (var controller in controllers)
-            {
                 if (!_roadRegistry.ContainsKey(controller.SplineIndex))
-                {
                     _roadRegistry.Add(controller.SplineIndex, controller);
-                }
-            }
         }
 
 #if UNITY_EDITOR
@@ -103,6 +114,7 @@ namespace Pathing
             _connectionMap.Clear();
             _seamPositionMap.Clear();
             _roadRegistry.Clear();
+            _generatedBlockers.Clear(); // Reset liste blockers
 
             // 1. Cleanup Children
             for (var i = transform.childCount - 1; i >= 0; i--)
@@ -140,22 +152,46 @@ namespace Pathing
             }
 
             ApplyTerrainSplatting();
+
+            // 5. Auto Bake NavMesh
+            if (autoBakeNavMesh) BakeNavMesh();
+        }
+
+        private void BakeNavMesh()
+        {
+            if (navMeshSurface == null) navMeshSurface = GetComponent<NavMeshSurface>();
+
+            if (navMeshSurface == null)
+            {
+                Debug.LogWarning("[RoadNetworkGenerator] AutoBake activé mais aucun composant NavMeshSurface trouvé !");
+                return;
+            }
+
+            // 1. Désactiver tous les obstacles pour que le NavMesh considère la route comme ouverte
+            foreach (var blocker in _generatedBlockers)
+                if (blocker != null)
+                    blocker.gameObject.SetActive(false);
+
+            // 2. Lancer le Bake
+            navMeshSurface.BuildNavMesh();
+
+            // 3. Réactiver les obstacles (leur état logique sera géré par les contrôleurs)
+            foreach (var blocker in _generatedBlockers)
+                if (blocker != null)
+                    blocker.gameObject.SetActive(true);
+
+            Debug.Log(
+                $"[RoadNetworkGenerator] NavMesh Baked successfully over {_generatedBlockers.Count} potential obstacles.");
         }
 
         // --- API for External Scripts ---
 
         public void SetRoadBlocked(int splineIndex, bool isBlocked)
         {
-            // On cherche le contrôleur de ce segment
             if (_roadRegistry.TryGetValue(splineIndex, out var controller))
-            {
-                // On utilise SetBlockedInternal pour éviter que le controller ne nous rappelle en boucle
                 controller.SetBlockedInternal(isBlocked);
-            }
             else
-            {
                 Debug.LogWarning($"[RoadNetworkGenerator] Cannot find RoadController for Spline Index {splineIndex}.");
-            }
         }
 
         // --------------------------------------------------------------------------------
@@ -225,27 +261,28 @@ namespace Pathing
                     blockerInstance.name = "Nav_Blocker";
                     blockerInstance.transform.localPosition = snappedPos;
                     blockerInstance.transform.rotation = Quaternion.LookRotation(forward, up);
-                    
-                    // Toujours garder l'objet actif pour que le script puisse fonctionner
-                    blockerInstance.SetActive(true);
 
-                    // Récupération du script RoadBlocker
+                    blockerInstance.SetActive(true);
                     blockerScript = blockerInstance.GetComponent<RoadBlocker>();
-                    
+
                     if (blockerScript == null)
-                    {
-                        Debug.LogError($"Le prefab assigné à 'Navigation Blocker Prefab' n'a pas le composant 'RoadBlocker' ! (Spline: {splineIndex})");
-                    }
+                        Debug.LogError(
+                            $"Le prefab assigné à 'Navigation Blocker Prefab' n'a pas le composant 'RoadBlocker' ! (Spline: {splineIndex})");
+                    else
+                        // Ajouter à la liste pour le baking
+                        _generatedBlockers.Add(blockerScript);
                 }
 
                 // --- SETUP CONTROLLER ---
                 var controller = roadGO.AddComponent<RoadSegmentController>();
                 controller.Initialize(this, splineIndex, blockerScript, initialBlockedState);
-                
+
                 _roadRegistry[splineIndex] = controller;
 
 #if UNITY_EDITOR
-                GameObjectUtility.SetStaticEditorFlags(roadGO, StaticEditorFlags.NavigationStatic);
+                GameObjectUtility.SetStaticEditorFlags(roadGO,
+                    StaticEditorFlags.NavigationStatic | StaticEditorFlags.BatchingStatic |
+                    StaticEditorFlags.OccluderStatic);
 #endif
 
                 // 3. Create the Center Lane Object
@@ -258,6 +295,9 @@ namespace Pathing
                     var mf = centerGO.AddComponent<MeshFilter>();
                     var mr = centerGO.AddComponent<MeshRenderer>();
                     mr.sharedMaterial = roadMaterial;
+
+                    // Application des paramètres (Static, Layer, Ombres)
+                    SetupGeneratedMeshObject(centerGO, mr);
 
                     var centerMesh = new Mesh();
                     centerMesh.name = $"CenterMesh_{splineIndex}";
@@ -273,7 +313,8 @@ namespace Pathing
                     mod.area = roadCenterAreaID;
 
 #if UNITY_EDITOR
-                    GameObjectUtility.SetStaticEditorFlags(centerGO, StaticEditorFlags.NavigationStatic);
+                    GameObjectUtility.SetStaticEditorFlags(centerGO,
+                        StaticEditorFlags.NavigationStatic | StaticEditorFlags.BatchingStatic);
 #endif
                 }
             }
@@ -286,9 +327,14 @@ namespace Pathing
             var activeLength = (tEnd - tStart) * splineLength;
             if (activeLength < 0.01f) return;
 
-            var segments = Mathf.CeilToInt(activeLength / Mathf.Max(0.1f, profile.vertexSpacing));
+            // --- Override Check ---
+            var spacing = overrideGlobalQuality ? globalVertexSpacing : profile.vertexSpacing;
+            var crossResBase = overrideGlobalQuality ? globalCrossResolution : profile.crossResolution;
+            // ---------------------
+
+            var segments = Mathf.CeilToInt(activeLength / Mathf.Max(0.1f, spacing));
             var widthPercent = uMax - uMin;
-            var resolution = Mathf.Max(1, Mathf.RoundToInt(profile.crossResolution * widthPercent));
+            var resolution = Mathf.Max(1, Mathf.RoundToInt(crossResBase * widthPercent));
             var prevRowIndices = new List<int>();
 
             for (var i = 0; i <= segments; i++)
@@ -340,13 +386,35 @@ namespace Pathing
             }
         }
 
+        private void SetupGeneratedMeshObject(GameObject go, MeshRenderer mr)
+        {
+            // 1. Shadows OFF
+            if (mr != null)
+            {
+                mr.shadowCastingMode = ShadowCastingMode.Off;
+                mr.receiveShadows = true;
+            }
+
+            // 2. Layer "Roads"
+            var roadLayer = LayerMask.NameToLayer("Roads");
+            if (roadLayer != -1) go.layer = roadLayer;
+            else go.layer = 0; // Default
+
+            // 3. Static
+            go.isStatic = true;
+        }
+
         private GameObject CreateMeshObject(string name, MeshData data, int areaID)
         {
-            var go = new GameObject(name) { layer = gameObject.layer };
+            var go = new GameObject(name);
             var mf = go.AddComponent<MeshFilter>();
             var mr = go.AddComponent<MeshRenderer>();
             var mc = go.AddComponent<MeshCollider>();
             var mod = go.AddComponent<NavMeshModifier>();
+
+            // --- CONFIGURATION CENTRALE ---
+            SetupGeneratedMeshObject(go, mr);
+            // -----------------------------
 
             mr.sharedMaterial = roadMaterial;
             var mesh = new Mesh { name = name + "_Mesh", indexFormat = IndexFormat.UInt32 };
@@ -410,7 +478,8 @@ namespace Pathing
                 var rawPos = (Vector3)pos;
 
                 var steps = Mathf.Max(1, junctionResolution);
-                var crossRes = Mathf.Max(1, profile.crossResolution);
+                var crossRes = overrideGlobalQuality ? globalCrossResolution : Mathf.Max(1, profile.crossResolution);
+
                 var prevRowIndices = new List<int>();
                 var armLeftIndices = new List<int>();
                 var armRightIndices = new List<int>();

@@ -48,10 +48,9 @@ namespace Towers.TowerDerived
         {
             foreach (var (enemy, hitCount) in _hitTracker)
             {
-
                 var totalForce = knockbackForce * hitCount;
 
- 
+
                 enemy.ApplyKnockback(transform.position, totalForce, knockbackDuration);
             }
         }
@@ -102,26 +101,23 @@ namespace Towers.TowerDerived
                 Debug.DrawRay(fp.position, shootDir * range.Value, Color.green, 0.2f);
 
                 if (!hit.collider.TryGetComponent<HealthComponent>(out var victim)) return;
-                Events.OnHit?.Invoke(new UpgradeProvider.OnHitData()
+                Events.OnHit?.Invoke(new UpgradeProvider.OnHitData
                 {
                     Origin = gameObject,
                     Target = victim.gameObject
                 });
 
-                
+
                 if (victim.gameObject.TryGetComponent<EnemyController>(out var movement))
                     if (!_hitTracker.TryAdd(movement, 1))
                         _hitTracker[movement]++;
 
                 if (victim.TakeDamage(Mathf.RoundToInt(damage.Value)))
-                {
-                    Events.OnKill?.Invoke(new UpgradeProvider.OnKillData()
+                    Events.OnKill?.Invoke(new UpgradeProvider.OnKillData
                     {
                         Origin = gameObject,
                         Target = gameObject
                     });
-                }
-
             }
             else
             {

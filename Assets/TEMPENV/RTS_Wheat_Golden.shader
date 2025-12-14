@@ -1,243 +1,286 @@
-﻿Shader "Custom/RTS_Wheat_VertexColor"
+﻿Shader "Custom/GenshinFoliageWind_Responsive"
 {
     Properties
     {
-        [Header(Main Settings)]
-        _TintColor ("Global Tint", Color) = (1, 1, 1, 1)
+        [Header(Base Settings)]
+        _BaseMap("Leaf Texture", 2D) = "white" {}
+        _Cutoff("Alpha Cutoff", Range(0, 1)) = 0.5
+
+        [Header(Genshin Stylization)]
+        _ColorTop("High Color (Sun)", Color) = (0.5, 0.8, 0.5, 1)
+        _ColorBot("Low Color (Shadow)", Color) = (0.2, 0.4, 0.2, 1)
+        _GradientScale("Gradient Scale", Float) = 10.0
+        _GradientOffset("Gradient Offset", Float) = 0.0
+
+        [Header(Color Variation)]
+        [Toggle(_)] _EnableColorVar("Enable Position Variation", Float) = 1.0
+        _ColorVariation("Variation Tint", Color) = (0.6, 0.8, 0.4, 1)
+        _VariationScale("Variation Scale (World Size)", Float) = 0.1
+        _VariationPower("Variation Intensity", Range(0, 1)) = 0.3
         
-        [Header(Terrain Blending)]
-        _TerrainMap ("Terrain Color Map (Top Down)", 2D) = "white" {}
-        _TerrainSize ("Terrain Size (XZ)", Vector) = (1000, 1000, 0, 0)
-        _TerrainPos ("Terrain Position (XZ)", Vector) = (0, 0, 0, 0)
-        _BlendStrength ("Terrain Blend Strength", Range(0, 1)) = 0.5
+        [Header(Stylized Specular)]
+        _SpecularColor("Specular Tint", Color) = (1, 1, 1, 1) // Devenu un Tint
+        _SpecularPower("Specular Size", Range(0.1, 100)) = 20.0
+        _SpecularIntensity("Specular Intensity", Range(0, 5)) = 0.5
+
+        [Header(Lighting)]
+        _RampTex("Toon Ramp (Black to White)", 2D) = "white" {}
+        _ShadowTint("Shadow Tint", Color) = (0.3, 0.3, 0.5, 1)
+
+        [Header(Rim Light)]
+        _RimTint("Rim Tint (Multiplies Light)", Color) = (1, 1, 1, 1) // Changé
+        _RimPower("Rim Sharpness", Range(0.1, 20)) = 3.0
+        _RimIntensity("Rim Intensity", Range(0, 5)) = 0.5
+
+        [Header(Translucency)]
+        _TranslucencyTint("Translucency Tint", Color) = (0.5, 0.8, 0.2, 1) // Changé
+        _TranslucencyPower("Translucency Focus", Range(0, 20)) = 5.0
+        _TranslucencyDistortion("Translucency Distortion", Range(0, 1)) = 0.2
 
         [Header(Wind Physics)]
-        _WindMultiplier ("Wind Responsiveness", Range(0.0, 5.0)) = 1.2 
-
+        _WindMultiplier("Overall Wind Strength", Range(0, 5)) = 1.0
+        _LeafFlutter("Leaf Flutter Intensity", Range(0, 1)) = 0.2
+        
         [Header(Wind Visuals)]
-        _WaveColor ("Gust Highlight Color", Color) = (1.0, 1.0, 0.8, 1)
-        _WaveOpacity ("Gust Visual Strength", Range(0,1)) = 0.3
-
-        [Header(Variation)]
-        _MinScale ("Min Scale Variance", Float) = 0.9
-        _MaxScale ("Max Scale Variance", Float) = 1.1
-        // --- NOUVEAU ---
-        _ColorVar ("Random Darken/Lighten", Range(0, 0.5)) = 0.2
-        _YOffset ("Mesh Vertical Offset", Float) = 0.0
-        // ---------------
+        _WaveTint ("Gust Tint", Color) = (1, 1, 1, 1) // Changé
+        _WaveOpacity ("Gust Visual Strength", Range(0,1)) = 0.2
+        
+        [Header(Quality Of Life)]
+        _EdgeFadePower("Edge Fade Power", Range(0, 20)) = 2.0
+        _EdgeFadeOffset("Edge Fade Offset", Range(0, 1)) = 0.1
     }
 
     SubShader
     {
-        Tags { "RenderType"="Opaque" "RenderPipeline"="UniversalPipeline" }
-        Cull Off
+        Tags 
+        { 
+            "RenderType"="TransparentCutout" 
+            "Queue"="AlphaTest" 
+            "RenderPipeline" = "UniversalPipeline" 
+        }
+        LOD 100
 
         Pass
         {
             Name "ForwardLit"
-            Tags { "LightMode"="UniversalForward" }
+            Tags { "LightMode" = "UniversalForward" }
+            Cull Off 
 
             HLSLPROGRAM
             #pragma vertex vert
             #pragma fragment frag
-            #pragma target 4.5
+            #pragma multi_compile_instancing
+            #pragma instancing_options procedural:setup
             #pragma multi_compile _ _MAIN_LIGHT_SHADOWS
             #pragma multi_compile _ _MAIN_LIGHT_SHADOWS_CASCADE
             #pragma multi_compile _ _SHADOWS_SOFT
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
+            #include "GenshinWindPhysics.hlsl"
 
-            StructuredBuffer<float4> _VisibleInstances;
+            // --- INDIRECT SETUP (Standard) ---
+            struct TreeData { float3 position; float4 rotation; float scale; float4 colorTint; };
+            #ifdef UNITY_PROCEDURAL_INSTANCING_ENABLED
+                StructuredBuffer<TreeData> _TreeDataBuffer;
+                StructuredBuffer<uint> _VisibleInstanceIndices;
+            #endif
+            float4x4 QuaternionToMatrix(float4 q) {
+                float4x4 m = float4x4(1-2*q.y*q.y-2*q.z*q.z, 2*q.x*q.y-2*q.z*q.w, 2*q.x*q.z+2*q.y*q.w, 0, 2*q.x*q.y+2*q.z*q.w, 1-2*q.x*q.x-2*q.z*q.z, 2*q.y*q.z-2*q.x*q.w, 0, 2*q.x*q.z-2*q.y*q.w, 2*q.y*q.z+2*q.x*q.w, 1-2*q.x*q.x-2*q.y*q.y, 0, 0,0,0,1);
+                return m;
+            }
+            void setup() {
+            #ifdef UNITY_PROCEDURAL_INSTANCING_ENABLED
+                uint id = _VisibleInstanceIndices[unity_InstanceID];
+                TreeData data = _TreeDataBuffer[id];
+                float4x4 rot = QuaternionToMatrix(data.rotation);
+                float4x4 scaleMat = float4x4(data.scale,0,0,0, 0,data.scale,0,0, 0,0,data.scale,0, 0,0,0,1);
+                float4x4 posMat = float4x4(1,0,0,data.position.x, 0,1,0,data.position.y, 0,0,1,data.position.z, 0,0,0,1);
+                unity_ObjectToWorld = mul(posMat, mul(rot, scaleMat));
+                float invScale = 1.0 / data.scale;
+                float4x4 invScaleMat = float4x4(invScale,0,0,0, 0,invScale,0,0, 0,0,invScale,0, 0,0,0,1);
+                float4x4 invRotMat = transpose(rot);
+                float4x4 invPosMat = float4x4(1,0,0,-data.position.x, 0,1,0,-data.position.y, 0,0,1,-data.position.z, 0,0,0,1);
+                unity_WorldToObject = mul(invScaleMat, mul(invRotMat, invPosMat));
+            #endif
+            }
 
-            // GLOBALS (Wind Manager)
+            // Globals
+            float _GlobalWindStrength; float _WindSpeed; float _WindScale; float2 _WindDirection;
             TEXTURE2D(_WindMap); SAMPLER(sampler_WindMap);
-            float _WindSpeed;
-            float _WindScale;
-            float2 _WindDirection;
-            float _GlobalWindStrength;
-
-            TEXTURE2D(_TerrainMap); SAMPLER(sampler_TerrainMap);
 
             CBUFFER_START(UnityPerMaterial)
-                float4 _TintColor;
-                float4 _WaveColor;
-                float4 _TerrainSize;
-                float4 _TerrainPos;
-                float _BlendStrength;
-                float _WaveOpacity;
-                float _WindMultiplier;
-                float _MinScale;
-                float _MaxScale;
-                // --- NOUVEAU ---
-                float _ColorVar;
-                float _YOffset;
-                // ---------------
-                float _TipFlutter; // Force du tremblement rapide du sommet
-                float _Stiffness;  // 0 = Mou (Herbe), 1 = Dur (Maïs)
+                float4 _BaseMap_ST; half _Cutoff;
+                half4 _ColorTop; half4 _ColorBot; float _GradientScale; float _GradientOffset;
+                float _EnableColorVar; half4 _ColorVariation; float _VariationScale; float _VariationPower;
+                
+                half4 _SpecularColor; float _SpecularPower; float _SpecularIntensity;
+                
+                half4 _ShadowTint; 
+                half4 _RimTint; // Renommé
+                half _RimPower; half _RimIntensity;
+                
+                half4 _TranslucencyTint; // Renommé
+                half _TranslucencyPower; half _TranslucencyDistortion;
+                
+                half _WindMultiplier; half _LeafFlutter;
+                
+                half4 _WaveTint; // Renommé
+                half _WaveOpacity; half _EdgeFadePower; half _EdgeFadeOffset;
             CBUFFER_END
+            
+            TEXTURE2D(_BaseMap); SAMPLER(sampler_BaseMap);
+            TEXTURE2D(_RampTex); SAMPLER(sampler_RampTex);
 
-            struct Attributes
+            struct Attributes { float4 positionOS : POSITION; float2 uv : TEXCOORD0; float3 normalOS : NORMAL; float4 color : COLOR; UNITY_VERTEX_INPUT_INSTANCE_ID };
+            struct Varyings { float4 positionCS : SV_POSITION; float2 uv : TEXCOORD0; float3 normalWS : TEXCOORD1; float3 positionWS : TEXCOORD3; float windMask : TEXCOORD4; float4 color : COLOR; UNITY_VERTEX_INPUT_INSTANCE_ID };
+
+            Varyings vert(Attributes input)
             {
-                float4 positionOS : POSITION;
-                float2 uv : TEXCOORD0;
-                float4 color : COLOR;
-                uint instanceID : SV_InstanceID;
-            };
+                Varyings output; UNITY_SETUP_INSTANCE_ID(input);
+                
+                float4 instanceTint = float4(1,1,1,1);
+                #ifdef UNITY_PROCEDURAL_INSTANCING_ENABLED
+                    uint id = _VisibleInstanceIndices[unity_InstanceID];
+                    instanceTint = _TreeDataBuffer[id].colorTint;
+                #endif
 
-            struct Varyings
-            {
-                float4 positionCS : SV_POSITION;
-                float2 uv : TEXCOORD0;
-                float4 color : TEXCOORD1;
-                float windMask : TEXCOORD3;
-                float3 positionWS : TEXCOORD4;
-                float rnd : TEXCOORD5;
-            };
+                VertexPositionInputs vertexInput = GetVertexPositionInputs(input.positionOS.xyz);
+                output.positionWS = vertexInput.positionWS;
+                VertexNormalInputs normalInput = GetVertexNormalInputs(input.normalOS, float4(1,1,1,1));
+                output.normalWS = normalInput.normalWS;
 
-Varyings vert(Attributes input)
-{
-    Varyings output;
+                // Physics
+                float time = _Time.y * _WindSpeed;
+                float2 windUV = output.positionWS.xz * _WindScale - (_WindDirection * time);
+                float noise = SAMPLE_TEXTURE2D_LOD(_WindMap, sampler_WindMap, windUV, 0).r;
+                float gust = noise * noise;
+                float3 bending = CalculateMainBending(output.positionWS, input.color.r, input.color.a, _WindMultiplier, _WindDirection, _WindSpeed, _GlobalWindStrength, _WindMap, sampler_WindMap, _WindScale, time);
+                float3 flutter = CalculateLeafFlutter(input.positionOS.xyz, output.normalWS, _LeafFlutter, time, input.color.g);
 
-    // --- 1. SETUP INSTANCE (Identique à votre code) ---
-    float4 instanceData = _VisibleInstances[input.instanceID];
-    float3 instancePos = instanceData.xyz;
-    float rnd = instanceData.w;
-
-    // Rotation & Scale
-    float angle = rnd * 6.283185;
-    float s, c;
-    sincos(angle, s, c);
-    float scale = lerp(_MinScale, _MaxScale, rnd);
-
-    float3 posOS = input.positionOS.xyz * scale;
-    
-    // Rotation Y manuelle
-    float xNew = posOS.x * c - posOS.z * s;
-    float zNew = posOS.x * s + posOS.z * c;
-    posOS.x = xNew;
-    posOS.z = zNew;
-
-    // Position Monde de base
-    float3 positionWS = instancePos + posOS;
-    positionWS.y += _YOffset;
-
-    // --- 2. CONFIGURATION PIVOT & LONGUEUR ---
-    // Pivot au sol (avec l'offset Y pris en compte)
-    float3 pivotPos = instancePos + float3(0, _YOffset, 0);
-    // On calcule la distance vertex <-> pivot pour la conserver plus tard (Anti-Stretch)
-    float origLength = length(positionWS - pivotPos);
-    
-    // Si on est exactement au pivot, on ne fait rien (optimisation)
-    if (origLength < 0.001) {
-        output.positionCS = TransformWorldToHClip(positionWS);
-        output.uv = input.uv;
-        output.color = input.color;
-        output.windMask = 0;
-        output.positionWS = positionWS;
-        output.rnd = rnd;
-        return output;
-    }
-
-    // --- 3. WIND PHYSICS "NEXT-GEN" ---
-
-    // A. Vent Global (La direction générale)
-    float time = _Time.y * _WindSpeed;
-    float2 windUV = positionWS.xz * _WindScale - (_WindDirection * time);
-    // On échantillonne le bruit (Rafale principale)
-    float noise = SAMPLE_TEXTURE2D_LOD(_WindMap, sampler_WindMap, windUV, 0).r;
-    
-    // B. Ambient Sway (Le mouvement "au repos")
-    // Crée une ondulation douce même sans vent fort.
-    // On utilise instancePos pour désynchroniser les plantes.
-    float ambientFreq = _Time.y * 0.5; // Lent
-    float ambientSway = sin(ambientFreq + instancePos.x * 0.3 + instancePos.z * 0.3) * 0.05;
-
-    // C. High Frequency Shiver (Le tremblement des feuilles/épis)
-    // Très rapide, très petit, affecte surtout le sommet.
-    float shiverFreq = _Time.y * 12.0; // Rapide
-    float shiver = sin(shiverFreq + instancePos.x) * _TipFlutter * noise; // Le bruit module le shiver (plus de vent = plus de tremblement)
-
-    // --- 4. CALCUL DE LA FORCE ---
-    
-    // Masque de hauteur (Quadratique pour une courbure naturelle)
-    float heightMask = pow(input.uv.y, 2.0); 
-    
-    // Pour le maïs/blé, le sommet bouge plus "violemment" par rapport à la tige rigide
-    // On ajoute le "Shiver" uniquement sur la partie haute (UV > 0.6)
-    float tipMask = max(0, input.uv.y - 0.6);
-    
-    // Mix des forces
-    // Force Principale = (Rafale + Ambient) * ForceGlobale * MultiplicateurLocal
-    float mainWindForce = (noise + ambientSway) * _GlobalWindStrength * _WindMultiplier;
-    
-    // Application de la rigidité (_Stiffness)
-    // Plus c'est rigide, moins ça plie, mais le "Shiver" reste.
-    mainWindForce *= (1.0 - _Stiffness * 0.5); 
-
-    // Calcul du vecteur de déplacement
-    float3 displacement = 0;
-    
-    // Déplacement XZ (Pliage de la tige)
-    displacement.x = _WindDirection.x * mainWindForce * heightMask;
-    displacement.z = _WindDirection.y * mainWindForce * heightMask;
-
-    // Ajout du "Shiver" (Tremblement) au sommet (Ajoute du chaos local)
-    displacement.x += shiver * tipMask * 0.5;
-    displacement.z += shiver * tipMask * 0.5;
-
-    // Position temporaire "étirée"
-    float3 positionWithWind = positionWS + displacement;
-
-    // --- 5. LENGTH LOCKING (CRITIQUE) ---
-    // C'est votre code existant, essentiel pour ne pas étirer la texture.
-    float3 pivotToNew = positionWithWind - pivotPos;
-    positionWithWind = pivotPos + normalize(pivotToNew) * origLength;
-
-    // Mise à jour finale
-    positionWS = positionWithWind;
-
-    // --- SORTIE ---
-    output.positionCS = TransformWorldToHClip(positionWS);
-    output.uv = input.uv;
-    output.color = input.color;
-    // On passe le bruit pour le frag shader (Highlighter les rafales)
-    output.windMask = noise * _GlobalWindStrength;
-    output.positionWS = positionWS;
-    output.rnd = rnd;
-
-    return output;
-}
+                output.positionWS += bending + flutter;
+                output.positionCS = TransformWorldToHClip(output.positionWS);
+                output.uv = TRANSFORM_TEX(input.uv, _BaseMap);
+                output.color = input.color * instanceTint;
+                output.windMask = gust * _GlobalWindStrength;
+                return output;
+            }
 
             half4 frag(Varyings input) : SV_Target
             {
-                // 1. Base Color = Vertex Color * Tint
-                float4 baseColor = input.color * _TintColor;
+                // Edge Fade
+                float3 ddxPos = ddx(input.positionWS);
+                float3 ddyPos = ddy(input.positionWS);
+                float3 geometricNormal = normalize(cross(ddyPos, ddxPos));
+                half3 viewDir = GetWorldSpaceNormalizeViewDir(input.positionWS);
+                float geometricNdotV = abs(dot(geometricNormal, viewDir));
+                float edgeAlpha = pow(smoothstep(_EdgeFadeOffset, 1.0, geometricNdotV), _EdgeFadePower);
+                half4 texColor = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv);
+                clip((texColor.a * edgeAlpha) - _Cutoff);
 
-                // --- NOUVEAU : VARIATION DE LUMINOSITÉ ALÉATOIRE ---
-                // input.rnd est unique par brin (vient du buffer Compute)
-                float brightness = lerp(1.0 - _ColorVar, 1.0 + _ColorVar, input.rnd);
-                baseColor.rgb *= brightness;
-                // ---------------------------------------------------
+                // Colors & Gradient
+                float heightFactor = saturate((input.positionWS.y + _GradientOffset) / _GradientScale);
+                half3 gradient = lerp(_ColorBot.rgb, _ColorTop.rgb, heightFactor);
+                if(_EnableColorVar > 0.5) {
+                    float variationNoise = sin(input.positionWS.x * _VariationScale) + cos(input.positionWS.z * _VariationScale * 0.8);
+                    gradient = lerp(gradient, _ColorVariation.rgb, (variationNoise * 0.5 + 0.5) * _VariationPower);
+                }
+                half3 albedo = texColor.rgb * gradient * input.color.b * input.color.rgb;
 
-                // 2. Terrain Blending
-                float2 terrainUV = (input.positionWS.xz - _TerrainPos.xz) / _TerrainSize.xz;
-                float4 groundColor = SAMPLE_TEXTURE2D(_TerrainMap, sampler_TerrainMap, terrainUV);
-                float blendFactor = (1.0 - input.uv.y) * _BlendStrength; 
-                baseColor = lerp(baseColor, groundColor, blendFactor * 0.5);
+                // --- LIGHTING ---
+                Light mainLight = GetMainLight(TransformWorldToShadowCoord(input.positionWS));
+                half3 lightDir = normalize(mainLight.direction);
+                half3 normal = normalize(input.normalWS); 
+                float NdotL = dot(normal, lightDir);
+                float shadowAtten = mainLight.shadowAttenuation;
+                float rampUV = saturate((NdotL * 0.5 + 0.5) * shadowAtten);
+                half3 rampColor = SAMPLE_TEXTURE2D(_RampTex, sampler_RampTex, float2(rampUV, 0.5)).rgb;
+                
+                // La couleur du résultat lumière prend en compte la lumière principale
+                half3 lightColorResult = lerp(_ShadowTint.rgb, mainLight.color, (rampColor.r + rampColor.g + rampColor.b) / 3.0);
 
-                // 3. Lighting
-                float4 shadowCoord = TransformWorldToShadowCoord(input.positionWS);
-                Light mainLight = GetMainLight(shadowCoord);
-                float shadow = mainLight.shadowAttenuation;
-                baseColor.rgb *= (mainLight.color * shadow);
+                // --- 1. SPECULAR (INFERRED) ---
+                half3 halfVector = normalize(lightDir + viewDir);
+                float NdotH = dot(normal, halfVector);
+                float specular = smoothstep(0.5, 0.55, pow(saturate(NdotH), _SpecularPower));
+                // On utilise mainLight.color ici !
+                half3 specularReflection = mainLight.color * _SpecularColor.rgb * specular * _SpecularIntensity * shadowAtten;
 
-                // 4. Wind Highlights
-                float highlight = input.windMask * input.uv.y * _WaveOpacity * shadow;
-                baseColor = lerp(baseColor, _WaveColor, highlight);
+                // --- 2. TRANSLUCENCY (INFERRED) ---
+                half3 transLightDir = lightDir + normal * _TranslucencyDistortion;
+                float transDot = pow(saturate(dot(viewDir, -transLightDir)), _TranslucencyPower);
+                // On utilise mainLight.color ! La lumière qui passe au travers est celle du soleil
+                half3 translucency = transDot * _TranslucencyTint.rgb * mainLight.color * shadowAtten;
 
-                return baseColor;
+                // --- 3. RIM LIGHT (INFERRED) ---
+                float fresnel = 1.0 - saturate(dot(viewDir, normal));
+                float rimTerm = pow(fresnel, _RimPower);
+                float rimLimit = saturate(dot(normal, lightDir) + 0.5);
+                // Le Rim est illuminé par le soleil, donc mainLight.color
+                half3 rimLight = mainLight.color * _RimTint.rgb * rimTerm * _RimIntensity * rimLimit;
+
+                // --- 4. WIND VISUALS (INFERRED) ---
+                float gustHighlight = input.windMask * _WaveOpacity;
+                // Les rafales brillent avec la couleur du soleil
+                half3 windVisualColor = mainLight.color * _WaveTint.rgb * gustHighlight;
+
+                // Final
+                half3 ambient = SampleSH(normal);
+                half3 finalColor = albedo * (lightColorResult * rampColor + ambient) 
+                                 + translucency 
+                                 + rimLight 
+                                 + windVisualColor
+                                 + specularReflection;
+
+                return half4(finalColor, 1.0);
             }
+            ENDHLSL
+        }
+        
+        // Shadow Pass (Standard, sans changement nécessaire sauf CBUFFER)
+        Pass {
+            Name "ShadowCaster" Tags{"LightMode" = "ShadowCaster"} ZWrite On ZTest LEqual ColorMask 0
+            HLSLPROGRAM
+            #pragma vertex ShadowPassVertex
+            #pragma fragment ShadowPassFragment
+            #pragma multi_compile_instancing
+            #pragma instancing_options procedural:setup
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Shadows.hlsl"
+            #include "GenshinWindPhysics.hlsl"
+
+            struct TreeData { float3 position; float4 rotation; float scale; float4 colorTint; };
+            #ifdef UNITY_PROCEDURAL_INSTANCING_ENABLED
+                StructuredBuffer<TreeData> _TreeDataBuffer; StructuredBuffer<uint> _VisibleInstanceIndices;
+            #endif
+            float4x4 QuaternionToMatrix(float4 q) { float4x4 m = float4x4(1-2*q.y*q.y-2*q.z*q.z, 2*q.x*q.y-2*q.z*q.w, 2*q.x*q.z+2*q.y*q.w, 0, 2*q.x*q.y+2*q.z*q.w, 1-2*q.x*q.x-2*q.z*q.z, 2*q.y*q.z-2*q.x*q.w, 0, 2*q.x*q.z-2*q.y*q.w, 2*q.y*q.z+2*q.x*q.w, 1-2*q.x*q.x-2*q.y*q.y, 0, 0,0,0,1); return m; }
+            void setup() {
+            #ifdef UNITY_PROCEDURAL_INSTANCING_ENABLED
+                uint id = _VisibleInstanceIndices[unity_InstanceID]; TreeData data = _TreeDataBuffer[id];
+                float4x4 rot = QuaternionToMatrix(data.rotation); float4x4 scaleMat = float4x4(data.scale,0,0,0, 0,data.scale,0,0, 0,0,data.scale,0, 0,0,0,1);
+                float4x4 posMat = float4x4(1,0,0,data.position.x, 0,1,0,data.position.y, 0,0,1,data.position.z, 0,0,0,1);
+                unity_ObjectToWorld = mul(posMat, mul(rot, scaleMat));
+                float invScale = 1.0 / data.scale; float4x4 invScaleMat = float4x4(invScale,0,0,0, 0,invScale,0,0, 0,0,invScale,0, 0,0,0,1); float4x4 invRotMat = transpose(rot); float4x4 invPosMat = float4x4(1,0,0,-data.position.x, 0,1,0,-data.position.y, 0,0,1,-data.position.z, 0,0,0,1);
+                unity_WorldToObject = mul(invScaleMat, mul(invRotMat, invPosMat));
+            #endif
+            }
+            float _GlobalWindStrength; float _WindSpeed; float _WindScale; float2 _WindDirection; TEXTURE2D(_WindMap); SAMPLER(sampler_WindMap);
+
+            CBUFFER_START(UnityPerMaterial)
+                float4 _BaseMap_ST; half _Cutoff;
+                half4 _ColorTop; half4 _ColorBot; float _GradientScale; float _GradientOffset;
+                float _EnableColorVar; half4 _ColorVariation; float _VariationScale; float _VariationPower;
+                half4 _SpecularColor; float _SpecularPower; float _SpecularIntensity;
+                half4 _ShadowTint; half4 _RimTint; half _RimPower; half _RimIntensity;
+                half4 _TranslucencyTint; half _TranslucencyPower; half _TranslucencyDistortion;
+                half _WindMultiplier; half _LeafFlutter;
+                half4 _WaveTint; half _WaveOpacity; half _EdgeFadePower; half _EdgeFadeOffset;
+            CBUFFER_END
+            TEXTURE2D(_BaseMap); SAMPLER(sampler_BaseMap);
+            struct Attributes { float4 positionOS : POSITION; float2 texcoord : TEXCOORD0; float4 color : COLOR; UNITY_VERTEX_INPUT_INSTANCE_ID };
+            struct Varyings { float4 positionCS : SV_POSITION; float2 uv : TEXCOORD0; float3 positionWS : TEXCOORD1; UNITY_VERTEX_INPUT_INSTANCE_ID };
+            Varyings ShadowPassVertex(Attributes input) { Varyings output; UNITY_SETUP_INSTANCE_ID(input); VertexPositionInputs vertexInput = GetVertexPositionInputs(input.positionOS.xyz); float3 positionWS = vertexInput.positionWS; float time = _Time.y * _WindSpeed; float3 bending = CalculateMainBending(positionWS, input.color.r, input.color.a, _WindMultiplier, _WindDirection, _WindSpeed, _GlobalWindStrength, _WindMap, sampler_WindMap, _WindScale, time); positionWS += bending; output.positionCS = TransformWorldToHClip(positionWS); output.uv = TRANSFORM_TEX(input.texcoord, _BaseMap); output.positionWS = positionWS; return output; }
+            half4 ShadowPassFragment(Varyings input) : SV_TARGET { half4 texColor = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv); float3 ddxPos = ddx(input.positionWS); float3 ddyPos = ddy(input.positionWS); float3 geometricNormal = normalize(cross(ddyPos, ddxPos)); half3 viewDir = GetWorldSpaceNormalizeViewDir(input.positionWS); float geometricNdotV = abs(dot(geometricNormal, viewDir)); float edgeAlpha = pow(smoothstep(_EdgeFadeOffset, 1.0, geometricNdotV), _EdgeFadePower); clip((texColor.a * edgeAlpha) - _Cutoff); return 0; }
             ENDHLSL
         }
     }
