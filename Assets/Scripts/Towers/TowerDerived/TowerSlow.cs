@@ -7,20 +7,18 @@ namespace Towers.TowerDerived
 {
     public sealed class TowerSlow : BaseTower
     {
-        [Header("Slow Configuration")] 
-        [Tooltip("Percentage to slow the enemy. 0.3 = 30% slow.")] 
-        [Range(0f, 0.9f)]
+        [Header("Slow Configuration")] [Tooltip("Percentage to slow the enemy. 0.3 = 30% slow.")] [Range(0f, 0.9f)]
         public float slowPercent = 0.3f;
 
-        [Header("Performance")] 
-        [SerializeField]
+        [Header("Performance")] [SerializeField]
         private float checkInterval = 0.2f;
 
         [SerializeField] private LayerMask enemyLayer;
 
         [Header("Visuals")]
         [Tooltip("Glisse ici l'objet enfant qui contient le mesh du rotor Daerrieus.")]
-        [SerializeField] private Transform rotorModel;
+        [SerializeField]
+        private Transform rotorModel;
 
         [Tooltip("Vitesse de rotation quand la tour est au repos (vent normal).")]
         public float idleSpeed = 20f;
@@ -35,7 +33,7 @@ namespace Towers.TowerDerived
         private readonly List<EnemyController> _currentFrameEnemies = new();
         private readonly List<EnemyController> _enemiesToRemove = new();
         private readonly Collider[] _hitBuffer = new Collider[32];
-        
+
         private readonly HashSet<EnemyController> _slowedEnemies = new();
 
         // Variable interne pour suivre la vitesse actuelle
@@ -44,10 +42,10 @@ namespace Towers.TowerDerived
         protected override void Start()
         {
             if (enemyLayer == 0) enemyLayer = LayerMask.GetMask("EnemyAir", "EnemyGround");
-            
+
             // Initialisation de la vitesse
             _currentRotationSpeed = idleSpeed;
-            
+
             StartCoroutine(SlowLoop());
         }
 
@@ -55,6 +53,12 @@ namespace Towers.TowerDerived
         private void Update()
         {
             HandleRotation();
+        }
+
+        private void OnDestroy()
+        {
+            RemoveAllSlows();
+            StopAllCoroutines();
         }
 
         private void HandleRotation()
@@ -65,20 +69,14 @@ namespace Towers.TowerDerived
             // 1. Déterminer la vitesse cible
             // Si on a des ennemis ralentis ET que la tour est alimentée -> Vitesse Rapide
             // Sinon -> Vitesse de Repos
-            bool isActive = _slowedEnemies.Count > 0 && (powerSource == null || powerSource.IsPowered);
-            float targetSpeed = isActive ? activeSpeed : idleSpeed;
+            var isActive = _slowedEnemies.Count > 0 && (powerSource == null || powerSource.IsPowered);
+            var targetSpeed = isActive ? activeSpeed : idleSpeed;
 
             // 2. Transition fluide (Lerp) vers la vitesse cible
             _currentRotationSpeed = Mathf.Lerp(_currentRotationSpeed, targetSpeed, Time.deltaTime * acceleration);
 
             // 3. Appliquer la rotation
             rotorModel.Rotate(Vector3.up, _currentRotationSpeed * Time.deltaTime);
-        }
-
-        private void OnDestroy()
-        {
-            RemoveAllSlows();
-            StopAllCoroutines();
         }
 
         protected override void OnDrawGizmosTower()

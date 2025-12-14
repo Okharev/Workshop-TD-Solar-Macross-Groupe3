@@ -7,23 +7,29 @@ namespace Towers.TowerDerived
 {
     public sealed class MissileTower : BaseTower
     {
-        [Header("Missile Configuration")] 
-        [SerializeField] private HomingMissile missilePrefab;
+        [Header("Missile Configuration")] [SerializeField]
+        private HomingMissile missilePrefab;
+
         [SerializeField] private Transform[] launchPoints;
 
-        [Header("Salvo Settings")] 
-        [SerializeField] private int missileCount = 6;
+        [Header("Salvo Settings")] [SerializeField]
+        private int missileCount = 6;
+
         [SerializeField] private float dispatchInterval = 0.15f;
         [SerializeField] private int maxMultiLockTargets = 4;
 
-        [Header("Arc Settings")]
-        [Tooltip("How far forward the arc extends before going up.")] 
-        [SerializeField] private float launchForwardBias = 2f; // Reduced from 4f
-        [Tooltip("Height of the arc apex relative to the tower.")] 
-        [SerializeField] private float arcHeight = 8f; // Reduced from 15f for tighter loops
+        [Header("Arc Settings")] [Tooltip("How far forward the arc extends before going up.")] [SerializeField]
+        private float launchForwardBias = 2f; // Reduced from 4f
+
+        [Tooltip("Height of the arc apex relative to the tower.")] [SerializeField]
+        private float arcHeight = 8f; // Reduced from 15f for tighter loops
+
         [Tooltip("0.0 = Start, 0.5 = Apex, 1.0 = Target. Stop at 0.5 to let Homing take over at the top.")]
-        [Range(0.1f, 1f)] [SerializeField] private float curvePathDuration = 0.5f; 
-        [SerializeField] private int arcResolution = 8; 
+        [Range(0.1f, 1f)]
+        [SerializeField]
+        private float curvePathDuration = 0.5f;
+
+        [SerializeField] private int arcResolution = 8;
 
         private readonly List<Transform> _lockedTargets = new();
         private readonly Collider[] _targetBuffer = new Collider[32];
@@ -39,7 +45,11 @@ namespace Towers.TowerDerived
         protected override void AcquireTarget()
         {
             var hitCount = Physics.OverlapSphereNonAlloc(transform.position, range.Value, _targetBuffer, targetLayer);
-            if (hitCount == 0) { currentTarget = null; return; }
+            if (hitCount == 0)
+            {
+                currentTarget = null;
+                return;
+            }
 
             Transform bestTarget = null;
             var bestSqrDist = float.MaxValue;
@@ -53,6 +63,7 @@ namespace Towers.TowerDerived
                     bestTarget = _targetBuffer[i].transform;
                 }
             }
+
             currentTarget = bestTarget;
         }
 
@@ -64,21 +75,20 @@ namespace Towers.TowerDerived
 
         private IEnumerator SalvoRoutine()
         {
-            isBusy = true; 
+            isBusy = true;
             RefreshSalvoTargets();
 
             if (_lockedTargets.Count > 0)
-            {
                 for (var i = 0; i < missileCount; i++)
                 {
                     var target = _lockedTargets[i % _lockedTargets.Count];
                     if (!target) target = GetFirstAliveTarget();
 
                     if (target) FireSingleMissile(target, i);
-                    
+
                     yield return _dispatchWait;
                 }
-            }
+
             isBusy = false;
         }
 
@@ -93,31 +103,31 @@ namespace Towers.TowerDerived
             var path = new List<Vector3>();
 
             // P0: Launch Tube
-            Vector3 p0 = tube.position;
+            var p0 = tube.position;
 
             // P2: Target Position (The end anchor of the math, even if we don't fly all the way there)
-            Vector3 p2 = target.position;
+            var p2 = target.position;
 
             // P1: The Apex Control Point
             // We find the midpoint, raise it up by arcHeight.
             // We also add "launchForwardBias" so the missile flies OUT of the tube before going UP.
-            Vector3 midPoint = Vector3.Lerp(p0, p2, 0.5f);
-            
-            Vector3 spread = Random.insideUnitSphere * 1.5f; 
-            spread.y = 0; 
-            
-            Vector3 p1 = midPoint + (Vector3.up * arcHeight) + spread + (tube.forward * launchForwardBias);
+            var midPoint = Vector3.Lerp(p0, p2, 0.5f);
+
+            var spread = Random.insideUnitSphere * 1.5f;
+            spread.y = 0;
+
+            var p1 = midPoint + Vector3.up * arcHeight + spread + tube.forward * launchForwardBias;
 
             // --- GENERATION LOOP ---
             // Key Fix: We multiply by 'curvePathDuration'. 
             // If curvePathDuration is 0.5, we only generate the path up to the peak.
             // This forces the missile to switch to Homing Mode exactly when it peaks.
-            for (int i = 1; i <= arcResolution; i++)
+            for (var i = 1; i <= arcResolution; i++)
             {
-                float tNormalized = i / (float)arcResolution; // 0 to 1 within the loop
-                float tActual = tNormalized * curvePathDuration; // 0 to 0.5 (if duration is 0.5)
-                
-                Vector3 point = EvaluateQuadraticBezier(p0, p1, p2, tActual);
+                var tNormalized = i / (float)arcResolution; // 0 to 1 within the loop
+                var tActual = tNormalized * curvePathDuration; // 0 to 0.5 (if duration is 0.5)
+
+                var point = EvaluateQuadraticBezier(p0, p1, p2, tActual);
                 path.Add(point);
             }
 
@@ -126,10 +136,10 @@ namespace Towers.TowerDerived
 
         private Vector3 EvaluateQuadraticBezier(Vector3 p0, Vector3 p1, Vector3 p2, float t)
         {
-            float u = 1 - t;
-            float tt = t * t;
-            float uu = u * u;
-            return (uu * p0) + (2 * u * t * p1) + (tt * p2);
+            var u = 1 - t;
+            var tt = t * t;
+            var uu = u * u;
+            return uu * p0 + 2 * u * t * p1 + tt * p2;
         }
 
         private void RefreshSalvoTargets()
@@ -145,7 +155,8 @@ namespace Towers.TowerDerived
         private Transform GetFirstAliveTarget()
         {
             foreach (var t in _lockedTargets)
-                if (t != null && t.gameObject.activeInHierarchy) return t;
+                if (t != null && t.gameObject.activeInHierarchy)
+                    return t;
             return null;
         }
 
@@ -154,7 +165,8 @@ namespace Towers.TowerDerived
             Gizmos.color = Color.red;
             if (launchPoints != null)
                 foreach (var lp in launchPoints)
-                    if (lp) Gizmos.DrawRay(lp.position, lp.forward * launchForwardBias);
+                    if (lp)
+                        Gizmos.DrawRay(lp.position, lp.forward * launchForwardBias);
         }
     }
 }

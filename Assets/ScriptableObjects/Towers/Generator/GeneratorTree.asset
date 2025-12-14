@@ -17,4 +17,4 @@ MonoBehaviour:
     options:
     - labelOverride: Generatorrrr
       cost: 20
-      upgradeDefinition: {fileID: 11400000, guid: ee6745bfb346ed448af66de5b95b22ff, type: 2}
+      upgradeDefinition: {fileID: 11400000, guid: 67a46521f67e5254bbe8798574cc6fa0, type: 2}

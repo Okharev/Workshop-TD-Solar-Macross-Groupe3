@@ -8,18 +8,18 @@ namespace Towers
     public class TowerUpgradeTreeSo : ScriptableObject
     {
         // Liste des étapes (Tier 1, Tier 2, etc.)
-        public List<UpgradeTier> tiers = new List<UpgradeTier>();
+        public List<UpgradeTier> tiers = new();
     }
 
     [Serializable]
     public class UpgradeTier
     {
         public string tierName; // Ex: "Module Tactique"
-        
+
         // Liste des choix possibles pour ce niveau.
         // Si la liste a 1 élément = Amélioration linéaire (ex: Lvl 2).
         // Si la liste a >1 éléments = Choix (ex: Lvl 3).
-        public List<UpgradeOption> options = new List<UpgradeOption>();
+        public List<UpgradeOption> options = new();
     }
 
     [Serializable]

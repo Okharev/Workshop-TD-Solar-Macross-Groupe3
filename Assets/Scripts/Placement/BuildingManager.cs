@@ -1,9 +1,8 @@
 ﻿using System;
 using Buildings;
-using UnityEngine;
-
 using Economy;
 using Towers;
+using UnityEngine;
 
 namespace Placement
 {
@@ -20,13 +19,13 @@ namespace Placement
 
         public static BuildingEntity CreateBuilding(BuildingEntity data, Vector3 position, Quaternion rotation)
         {
-            if (!CurrencyManager.Instance.TrySpend(data.cost)) 
+            if (!CurrencyManager.Instance.TrySpend(data.cost))
             {
                 Debug.Log("Pas assez de crédits !");
                 return null;
             }
 
-            GameObject newObj = Instantiate(data.currentLevelPrefab, position, rotation);
+            var newObj = Instantiate(data.currentLevelPrefab, position, rotation);
 
 
             if (!newObj.TryGetComponent<BuildingEntity>(out var entity))
@@ -54,15 +53,15 @@ namespace Placement
             }
 
             // 1. Sauvegarder l'état (position, rotation, etc.)
-            Vector3 pos = oldEntity.transform.position;
-            Quaternion rot = oldEntity.transform.rotation;
+            var pos = oldEntity.transform.position;
+            var rot = oldEntity.transform.rotation;
 
             // 2. Détruire l'ancien
             Destroy(oldEntity.gameObject);
 
             // 3. Créer le nouveau
             SpawnEntity(nextData, pos, rot);
-            
+
             // TODO: Jouer un effet de particules ici
             Debug.Log($"Amélioré en {nextData.displayName}");
         }
@@ -77,12 +76,12 @@ namespace Placement
         // Méthode interne pour instancier proprement
         private BuildingEntity SpawnEntity(BuildingLevelSo data, Vector3 pos, Quaternion rot)
         {
-            GameObject newObj = Instantiate(data.currentLevelPrefab, pos, rot);
-            
+            var newObj = Instantiate(data.currentLevelPrefab, pos, rot);
+
             // On s'assure que le composant est bien là et on l'initialise
             var entity = newObj.GetComponent<BuildingEntity>();
- 
-            
+
+
             return entity;
         }
     }

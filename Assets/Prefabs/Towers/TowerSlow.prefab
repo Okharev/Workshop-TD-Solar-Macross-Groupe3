@@ -16,6 +16,7 @@ GameObject:
   - component: {fileID: 6425537603779408165}
   - component: {fileID: 6884296905430244531}
   - component: {fileID: -8252929612517609037}
+  - component: {fileID: -9083397951629444370}
   m_Layer: 8
   m_Name: TowerSlow
   m_TagString: Tower
@@ -216,7 +217,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 96c115983e0c4e5696f4d3808c0dc772, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GrassOccluder
-  radius: 7
+  radius: 8
+--- !u!114 &-9083397951629444370
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5607425079627833002}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9a27753ed99edca4ba41470f7089d968, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UI.MinimapIcon
+  _iconSprite: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
+  _color: {r: 0.1716981, g: 0.38225836, b: 1, a: 1}
+  _size: 100
 --- !u!1 &8967730424825563994
 GameObject:
   m_ObjectHideFlags: 0
@@ -337,7 +353,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5801697133760783917, guid: ed475cce1d14fae44b911896847eabfa, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -3.77457
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5801697133760783917, guid: ed475cce1d14fae44b911896847eabfa, type: 3}
       propertyPath: m_LocalPosition.y
@@ -345,7 +361,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5801697133760783917, guid: ed475cce1d14fae44b911896847eabfa, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -4.20827
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5801697133760783917, guid: ed475cce1d14fae44b911896847eabfa, type: 3}
       propertyPath: m_LocalRotation.w

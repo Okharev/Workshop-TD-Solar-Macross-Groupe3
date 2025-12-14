@@ -5,10 +5,10 @@ namespace Enemy
 {
     public sealed class MeleeAttacker : EnemyAttacker
     {
+        [SerializeField] public int damage = 2;
+
         protected override void PerformAttack(GameObject target)
         {
-            const int damage = 10;
-
             if (target.TryGetComponent<HealthComponent>(out var health))
             {
                 health.TakeDamage(damage);

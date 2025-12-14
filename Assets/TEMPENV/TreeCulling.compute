@@ -1,0 +1,50 @@
+﻿#pragma kernel CSMain
+
+struct TreeData {
+    float3 position;
+    float4 rotation;
+    float scale;
+    float4 colorTint;
+};
+
+// Buffers
+StructuredBuffer<TreeData> _AllInstances;
+AppendStructuredBuffer<uint> _VisibleInstanceIndices;
+
+// Variables C#
+float4x4 _VPMatrix;
+float3 _CamPos;
+float _MaxDistance;
+uint _Count;
+
+[numthreads(64,1,1)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+    if (id.x >= _Count) return;
+
+    TreeData instance = _AllInstances[id.x];
+    float3 pos = instance.position;
+
+    // 1. Distance Culling
+    float dist = distance(pos, _CamPos);
+    if (dist > _MaxDistance) return;
+
+    // 2. Frustum Culling (Simple point check)
+    // Pour être plus précis, on devrait tester une sphère avec instance.scale
+    float4 clipPos = mul(_VPMatrix, float4(pos, 1.0));
+    
+    // En espace Clip, visible si w > 0 et coordonnées entre -w et w
+    // On ajoute une marge (scale * hauteur approx) pour éviter le popping
+    float margin = instance.scale * 10.0; 
+    
+    bool isVisible = (clipPos.w > -margin); 
+    // Note : Un test frustum complet est plus complexe, 
+    // mais pour un test rapide, on accepte souvent tout ce qui est "devant" ou on ignore si on veut juste tester.
+    
+    // Si vous voulez juste tester sans frustum culling pour commencer :
+    // isVisible = true; 
+
+    if (isVisible) {
+        _VisibleInstanceIndices.Append(id.x);
+    }
+}

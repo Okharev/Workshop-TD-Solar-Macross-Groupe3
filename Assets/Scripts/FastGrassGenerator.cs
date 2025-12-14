@@ -1,46 +1,46 @@
-﻿using UnityEngine;
-using UnityEditor;
+﻿using UnityEditor;
+using UnityEngine;
 
 public class FastGrassGenerator : EditorWindow
 {
     [MenuItem("Tools/Generate OPAQUE RTS Grass")]
     public static void CreateMesh()
     {
-        Mesh mesh = new Mesh
+        var mesh = new Mesh
         {
             name = "RTS_OpaqueCluster"
         };
 
         // Configuration
-        int bladeCount = 3;       // 3 blades per clump
-        float height = 1.0f;      // Height of grass
-        float width = 0.2f;       // Width of base of blade
-        float spread = 0.2f;      // How far apart blades are
-        
-        Vector3[] vertices = new Vector3[bladeCount * 3];
-        Vector2[] uvs = new Vector2[bladeCount * 3];
-        int[] triangles = new int[bladeCount * 3];
+        var bladeCount = 3; // 3 blades per clump
+        var height = 1.0f; // Height of grass
+        var width = 0.2f; // Width of base of blade
+        var spread = 0.2f; // How far apart blades are
 
-        for (int i = 0; i < bladeCount; i++)
+        var vertices = new Vector3[bladeCount * 3];
+        var uvs = new Vector2[bladeCount * 3];
+        var triangles = new int[bladeCount * 3];
+
+        for (var i = 0; i < bladeCount; i++)
         {
             // Calculate rotation for this blade (evenly distributed)
-            float angle = i * (360f / bladeCount);
-            Quaternion rot = Quaternion.Euler(0, angle, 0);
+            var angle = i * (360f / bladeCount);
+            var rot = Quaternion.Euler(0, angle, 0);
 
             // Random variance to make it look natural
-            Vector3 offset = rot * new Vector3(0, 0, spread * 0.5f); 
+            var offset = rot * new Vector3(0, 0, spread * 0.5f);
 
             // Define the 3 points of a grass blade (Triangle)
             // Relative to (0,0,0)
-            Vector3 vLeft = new Vector3(-width * 0.5f, 0, 0);
-            Vector3 vRight = new Vector3(width * 0.5f, 0, 0);
-            Vector3 vTop = new Vector3(0, height, 0); // Tapers to a point!
+            var vLeft = new Vector3(-width * 0.5f, 0, 0);
+            var vRight = new Vector3(width * 0.5f, 0, 0);
+            var vTop = new Vector3(0, height, 0); // Tapers to a point!
 
             // Apply rotation and offset
-            int vIndex = i * 3;
-            vertices[vIndex + 0] = (rot * vLeft) + offset;  // Bottom Left
-            vertices[vIndex + 1] = (rot * vRight) + offset; // Bottom Right
-            vertices[vIndex + 2] = (rot * vTop) + offset;   // Top Tip
+            var vIndex = i * 3;
+            vertices[vIndex + 0] = rot * vLeft + offset; // Bottom Left
+            vertices[vIndex + 1] = rot * vRight + offset; // Bottom Right
+            vertices[vIndex + 2] = rot * vTop + offset; // Top Tip
 
             // UVs (For gradient coloring)
             uvs[vIndex + 0] = new Vector2(0, 0);
@@ -56,14 +56,14 @@ public class FastGrassGenerator : EditorWindow
         mesh.vertices = vertices;
         mesh.uv = uvs;
         mesh.triangles = triangles;
-        
 
-        mesh.normals = null; 
+
+        mesh.normals = null;
         mesh.tangents = null;
-        
+
         mesh.RecalculateBounds();
 
-        string path = "Assets/RTS_Opaque_Grass.asset";
+        var path = "Assets/RTS_Opaque_Grass.asset";
         AssetDatabase.CreateAsset(mesh, path);
         AssetDatabase.SaveAssets();
 

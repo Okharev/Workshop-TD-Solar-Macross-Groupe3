@@ -32,9 +32,10 @@ namespace Towers
     [CreateAssetMenu(menuName = "Upgrades/Energy Modifier")]
     public sealed class EnergyUpgradeSo : UpgradeSo
     {
-        [Header("Energy Settings")]
-        public EnergyTargetType targetType;
+        [Header("Energy Settings")] public EnergyTargetType targetType;
+
         public StatModType modificationType;
+
         [Tooltip("Value for Flat, PercentAdd (0.1 = 10%), or Mult")]
         public float value;
 
@@ -48,7 +49,7 @@ namespace Towers
         {
             private readonly EnergyUpgradeSo _config;
             private readonly BaseTower _tower;
-            
+
             // On stocke le modifier pour pouvoir le retirer plus tard (SOLID)
             private StatModifier _modifier;
 
@@ -71,8 +72,8 @@ namespace Towers
                         ApplyToProducer();
                         break;
                     case EnergyTargetType.Range:
-                         ApplyToProducerRange(); // Pour le fun (Bonus)
-                         break;
+                        ApplyToProducerRange(); // Pour le fun (Bonus)
+                        break;
                 }
             }
 
@@ -87,10 +88,10 @@ namespace Towers
                 var producer = _tower.GetComponent<EnergyProducer>();
                 if (producer)
                 {
-                     // Note: Pour faire ça proprement, il faudrait aussi changer producer.maxCapacity en public 
-                     // ou ajouter une méthode RemoveModifier sur le Producer.
-                     // Pour l'instant, supposons que nous avons rendu StatInt public dans Producer comme dans Consumer.
-                     // Voir note d'implémentation ci-dessous.
+                    // Note: Pour faire ça proprement, il faudrait aussi changer producer.maxCapacity en public 
+                    // ou ajouter une méthode RemoveModifier sur le Producer.
+                    // Pour l'instant, supposons que nous avons rendu StatInt public dans Producer comme dans Consumer.
+                    // Voir note d'implémentation ci-dessous.
                 }
             }
 
@@ -99,37 +100,31 @@ namespace Towers
                 // BaseTower a déjà une référence 'powerSource'
                 // Mais pour être sûr d'avoir le composant réel :
                 var consumer = _tower.GetComponent<EnergyConsumer>();
-                if (consumer)
-                {
-                    consumer.totalRequirement.AddModifier(_modifier);
-                }
+                if (consumer) consumer.totalRequirement.AddModifier(_modifier);
             }
 
             private void ApplyToProducer()
             {
                 var producer = _tower.GetComponent<EnergyProducer>();
                 if (producer)
-                {
                     // Nous devons accéder au StatInt.
                     // Solution propre : Ajouter une méthode 'AddModifier' sur EnergyProducer
                     // Solution rapide (si StatInt est public) :
                     // producer.maxCapacity.AddModifier(_modifier);
-                    
                     // Comme j'ai mis 'private StatInt maxCapacity' dans l'exemple plus haut,
                     // il faut utiliser une méthode publique sur EnergyProducer.
                     producer.AddCapacityModifier(_modifier);
-                }
             }
-            
+
             private void ApplyToProducerRange()
             {
-                 // Pour la portée (qui est un Float), on peut utiliser le système Stat standard
-                 // si on convertit ReactiveFloat en Stat dans EnergyProducer.
-                 // Pour cet exemple, restons sur les Ints.
+                // Pour la portée (qui est un Float), on peut utiliser le système Stat standard
+                // si on convertit ReactiveFloat en Stat dans EnergyProducer.
+                // Pour cet exemple, restons sur les Ints.
             }
         }
     }
-    
+
     [CreateAssetMenu(menuName = "Upgrades/Hello")]
     public sealed class HelloUpgradeSo : UpgradeSo
     {
