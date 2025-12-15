@@ -7,4 +7,5 @@
         <ui:Button text="Zoo" name="ButtonZoo" class="button-menu" />
         <ui:Button text="Leave" name="ButtonLeave" class="button-menu" />
     </ui:VisualElement>
+    <ui:VisualElement name="Fader" class="fader" picking-mode="Ignore" />
 </ui:UXML>
