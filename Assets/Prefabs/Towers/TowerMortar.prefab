@@ -136,9 +136,9 @@ MonoBehaviour:
   nextUpgrade: {fileID: 0}
   refundRatio: 0.9
   powerSource: {fileID: 762822935104049358}
-  baseDamage: 15
-  baseRange: 80
-  baseFireRate: 1
+  baseDamage: 10
+  baseRange: 45
+  baseFireRate: 1.5
   damage:
     _baseValue:
       _value: 0
