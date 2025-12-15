@@ -96,7 +96,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1004739888977982886, guid: 9df7380db50448b44b860ef01dcf3a9e, type: 3}
       propertyPath: minStallSpeed
-      value: 6
+      value: 12
       objectReference: {fileID: 0}
     - target: {fileID: 1004739888977982886, guid: 9df7380db50448b44b860ef01dcf3a9e, type: 3}
       propertyPath: maxThrustSpeed
@@ -113,6 +113,14 @@ PrefabInstance:
     - target: {fileID: 1004739888977982886, guid: 9df7380db50448b44b860ef01dcf3a9e, type: 3}
       propertyPath: weightSeparation
       value: 30
+      objectReference: {fileID: 0}
+    - target: {fileID: 3399384273038241848, guid: 9df7380db50448b44b860ef01dcf3a9e, type: 3}
+      propertyPath: maxHealth
+      value: 50
+      objectReference: {fileID: 0}
+    - target: {fileID: 3399384273038241848, guid: 9df7380db50448b44b860ef01dcf3a9e, type: 3}
+      propertyPath: currentHealth._value
+      value: 50
       objectReference: {fileID: 0}
     - target: {fileID: 3594526995502976572, guid: 9df7380db50448b44b860ef01dcf3a9e, type: 3}
       propertyPath: m_Size.z
