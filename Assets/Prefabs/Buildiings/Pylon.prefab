@@ -78,7 +78,7 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
@@ -187,7 +187,9 @@ GameObject:
   - component: {fileID: 4498335880237134501}
   - component: {fileID: 596233420682327185}
   - component: {fileID: 3553257654113091858}
-  m_Layer: 0
+  - component: {fileID: 851527466883103430}
+  - component: {fileID: 7214719138664667003}
+  m_Layer: 12
   m_Name: Pylon
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -226,9 +228,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Economy.EnergyProducer
   isMobileGenerator: 1
   maxCapacity:
-    _value: 100
+    _baseValue: 100
+    _currentValueDisplay: 100
+    _modifiers: []
   broadcastRadius:
     _value: 50
+  references:
+    version: 2
+    RefIds: []
 --- !u!114 &5161753327049622365
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -289,3 +296,39 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GrassOccluder
   radius: 5
+--- !u!65 &851527466883103430
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6550899339497922917}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 8, y: 12, z: 8}
+  m_Center: {x: 0, y: 6, z: 0}
+--- !u!114 &7214719138664667003
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6550899339497922917}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9a27753ed99edca4ba41470f7089d968, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UI.MinimapIcon
+  _iconSprite: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
+  _color: {r: 0.42563504, g: 1, b: 0.41320753, a: 1}
+  _size: 100

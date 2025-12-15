@@ -93,10 +93,10 @@ namespace Towers.TowerDerived
 
                 // B. Si on touche un ennemi (Target Layer)
                 if (((1 << hit.collider.gameObject.layer) & targetLayer) == 0) continue;
-                
+
                 if (!hit.collider.TryGetComponent<HealthComponent>(out var victim)) return;
-                
-                Events.OnHit?.Invoke(new UpgradeProvider.OnHitData()
+
+                Events.OnHit?.Invoke(new UpgradeProvider.OnHitData
                 {
                     Origin = gameObject,
                     Target = gameObject
@@ -104,13 +104,11 @@ namespace Towers.TowerDerived
 
 
                 if (victim.TakeDamage(Mathf.RoundToInt(damageAmount)))
-                {
-                    Events.OnKill?.Invoke(new UpgradeProvider.OnKillData()
+                    Events.OnKill?.Invoke(new UpgradeProvider.OnKillData
                     {
                         Origin = gameObject,
                         Target = gameObject
                     });
-                }
             }
         }
 

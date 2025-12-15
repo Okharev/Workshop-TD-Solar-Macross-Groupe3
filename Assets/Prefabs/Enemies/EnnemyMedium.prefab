@@ -70,29 +70,53 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: -3085748104850769281, guid: 8b8d71801f036614e9887ef7538737a9, type: 3}
+      propertyPath: amountToLoot
+      value: 20
+      objectReference: {fileID: 0}
     - target: {fileID: 1105061454396104584, guid: 8b8d71801f036614e9887ef7538737a9, type: 3}
       propertyPath: defaultStoppingDistance
       value: 1.8
       objectReference: {fileID: 0}
     - target: {fileID: 2705688281348489239, guid: 8b8d71801f036614e9887ef7538737a9, type: 3}
       propertyPath: m_Speed
-      value: 6
+      value: 7.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 2705688281348489239, guid: 8b8d71801f036614e9887ef7538737a9, type: 3}
+      propertyPath: m_Height
+      value: 3.67
       objectReference: {fileID: 0}
     - target: {fileID: 2705688281348489239, guid: 8b8d71801f036614e9887ef7538737a9, type: 3}
       propertyPath: m_Radius
-      value: 0.9
+      value: 1.42
       objectReference: {fileID: 0}
     - target: {fileID: 2705688281348489239, guid: 8b8d71801f036614e9887ef7538737a9, type: 3}
       propertyPath: m_AutoBraking
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3193710489291229808, guid: 8b8d71801f036614e9887ef7538737a9, type: 3}
+      propertyPath: m_Size.x
+      value: 1.9892085
+      objectReference: {fileID: 0}
+    - target: {fileID: 3193710489291229808, guid: 8b8d71801f036614e9887ef7538737a9, type: 3}
+      propertyPath: m_Size.y
+      value: 3.7220714
+      objectReference: {fileID: 0}
+    - target: {fileID: 3193710489291229808, guid: 8b8d71801f036614e9887ef7538737a9, type: 3}
+      propertyPath: m_Center.x
+      value: -0.49460423
+      objectReference: {fileID: 0}
+    - target: {fileID: 3193710489291229808, guid: 8b8d71801f036614e9887ef7538737a9, type: 3}
+      propertyPath: m_Center.y
+      value: 1.8610357
+      objectReference: {fileID: 0}
     - target: {fileID: 3238345694428518885, guid: 8b8d71801f036614e9887ef7538737a9, type: 3}
       propertyPath: maxHealth
-      value: 112
+      value: 120
       objectReference: {fileID: 0}
     - target: {fileID: 3238345694428518885, guid: 8b8d71801f036614e9887ef7538737a9, type: 3}
       propertyPath: currentHealth._value
-      value: 112
+      value: 120
       objectReference: {fileID: 0}
     - target: {fileID: 3676794826586101564, guid: 8b8d71801f036614e9887ef7538737a9, type: 3}
       propertyPath: m_LocalScale.x
@@ -160,15 +184,24 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8781234593180703897, guid: 8b8d71801f036614e9887ef7538737a9, type: 3}
       propertyPath: baseSpeed
-      value: 2
+      value: 7.5
       objectReference: {fileID: 0}
     - target: {fileID: 8781234593180703897, guid: 8b8d71801f036614e9887ef7538737a9, type: 3}
       propertyPath: baseHealth
-      value: 112
+      value: 100
+      objectReference: {fileID: 0}
+    - target: {fileID: 8781234593180703897, guid: 8b8d71801f036614e9887ef7538737a9, type: 3}
+      propertyPath: baseFireRate
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 8781234593180703897, guid: 8b8d71801f036614e9887ef7538737a9, type: 3}
+      propertyPath: speed._baseValue._value
+      value: 7.5
       objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 1075060716700723535, guid: 8b8d71801f036614e9887ef7538737a9, type: 3}
     - {fileID: 6827630163787726346, guid: 8b8d71801f036614e9887ef7538737a9, type: 3}
+    - {fileID: 3193710489291229808, guid: 8b8d71801f036614e9887ef7538737a9, type: 3}
     m_RemovedGameObjects:
     - {fileID: 110600649117897677, guid: 8b8d71801f036614e9887ef7538737a9, type: 3}
     m_AddedGameObjects:
@@ -221,8 +254,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 2, y: 3.5, z: 1}
-  m_Center: {x: 0, y: 1.75, z: 0}
+  m_Size: {x: 3.26688, y: 3.901533, z: 2.2039676}
+  m_Center: {x: -0.036971807, y: 1.9507664, z: -0.40473187}
 --- !u!4 &5283846569983871699 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 3676794826586101564, guid: 8b8d71801f036614e9887ef7538737a9, type: 3}

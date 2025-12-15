@@ -25,3 +25,6 @@ MonoBehaviour:
   - modifierType: 300
     value: 20
     targetStat: 1
+  - modifierType: 300
+    value: 20
+    targetStat: 3

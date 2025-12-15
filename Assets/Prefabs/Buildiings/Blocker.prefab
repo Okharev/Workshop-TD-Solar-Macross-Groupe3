@@ -63,7 +63,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 96c115983e0c4e5696f4d3808c0dc772, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GrassOccluder
-  radius: 5
+  radius: 9
 --- !u!1 &2917443860778642042
 GameObject:
   m_ObjectHideFlags: 0

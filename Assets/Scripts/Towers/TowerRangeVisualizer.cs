@@ -1,26 +1,26 @@
-﻿using UnityEngine;
-using Towers;
+﻿using Towers;
+using UnityEngine;
 
 [RequireComponent(typeof(BaseTower))]
 public class TowerRangeVisualizer : MonoBehaviour
 {
-    [Header("Settings")]
-    [Tooltip("Le prefab contenant la sphère avec le shader")]
+    [Header("Settings")] [Tooltip("Le prefab contenant la sphère avec le shader")]
     public GameObject rangeIndicatorPrefab;
-    
+
     [Tooltip("Si vrai, l'indicateur est visible uniquement quand la tour est sélectionnée")]
     public bool showOnlyOnSelect = true;
 
-    private BaseTower _tower;
-    private GameObject _visualInstance;
     private bool _isSelected;
 
-    void Awake()
+    private BaseTower _tower;
+    private GameObject _visualInstance;
+
+    private void Awake()
     {
         _tower = GetComponent<BaseTower>();
     }
 
-    void Start()
+    private void Start()
     {
         // 1. Initialisation de l'instance visuelle (cachée par défaut)
         if (rangeIndicatorPrefab != null)
@@ -31,14 +31,11 @@ public class TowerRangeVisualizer : MonoBehaviour
 
         // 2. Abonnement réactif à la stat "Range"
         // CORRECTIF DU BUG : On s'assure que _visualInstance existe avant de modifier son scale
-        if (_tower.range != null)
-        {
-            _tower.range.Observable.Subscribe(newRange => UpdateRangeScale(newRange)).AddTo(this);
-        }
+        if (_tower.range != null) _tower.range.Observable.Subscribe(newRange => UpdateRangeScale(newRange)).AddTo(this);
     }
 
     /// <summary>
-    /// Appelé automatiquement quand la stat change via UniRx
+    ///     Appelé automatiquement quand la stat change via UniRx
     /// </summary>
     private void UpdateRangeScale(float rangeValue)
     {
@@ -46,7 +43,7 @@ public class TowerRangeVisualizer : MonoBehaviour
         if (_visualInstance == null) return;
 
         // La sphère Unity fait 1 unit de diamètre. Scale = Rayon * 2.
-        float diameter = rangeValue * 2.0f;
+        var diameter = rangeValue * 2.0f;
         _visualInstance.transform.localScale = new Vector3(diameter, diameter, diameter);
     }
 
@@ -69,9 +66,9 @@ public class TowerRangeVisualizer : MonoBehaviour
         if (_visualInstance == null) return;
 
         // Affiche si sélectionné OU si on force l'affichage
-        bool shouldShow = _isSelected || !showOnlyOnSelect;
+        var shouldShow = _isSelected || !showOnlyOnSelect;
         _visualInstance.SetActive(shouldShow);
-        
+
         // Force une mise à jour du scale au moment de l'affichage pour être sûr
         if (shouldShow) UpdateRangeScale(_tower.range.Value);
     }

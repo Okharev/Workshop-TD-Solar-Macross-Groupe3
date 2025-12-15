@@ -128,7 +128,7 @@ Material:
     - _Parallax: 0.005
     - _PatchScale: 0.002
     - _PatchStrength: 0.5
-    - _PetalStart: 0.124
+    - _PetalStart: 0.1
     - _QueueOffset: 0
     - _ReceiveShadows: 1
     - _Smoothness: 0.5

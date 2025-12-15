@@ -1,8 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using Towers.ProjectileDerived;
+﻿using Towers.ProjectileDerived;
 using UnityEngine;
-using UnityEngine.AI; // Nécessaire pour NavMeshAgent
+using UnityEngine.AI;
+// Nécessaire pour NavMeshAgent
 using Random = UnityEngine.Random;
 
 namespace Towers.TowerDerived
@@ -14,24 +13,23 @@ namespace Towers.TowerDerived
         [SerializeField]
         private float packRadius = 5f;
 
-        [Header("Ballistics")] 
-        [Tooltip("Minimum flight time (close range).")] 
-        [SerializeField]
+        [Header("Ballistics")] [Tooltip("Minimum flight time (close range).")] [SerializeField]
         private float minProjectileTravelTime = 0.5f;
 
-        [Tooltip("Maximum flight time (max range).")] 
-        [SerializeField]
+        [Tooltip("Maximum flight time (max range).")] [SerializeField]
         private float maxProjectileTravelTime = 2.0f;
 
         [SerializeField] private MortarBomb mortarProjectilePrefab;
+
         [SerializeField] private float radiusOfImpact = 6f;
+
+        // Cache for checking density around a specific target
+        private readonly Collider[] _densityCheckCache = new Collider[30];
 
         // --- Cache (Optimization to avoid GC) ---
         // Cache for the initial wide scan
-        private readonly Collider[] _potentialTargetsCache = new Collider[100]; 
-        // Cache for checking density around a specific target
-        private readonly Collider[] _densityCheckCache = new Collider[30];      
-        
+        private readonly Collider[] _potentialTargetsCache = new Collider[100];
+
         // --- State ---
         private float _currentProjectileTravelTime;
         private bool _hasValidTarget;
@@ -55,20 +53,19 @@ namespace Towers.TowerDerived
             fireCountdown -= Time.deltaTime;
 
             if (isAligned && fireCountdown <= 0f)
-            {
                 // Re-check path before firing
                 if (IsPathClear(firePoint.position, _predictedAimPoint, _currentProjectileTravelTime))
                 {
                     Fire();
                     fireCountdown = 1f / fireRate.Value;
                 }
-            }
         }
 
         protected override void AcquireTarget()
         {
             // 1. Scan for ALL enemies within the tower's range
-            int totalEnemiesInRange = Physics.OverlapSphereNonAlloc(transform.position, range.Value, _potentialTargetsCache, targetLayer);
+            var totalEnemiesInRange =
+                Physics.OverlapSphereNonAlloc(transform.position, range.Value, _potentialTargetsCache, targetLayer);
 
             if (totalEnemiesInRange == 0)
             {
@@ -76,19 +73,20 @@ namespace Towers.TowerDerived
                 return;
             }
 
-            Vector3 bestClusterCenter = Vector3.zero;
-            int maxDensity = -1;
-            bool foundCluster = false;
+            var bestClusterCenter = Vector3.zero;
+            var maxDensity = -1;
+            var foundCluster = false;
 
             // 2. BRUTE FORCE SCAN: Check density around EVERY enemy found
             // This is the "worse complexity" part (O(N^2)), but independent of managers.
-            for (int i = 0; i < totalEnemiesInRange; i++)
+            for (var i = 0; i < totalEnemiesInRange; i++)
             {
                 var potentialCenter = _potentialTargetsCache[i];
-                if(potentialCenter == null) continue;
+                if (potentialCenter == null) continue;
 
                 // Count neighbors within packRadius for this specific enemy
-                int currentDensity = Physics.OverlapSphereNonAlloc(potentialCenter.transform.position, packRadius, _densityCheckCache, targetLayer);
+                var currentDensity = Physics.OverlapSphereNonAlloc(potentialCenter.transform.position, packRadius,
+                    _densityCheckCache, targetLayer);
 
                 if (currentDensity > maxDensity)
                 {
@@ -114,30 +112,25 @@ namespace Towers.TowerDerived
         private void CalculateClusterProperties(Vector3 clusterCenter)
         {
             // Logic imported from Mortar.cs
-            Vector3 totalPosition = Vector3.zero;
-            Vector3 totalVelocity = Vector3.zero;
-            int validCount = 0;
+            var totalPosition = Vector3.zero;
+            var totalVelocity = Vector3.zero;
+            var validCount = 0;
 
             // Get the actual members of this best cluster
-            int hitCount = Physics.OverlapSphereNonAlloc(clusterCenter, packRadius, _densityCheckCache, targetLayer);
+            var hitCount = Physics.OverlapSphereNonAlloc(clusterCenter, packRadius, _densityCheckCache, targetLayer);
 
             for (var i = 0; i < hitCount; i++)
             {
                 var member = _densityCheckCache[i];
-                if(member == null) continue;
+                if (member == null) continue;
 
                 totalPosition += member.transform.position;
-                
+
                 // Accumulate velocity from Agents or Rigidbodies
                 if (member.TryGetComponent<NavMeshAgent>(out var agent))
-                {
                     totalVelocity += agent.velocity;
-                }
-                else if (member.TryGetComponent<Rigidbody>(out var rb))
-                {
-                    totalVelocity += rb.linearVelocity;
-                }
-                
+                else if (member.TryGetComponent<Rigidbody>(out var rb)) totalVelocity += rb.linearVelocity;
+
                 validCount++;
             }
 
@@ -151,7 +144,7 @@ namespace Towers.TowerDerived
             var averageVelocity = totalVelocity / validCount;
 
             _currentProjectileTravelTime = GetDynamicTravelTime(centroid);
-            
+
             // Predict where the centroid will be
             _predictedAimPoint = centroid + averageVelocity * _currentProjectileTravelTime;
         }
@@ -182,7 +175,7 @@ namespace Towers.TowerDerived
             var randomTorque = Random.insideUnitSphere * torqueStrength;
             shell.rigidbody.AddTorque(randomTorque, ForceMode.Impulse);
         }
-        
+
         // --- Helper Calculation Methods ---
 
         private float GetDynamicTravelTime(Vector3 targetPosition)
@@ -213,12 +206,13 @@ namespace Towers.TowerDerived
             {
                 var t = (float)i / trajectorySteps * time;
                 var currentPoint = startPoint + launchVelocity * t + Physics.gravity * (0.5f * t * t);
-                
+
                 // Check if blocked by terrain/walls (visionBlockerLayer)
                 if (Physics.Linecast(previousPoint, currentPoint, visionBlockerLayer)) return false;
-                
+
                 previousPoint = currentPoint;
             }
+
             return true;
         }
 
@@ -242,7 +236,8 @@ namespace Towers.TowerDerived
             if (localLaunchDirection.sqrMagnitude < 0.001f) localLaunchDirection = Vector3.forward;
 
             var xLookRotation = Quaternion.LookRotation(localLaunchDirection);
-            xPivot.localRotation = Quaternion.RotateTowards(xPivot.localRotation, xLookRotation, xPivotSpeed * Time.deltaTime);
+            xPivot.localRotation =
+                Quaternion.RotateTowards(xPivot.localRotation, xLookRotation, xPivotSpeed * Time.deltaTime);
 
             // Check alignment
             var yAligned = Quaternion.Angle(yPivot.rotation, yLookRotation) < rotationThreshold;
@@ -252,12 +247,12 @@ namespace Towers.TowerDerived
 
         protected override void OnDrawGizmosTower()
         {
-             if (_hasValidTarget)
-             {
-                 Gizmos.color = Color.red;
-                 Gizmos.DrawWireSphere(_predictedAimPoint, 0.5f);
-                 Gizmos.DrawLine(firePoint.position, _predictedAimPoint);
-             }
+            if (_hasValidTarget)
+            {
+                Gizmos.color = Color.red;
+                Gizmos.DrawWireSphere(_predictedAimPoint, 0.5f);
+                Gizmos.DrawLine(firePoint.position, _predictedAimPoint);
+            }
         }
     }
 }

@@ -1,28 +1,38 @@
-﻿using UnityEngine;
+﻿using System.Collections;
+using UnityEngine;
 
 namespace Camera
 {
     public sealed class FreeFlyCamera : MonoBehaviour
     {
+        [Header("Cinematic Entry")]
+        [Tooltip("Si vrai, lance la transition au démarrage.")]
+        public bool playIntroOnStart = true;
+
+        [Tooltip("L'objet cible où la caméra doit atterrir (La position du Joueur).")]
+        public Transform playerStartPoint;
+
+        [Tooltip("Combien de temps attendre avant de commencer à descendre.")]
+        public float startDelay = 2.0f; 
+
+        [Tooltip("La durée du voyage.")]
+        public float introDuration = 3.0f;
+
+        [Tooltip("La courbe de vitesse.")]
+        public AnimationCurve introCurve = AnimationCurve.EaseInOut(0, 0, 1, 1);
+
         [Header("Movement Settings")] 
         public float movementSpeed = 10f;
         public float boostMultiplier = 5f;
-
-        [Tooltip("Temps pour atteindre la vitesse cible. Plus bas = plus réactif.")]
         public float moveSmoothTime = 0.15f;
 
         [Header("Zoom Settings")]
-        [Tooltip("Vitesse du zoom avec la molette.")]
         public float scrollSensitivity = 150f; 
 
         [Header("Look Settings")] 
         public float mouseSensitivity = 2f;
         public bool invertY;
-
-        [Tooltip("Angle minimum pour regarder vers le bas")]
         public float minPitchAngle = -60f;
-
-        [Tooltip("Angle maximum pour regarder vers le haut")]
         public float maxPitchAngle = 60f;
 
         [Header("Position Constraints")] 
@@ -33,36 +43,108 @@ namespace Camera
         [Header("Obstacle Avoidance")] 
         public bool autoAvoidObstacles = true;
         public LayerMask obstacleLayers;
-
-        [Tooltip("Hauteur minimum à maintenir au-dessus du sol.")]
         public float heightBuffer = 2.0f;
         public float predictionTime = 0.5f;
         public float climbSmoothing = 4f;
         public float rayCastSourceHeight = 3.0f;
 
-        // SmoothDamp Reference Variables
+        // Variables internes
         private Vector3 _currentVelocity; 
         private float _rotationX;
         private float _rotationY;
         private Vector3 _smoothDampVelocityRef; 
         private float _targetAutoHeight = -9999f;
+        
+        // Bloque les contrôles pendant l'intro
+        private bool _isLocked = false; 
 
         private void Start()
         {
+            // Initialisation des rotations (au cas où l'intro est désactivée)
             var rot = transform.localRotation.eulerAngles;
             _rotationY = rot.y;
             _rotationX = rot.x;
             _targetAutoHeight = transform.position.y;
+
+            // Lancement de l'intro
+            if (playIntroOnStart && playerStartPoint != null)
+            {
+                StartCoroutine(PlayCinematicEntry());
+            }
         }
 
         private void Update()
         {
+            // Si on est en mode cinématique, on coupe les contrôles
+            if (_isLocked) return;
+
             HandleMouseLook();
             HandleMovementAndAvoidance();
         }
 
+        public IEnumerator PlayCinematicEntry()
+        {
+            _isLocked = true; // 1. On verrouille tout de suite
+
+            // 2. Le Délai : On attend un peu en haut avant de bouger
+            yield return new WaitForSeconds(startDelay);
+
+            // --- Configuration du trajet ---
+            
+            // Départ = Position actuelle de la caméra (En hauteur)
+            Vector3 startPos = transform.position;
+            Quaternion startRot = transform.rotation;
+
+            // Arrivée = Le point du joueur
+            Vector3 endPos = playerStartPoint.position;
+            Quaternion endRot = playerStartPoint.rotation;
+
+            float timer = 0f;
+
+            // 3. La boucle d'animation
+            while (timer < 1f)
+            {
+                timer += Time.deltaTime / introDuration;
+                float t = introCurve.Evaluate(timer);
+
+                transform.position = Vector3.Lerp(startPos, endPos, t);
+                transform.rotation = Quaternion.Slerp(startRot, endRot, t);
+
+                yield return null;
+            }
+
+            // 4. Finalisation (Snap final pour être précis)
+            transform.position = endPos;
+            transform.rotation = endRot;
+
+            // 5. Synchronisation des axes de souris pour éviter les sauts
+            // On récupère la rotation de l'arrivée (PlayerStartPoint)
+            var finalEuler = playerStartPoint.eulerAngles;
+            _rotationY = finalEuler.y;
+            _rotationX = finalEuler.x;
+            
+            // Correction d'angle pour Unity (0..360 -> -180..180)
+            if (_rotationX > 180) _rotationX -= 360; 
+            
+            // Reset de la vélocité
+            _currentVelocity = Vector3.zero; 
+            _smoothDampVelocityRef = Vector3.zero;
+
+            _isLocked = false; // 6. On libère le joueur
+        }
+
+        // --- Le reste du code reste identique ---
+        
         private void OnDrawGizmos()
         {
+            // On dessine une ligne verte vers le point d'arrivée
+            if (playerStartPoint != null)
+            {
+                Gizmos.color = Color.green;
+                Gizmos.DrawLine(transform.position, playerStartPoint.position);
+                Gizmos.DrawWireSphere(playerStartPoint.position, 0.5f);
+            }
+
             if (!autoAvoidObstacles || !Application.isPlaying) return;
 
             Gizmos.color = Color.yellow;
@@ -106,16 +188,12 @@ namespace Camera
 
         private void HandleMovementAndAvoidance()
         {
-            // --- 1. Get planar direction ---
-            
             var forward = transform.forward;
             var right = transform.right;
 
-            // On écrase la composante Y à 0 pour garder le mouvement plat
             forward.y = 0f;
             right.y = 0f;
 
-            // Normize to avoid faster diagonal moves
             forward.Normalize();
             right.Normalize();
 
@@ -123,13 +201,8 @@ namespace Camera
             inputDir += forward * Input.GetAxisRaw("Vertical");
             inputDir += right * Input.GetAxisRaw("Horizontal");
 
-            // --- Gestion du Zoom (Molette) ---
-            // On récupère le scroll de la souris pour l'axe Y
             float scrollInput = Input.GetAxis("Mouse ScrollWheel");
-            
-            // Use scroll speed 
             Vector3 verticalMove = -(Vector3.up * (scrollInput * scrollSensitivity));
-
 
             if (inputDir.sqrMagnitude > 1f) inputDir.Normalize();
 
@@ -147,7 +220,6 @@ namespace Camera
 
             var nextPosition = transform.position + _currentVelocity * Time.unscaledDeltaTime;
 
-            // --- 3. Obstacle avoidance ---
             if (autoAvoidObstacles)
             {
                 var futureProbePos = nextPosition + _currentVelocity * predictionTime;

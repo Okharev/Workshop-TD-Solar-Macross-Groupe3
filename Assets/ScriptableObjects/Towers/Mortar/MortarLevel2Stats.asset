@@ -20,8 +20,11 @@ MonoBehaviour:
     value: 20
     targetStat: 0
   - modifierType: 100
-    value: 20
+    value: 55
     targetStat: 1
   - modifierType: 200
     value: 0.1
     targetStat: 2
+  - modifierType: 100
+    value: 25
+    targetStat: 3

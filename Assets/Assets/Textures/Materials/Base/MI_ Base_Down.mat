@@ -131,7 +131,7 @@ Material:
     - _GlossyReflections: 0
     - _Metallic: 0
     - _MettalicValue: 0
-    - _NOAO: 1
+    - _NOAO: 5
     - _OcclusionStrength: 1
     - _Parallax: 0.005
     - _QueueControl: 0
@@ -144,7 +144,7 @@ Material:
     - _SrcBlend: 1
     - _SrcBlendAlpha: 1
     - _Surface: 0
-    - _UseAO: 1
+    - _UseAO: 0
     - _UseBaseColor: 1
     - _UseEmissive: 1
     - _UseMettalic: 1
