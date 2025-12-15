@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 public sealed class GrassRenderer : MonoBehaviour
 {
-    // --- AJOUT : Gestion statique des Occluders ---
+    // --- Gestion statique des Occluders ---
     public static List<GrassOccluder> activeOccluders = new List<GrassOccluder>();
     public static void RegisterOccluder(GrassOccluder o) { if(!activeOccluders.Contains(o)) activeOccluders.Add(o); }
     public static void UnregisterOccluder(GrassOccluder o) { activeOccluders.Remove(o); }
@@ -27,14 +27,17 @@ public sealed class GrassRenderer : MonoBehaviour
     public float drawDistance = 200f;
     public Terrain terrain;
 
+    [Header("Debug")]
+    public bool renderAllGrass = false; // <--- COCHEZ CECI POUR TOUT VOIR
+
     private ComputeBuffer allInstancesBuffer;
     private ComputeBuffer visibleInstancesBuffer;
     private ComputeBuffer argsBuffer;
     
-    // --- AJOUT : Buffer pour les occluders ---
+    // --- Buffer pour les occluders ---
     private ComputeBuffer occluderBuffer;
-    private Vector4[] occluderData; // Tableau temporaire pour envoyer les données
-    // -----------------------------------------
+    private Vector4[] occluderData; 
+    // ---------------------------------
 
     private uint[] args = new uint[5] { 0, 0, 0, 0, 0 };
 
@@ -43,6 +46,7 @@ public sealed class GrassRenderer : MonoBehaviour
         if (terrain == null) terrain = Terrain.activeTerrain;
         InitBuffers();
     }
+    
     void InitBuffers()
     {
         if (!terrain) return;
@@ -120,23 +124,28 @@ public sealed class GrassRenderer : MonoBehaviour
         occluderBuffer = new ComputeBuffer(200, sizeof(float) * 4);
     }
 
-void Update()
+    void Update()
     {
         if (allInstancesBuffer == null || instanceCount == 0) return;
 
-        // --- AJOUT : Mise à jour des Occluders ---
+        // --- Mise à jour des Occluders ---
         UpdateOccluders();
-        // -----------------------------------------
+        // ---------------------------------
 
         visibleInstancesBuffer.SetCounterValue(0);
 
         cullingComputeShader.SetBuffer(0, "_AllInstances", allInstancesBuffer);
         cullingComputeShader.SetBuffer(0, "_VisibleInstances", visibleInstancesBuffer);
         
-        // --- AJOUT : Envoi des occluders au Shader ---
+        // --- Envoi des occluders au Shader ---
         cullingComputeShader.SetBuffer(0, "_Occluders", occluderBuffer);
         cullingComputeShader.SetInt("_OccluderCount", activeOccluders.Count);
-        // ---------------------------------------------
+        // -------------------------------------
+
+        // --- AJOUT : Envoi de l'option de debug ---
+        // Si renderAllGrass est vrai, on envoie 1, sinon 0
+        cullingComputeShader.SetInt("_RenderAll", renderAllGrass ? 1 : 0);
+        // ------------------------------------------
 
         Matrix4x4 vp = UnityEngine.Camera.main.projectionMatrix * UnityEngine.Camera.main.worldToCameraMatrix;
         cullingComputeShader.SetMatrix("_VPMatrix", vp);
@@ -157,7 +166,7 @@ void Update()
         );
     }
 
-    // --- AJOUT : Fonction utilitaire ---
+    // --- Fonction utilitaire ---
     void UpdateOccluders()
     {
         int count = activeOccluders.Count;
@@ -191,7 +200,6 @@ void Update()
         if (allInstancesBuffer != null) allInstancesBuffer.Release();
         if (visibleInstancesBuffer != null) visibleInstancesBuffer.Release();
         if (argsBuffer != null) argsBuffer.Release();
-        // --- AJOUT : Release ---
         if (occluderBuffer != null) occluderBuffer.Release();
     }
 }

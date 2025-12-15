@@ -22,7 +22,7 @@ MonoBehaviour:
     options:
     - labelOverride: Say Hello On Hit !!
       cost: 20
-      upgradeDefinition: {fileID: 0}
+      upgradeDefinition: {fileID: 11400000, guid: 6528ca34bf158bd4ab79d5686f388c0b, type: 2}
     - labelOverride: ExecuteUpgrade
       cost: 100
       upgradeDefinition: {fileID: 11400000, guid: 6528ca34bf158bd4ab79d5686f388c0b, type: 2}
