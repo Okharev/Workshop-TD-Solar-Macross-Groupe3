@@ -3,54 +3,50 @@
 StructuredBuffer<float4> _AllInstances;
 AppendStructuredBuffer<float4> _VisibleInstances;
 
-// --- AJOUT : Buffer des obstacles ---
-StructuredBuffer<float4> _Occluders; // .xyz = position, .w = radius
+StructuredBuffer<float4> _Occluders;
 int _OccluderCount;
-// ------------------------------------
 
 float4x4 _VPMatrix;
 float _MaxDistance;
 float3 _CamPos;
 
+// --- AJOUT : Variable pour forcer le rendu ---
+int _RenderAll; 
+// ---------------------------------------------
+
 float RandomNoise(float2 pos)
 {
     return frac(sin(dot(pos, float2(12.9898, 78.233))) * 43758.5453);
 }
-// ----------------------------------------
 
 bool IsVisible(float3 pos)
 {
+    // --- AJOUT : Si on veut tout voir, on ignore les tests ---
+    if (_RenderAll == 1)
+        return true;
+    // --------------------------------------------------------
+
     // 1. Distance Check (Caméra)
     if (distance(pos, _CamPos) > _MaxDistance)
         return false;
 
-    // --- MODIFICATION : Obstacle Check avec "Bruit" ---
+    // 2. Obstacle Check (Occluders)
     for (int i = 0; i < _OccluderCount; i++)
     {
         float4 occluder = _Occluders[i];
         float3 occPos = occluder.xyz;
         float radius = occluder.w;
 
-        // Calcul de la distance réelle sur le plan horizontal (XZ)
         float dist = distance(pos.xz, occPos.xz);
-
-        // Au lieu de couper net à "radius", on module le rayon.
-        // On génère un bruit basé sur la position de l'herbe.
-        // Multiplier pos.xz par 0.5 ou 2.0 change la "fréquence" du bruit (la taille des trous).
         float noise = RandomNoise(pos.xz * 1.5); 
-        
-        // Le rayon effectif varie entre 50% et 100% du rayon défini
-        // Cela crée des bords irréguliers "mordus".
         float irregularRadius = radius * lerp(0.5, 1.0, noise);
 
         if (dist < irregularRadius)
-            return false; // Caché par la tour de façon irrégulière
+            return false;
     }
-    // -------------------------------------------------
 
-    [cite_start]// 2. Frustum Check (Code original [cite: 3])
+    // 3. Frustum Check
     float4 clipPos = mul(_VPMatrix, float4(pos, 1.0));
-    [cite_start]// Marge pour éviter le popping [cite: 4]
     float margin = 1.5;
     bool inFrustum = (clipPos.x >= -clipPos.w - margin && clipPos.x <= clipPos.w + margin) &&
                      (clipPos.y >= -clipPos.w - margin && clipPos.y <= clipPos.w + margin) &&
@@ -64,7 +60,6 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 {
     uint count, stride;
     _AllInstances.GetDimensions(count, stride);
-    
     if (id.x >= count) return;
 
     float4 instanceData = _AllInstances[id.x];
@@ -73,4 +68,4 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     {
         _VisibleInstances.Append(instanceData);
     }
-}
+}   
