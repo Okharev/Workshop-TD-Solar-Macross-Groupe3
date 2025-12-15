@@ -1,13 +1,13 @@
-<ui:UXML xmlns:ui="UnityEngine.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd"
-         editor-extension-mode="False">
-    <Style src="project://database/Assets/UI/BuildingBarPanel.uss?fileID=7433441132597879392&amp;guid=a0d596e7938443a8a478da3fca5785a9&amp;type=3#BuildingBarPanel"/>
+<ui:UXML xmlns:ui="UnityEngine.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Assets/UI/BuildingBarPanel.uss?fileID=7433441132597879392&amp;guid=a0d596e7938443a8a478da3fca5785a9&amp;type=3#BuildingBarPanel" />
     <ui:VisualElement name="BuildingBarRoot" class="building-bar-root">
         <ui:VisualElement name="TooltipContainer" class="tooltip-container tooltip-hidden">
-            <ui:Label name="TooltipTitle" text="Building Name" class="tooltip-header"/>
-            <ui:Label name="TooltipCost" text="150 Gold" class="tooltip-cost"/>
-            <ui:Label name="TooltipDesc" text="Description of the building functionality." class="tooltip-desc"/>
+            <ui:Label name="TooltipTitle" text="Building Name" class="tooltip-header" />
+            <ui:Label name="TooltipCost" text="150 Gold" class="tooltip-cost" />
+            <ui:Label name="TooltipDesc" text="Description of the building functionality." class="tooltip-desc" />
         </ui:VisualElement>
-        <ui:VisualElement name="SlotsContainer" class="slots-container"/>
+        <ui:VisualElement style="flex-grow: 1; padding-top: 8px; padding-right: 8px; padding-bottom: 8px; padding-left: 8px; background-color: rgb(164, 192, 188); border-top-left-radius: 35px; border-top-right-radius: 35px; border-bottom-right-radius: 35px; border-bottom-left-radius: 35px;">
+            <ui:VisualElement name="SlotsContainer" class="slots-container" style="background-color: rgba(164, 192, 188, 0.95); border-left-color: rgb(254, 255, 255); border-right-color: rgb(254, 255, 255); border-top-color: rgb(254, 255, 255); border-bottom-color: rgb(254, 255, 255); border-top-left-radius: 35px; border-top-right-radius: 35px; border-bottom-right-radius: 35px; border-bottom-left-radius: 35px; border-top-width: 10px; border-right-width: 10px; border-bottom-width: 10px; border-left-width: 10px; padding-top: 0; padding-right: 0; padding-bottom: 0; padding-left: 0;" />
+        </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>
-    

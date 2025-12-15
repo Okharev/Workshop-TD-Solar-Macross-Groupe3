@@ -14,6 +14,7 @@ GameObject:
   - component: {fileID: 2254874439775709254}
   - component: {fileID: 5627214211521358744}
   - component: {fileID: -9163792475921355872}
+  - component: {fileID: -4272753037776653783}
   m_Layer: 0
   m_Name: Nexus
   m_TagString: Nexus
@@ -99,9 +100,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Economy.EnergyProducer
   isMobileGenerator: 1
   maxCapacity:
-    _value: 100
+    _baseValue: 100
+    _currentValueDisplay: 100
+    _modifiers: []
   broadcastRadius:
     _value: 60
+  references:
+    version: 2
+    RefIds: []
 --- !u!114 &-9163792475921355872
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -115,6 +121,21 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GrassOccluder
   radius: 5
+--- !u!114 &-4272753037776653783
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 576159419492445392}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9a27753ed99edca4ba41470f7089d968, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UI.MinimapIcon
+  _iconSprite: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
+  _color: {r: 0.42563504, g: 1, b: 0.41320753, a: 1}
+  _size: 100
 --- !u!1 &2698652000474220343
 GameObject:
   m_ObjectHideFlags: 0

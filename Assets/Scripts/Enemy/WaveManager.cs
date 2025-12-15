@@ -9,16 +9,8 @@ using UnityEngine;
 
 namespace Enemy
 {
-public sealed class WaveManager : MonoBehaviour
+    public sealed class WaveManager : MonoBehaviour
     {
-        // --- AJOUT : Singleton pour accès facile (Optionnel mais recommandé) ---
-        public static WaveManager Instance { get; private set; }
-
-        private void Awake()
-        {
-            if (Instance != null && Instance != this) Destroy(this);
-            else Instance = this;
-        }
         // -----------------------------------------------------------------------
 
         [Header("Dependencies")] public RoadNetworkGenerator roadGenerator;
@@ -28,10 +20,20 @@ public sealed class WaveManager : MonoBehaviour
         public ReactiveInt enemiesRemaining = new(0);
         public ReactiveInt totalEnemiesInWave = new(0);
         public ReactiveFloat timeToNextWave = new(0);
+
         private Coroutine _countdownCoroutine;
+
+        // --- AJOUT : Singleton pour accès facile (Optionnel mais recommandé) ---
+        public static WaveManager Instance { get; private set; }
 
         public bool IsWaveActive { get; private set; }
         public int CurrentWaveIndex { get; private set; } = -1;
+
+        private void Awake()
+        {
+            if (Instance != null && Instance != this) Destroy(this);
+            else Instance = this;
+        }
 
         public event Action<int, string> OnWaveStarted;
         public event Action OnWaveFinished;
@@ -78,10 +80,7 @@ public sealed class WaveManager : MonoBehaviour
             enemiesRemaining.Value--;
 
             // On vérifie si la vague est finie
-            if (enemiesRemaining.Value <= 0 && IsWaveActive)
-            {
-                OnWaveDefeated();
-            }
+            if (enemiesRemaining.Value <= 0 && IsWaveActive) OnWaveDefeated();
         }
         // -----------------------------------------------------
 
@@ -96,7 +95,7 @@ public sealed class WaveManager : MonoBehaviour
             else
                 OnAllWavesCompleted?.Invoke();
         }
-        
+
         private IEnumerator WaveCountdownRoutine()
         {
             var timer = timeBetweenWaves;
@@ -108,6 +107,7 @@ public sealed class WaveManager : MonoBehaviour
                 timer -= Time.deltaTime;
                 timeToNextWave.Value = Mathf.Max(0, timer);
             }
+
             StartNextWave();
         }
 
@@ -139,9 +139,9 @@ public sealed class WaveManager : MonoBehaviour
 
             foreach (var c in activeSpawns) yield return c;
         }
-        
+
         // ... (Garde tes méthodes SpawnGroundSegment, SpawnAirSegment, ConfigureRoadsForWave telles quelles) ...
-        
+
         private IEnumerator SpawnGroundSegment(GroundWaveSegment segment)
         {
             if (segment.initialDelay > 0) yield return new WaitForSeconds(segment.initialDelay);

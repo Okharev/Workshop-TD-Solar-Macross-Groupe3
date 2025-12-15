@@ -114,9 +114,29 @@ PrefabInstance:
       propertyPath: weightSeparation
       value: 30
       objectReference: {fileID: 0}
+    - target: {fileID: 3594526995502976572, guid: 9df7380db50448b44b860ef01dcf3a9e, type: 3}
+      propertyPath: m_Size.z
+      value: 3.8000002
+      objectReference: {fileID: 0}
+    - target: {fileID: 3594526995502976572, guid: 9df7380db50448b44b860ef01dcf3a9e, type: 3}
+      propertyPath: m_Center.z
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 5069400229212143550, guid: 9df7380db50448b44b860ef01dcf3a9e, type: 3}
       propertyPath: m_Name
       value: JetMid
+      objectReference: {fileID: 0}
+    - target: {fileID: 6005638722976674783, guid: 9df7380db50448b44b860ef01dcf3a9e, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6005638722976674783, guid: 9df7380db50448b44b860ef01dcf3a9e, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.21
+      objectReference: {fileID: 0}
+    - target: {fileID: 6005638722976674783, guid: 9df7380db50448b44b860ef01dcf3a9e, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 1.65
       objectReference: {fileID: 0}
     - target: {fileID: 6778696234163456189, guid: 9df7380db50448b44b860ef01dcf3a9e, type: 3}
       propertyPath: m_LocalPosition.x

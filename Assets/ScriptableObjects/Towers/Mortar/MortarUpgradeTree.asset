@@ -18,9 +18,6 @@ MonoBehaviour:
     - labelOverride: Level 2 mortar
       cost: 50
       upgradeDefinition: {fileID: 11400000, guid: b15441234b4a73b4dbb65cbd0e7fe94d, type: 2}
-    - labelOverride: Level 2 mortar
-      cost: 50
-      upgradeDefinition: {fileID: 11400000, guid: b15441234b4a73b4dbb65cbd0e7fe94d, type: 2}
   - tierName: Level 3
     options:
     - labelOverride: Say Hello On Hit !!

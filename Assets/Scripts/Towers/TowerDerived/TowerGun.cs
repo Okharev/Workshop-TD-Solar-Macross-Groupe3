@@ -14,14 +14,12 @@ namespace Towers.TowerDerived
 
         protected override void OnDrawGizmosTower()
         {
-            
-                if (!firePoint) return;
+            if (!firePoint) return;
 
-                Gizmos.color = Color.cyan;
-                Gizmos.matrix = Matrix4x4.TRS(firePoint.position + firePoint.forward * 1f, firePoint.rotation, Vector3.one);
-                Gizmos.DrawWireCube(Vector3.zero,
-                    new Vector3(projectileThickness * 2, projectileThickness * 2, projectileThickness * 2));
-            
+            Gizmos.color = Color.cyan;
+            Gizmos.matrix = Matrix4x4.TRS(firePoint.position + firePoint.forward * 1f, firePoint.rotation, Vector3.one);
+            Gizmos.DrawWireCube(Vector3.zero,
+                new Vector3(projectileThickness * 2, projectileThickness * 2, projectileThickness * 2));
         }
 
         protected override void Fire()
@@ -59,9 +57,14 @@ namespace Towers.TowerDerived
             {
                 Debug.DrawLine(firePoint.position, hit.point, Color.green, 0.2f);
 
-                if (!hit.collider.TryGetComponent<HealthComponent>(out var victim)) return;
-        
-                Events.OnHit?.Invoke(new UpgradeProvider.OnHitData()
+                HealthComponent victim;
+                if (!hit.collider.TryGetComponent(out victim))
+                {
+                    victim = hit.collider.GetComponentInParent<HealthComponent>();
+                    if (!victim) return;
+                }
+
+                Events.OnHit?.Invoke(new UpgradeProvider.OnHitData
                 {
                     Origin = gameObject,
                     Target = hit.collider.gameObject
@@ -69,16 +72,19 @@ namespace Towers.TowerDerived
 
                 if (victim.TakeDamage(Mathf.RoundToInt(damage.Value)))
                 {
-                    Events.OnKill?.Invoke(new UpgradeProvider.OnKillData()
+                    Events.OnKill?.Invoke(new UpgradeProvider.OnKillData
                     {
                         Origin = gameObject,
                         Target = hit.collider.gameObject
                     });
 
-                    currentTarget = null; 
+                    currentTarget = null;
                 }
             }
-            else Debug.DrawRay(firePoint.position, shootDirection * currentRange, Color.red, 0.2f);
+            else
+            {
+                Debug.DrawRay(firePoint.position, shootDirection * currentRange, Color.red, 0.2f);
+            }
         }
 
         protected override void AcquireTarget()

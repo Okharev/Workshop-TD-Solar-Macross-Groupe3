@@ -1,6 +1,5 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
-using Buildings;
 using Economy;
 using UnityEngine;
 
@@ -28,7 +27,7 @@ namespace Towers
         [SerializeField] public int baseDamage;
         [SerializeField] public float baseRange;
         [SerializeField] public float baseFireRate;
-        
+
         [SerializeField] public Stat damage;
         [SerializeField] public Stat range;
         [SerializeField] public Stat fireRate;
@@ -54,13 +53,11 @@ namespace Towers
         [SerializeField] protected float fireCountdown;
         [SerializeField] protected bool isBusy;
 
-        [Header("Visuals")]
-        [Tooltip("Prefab contenant une sphère avec le Shader de portée")]
-        [SerializeField] private GameObject rangeIndicatorPrefab;
-        
-        private GameObject _activeRangeIndicator;
+        [Header("Visuals")] [Tooltip("Prefab contenant une sphère avec le Shader de portée")] [SerializeField]
+        private GameObject rangeIndicatorPrefab;
+
         [SerializeField] private TowerLevelingManager _levelingManager;
-        
+
         [Header("Rotation Logic")] [SerializeField]
         protected RotationMode rotationMode = RotationMode.ScaledWithStats;
 
@@ -68,24 +65,26 @@ namespace Towers
         [SerializeField]
         private float referenceTurnAngle = 120f;
 
+        [SerializeReference] private List<IUpgradeInstance> _activeUpgrades = new();
+
         [Header("Upgrades")] public readonly UpgradeProvider Events = new();
 
-        [SerializeReference] private List<IUpgradeInstance> _activeUpgrades = new();
-        
+        private GameObject _activeRangeIndicator;
+
         protected override void Awake()
         {
             base.Awake();
-    
+
             _levelingManager = GetComponent<TowerLevelingManager>();
-    
+
             powerSource = GetComponent<EnergyConsumer>();
-            
+
             powerSource.totalRequirement.BaseValue = energyDrain;
-    
+
 
             if (targetLayer == 0) targetLayer = LayerMask.GetMask("EnemyGround");
             if (visionBlockerLayer == 0) visionBlockerLayer = LayerMask.GetMask("Terrain", "PhysicalBlocker");
-    
+
             ApplyBlueprintStats();
         }
 
@@ -174,16 +173,15 @@ namespace Towers
 
             HideRangeIndicator();
         }
-        
+
         private void ShowRangeIndicator()
         {
             if (rangeIndicatorPrefab == null) return;
 
             // Si l'indicateur n'existe pas encore, on le crée
             if (_activeRangeIndicator == null)
-            {
-                _activeRangeIndicator = Instantiate(rangeIndicatorPrefab, transform.position, Quaternion.identity, transform);
-            }
+                _activeRangeIndicator =
+                    Instantiate(rangeIndicatorPrefab, transform.position, Quaternion.identity, transform);
 
             _activeRangeIndicator.SetActive(true);
             UpdateRangeVisualScale();
@@ -191,14 +189,11 @@ namespace Towers
 
         private void HideRangeIndicator()
         {
-            if (_activeRangeIndicator != null)
-            {
-                _activeRangeIndicator.SetActive(false);
-            }
+            if (_activeRangeIndicator != null) _activeRangeIndicator.SetActive(false);
         }
 
         /// <summary>
-        /// Met à jour la taille de la sphère visuelle en fonction de la portée actuelle.
+        ///     Met à jour la taille de la sphère visuelle en fonction de la portée actuelle.
         /// </summary>
         public void UpdateRangeVisualScale()
         {
@@ -207,7 +202,7 @@ namespace Towers
             // La portée est un rayon (radius).
             // La sphère primitive d'Unity a un diamètre de 1 unité par défaut.
             // Donc Scale = Radius * 2.
-            float diameter = range.Value * 2.0f;
+            var diameter = range.Value * 2.0f;
             _activeRangeIndicator.transform.localScale = new Vector3(diameter, diameter, diameter);
         }
 
@@ -215,10 +210,7 @@ namespace Towers
         protected void OnStatsChanged()
         {
             // Logique pour recalculer les stats...
-            if(_activeRangeIndicator && _activeRangeIndicator.activeSelf) 
-            {
-                UpdateRangeVisualScale();
-            }
+            if (_activeRangeIndicator && _activeRangeIndicator.activeSelf) UpdateRangeVisualScale();
         }
 
         protected virtual bool AimAtTarget(Vector3 aimPoint)
@@ -278,33 +270,27 @@ namespace Towers
             range.Initialize();
             fireRate.Initialize();
         }
-        
+
         public void RegisterUpgrade(IUpgradeInstance instance, UpgradeSo sourceDefinition)
         {
             // 1. On ajoute l'instance logique à la liste privée (pour le fonctionnement interne)
             _activeUpgrades.Add(instance);
 
             // 2. On ajoute la définition à la liste publique (pour que tu le voies dans l'Inspecteur Unity)
-            if (!upgrades.Contains(sourceDefinition))
-            {
-                upgrades.Add(sourceDefinition);
-            }
-    
+            if (!upgrades.Contains(sourceDefinition)) upgrades.Add(sourceDefinition);
+
             // 3. Optionnel : Si l'upgrade modifie des stats, on peut déclencher un recalcul
             OnStatsChanged();
         }
-        
+
         public override List<InteractionAction> GetInteractions()
         {
             // 1. Récupère les interactions de base (Vendre)
             var actions = base.GetInteractions();
 
             // 2. Si on a un manager d'upgrade, on ajoute ses options
-            if (_levelingManager != null)
-            {
-                actions.AddRange(_levelingManager.GetUpgradeInteractions());
-            }
-    
+            if (_levelingManager != null) actions.AddRange(_levelingManager.GetUpgradeInteractions());
+
             // Note: Si tu veux désactiver le système "nextUpgrade" de BuildingEntity
             // assure-toi que le champ 'nextUpgrade' est vide dans l'inspecteur Unity,
             // ou filtre la liste 'actions' ici.
@@ -318,7 +304,6 @@ namespace Towers
 
         protected virtual void OnDrawGizmosTower()
         {
-            
         }
     }
 }

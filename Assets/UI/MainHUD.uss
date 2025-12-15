@@ -1,16 +1,13 @@
-@import "InfoPanel.uss";
-@import "WavePanel.uss";
-@import "ObjectivesHealthPanel.uss";
-@import "BuildingBarPanel.uss";
-
-
+@import url("project://database/Assets/UI/InfoPanel.uss?fileID=7433441132597879392&guid=b8383ba551774a218973a50334aae02a&type=3#InfoPanel");
+@import url("project://database/Assets/UI/WavePanel.uss?fileID=7433441132597879392&guid=50b86e0e6c9f14b4e86674680b30ac56&type=3#WavePanel");
+@import url("project://database/Assets/UI/ObjectivesHealthPanel.uss?fileID=7433441132597879392&guid=a7eb2283b8f842d0aebcfd2460187d89&type=3#ObjectivesHealthPanel");
+@import url("project://database/Assets/UI/BuildingBarPanel.uss?fileID=7433441132597879392&guid=a0d596e7938443a8a478da3fca5785a9&type=3#BuildingBarPanel");
 :root {
     --color-bg: rgba(30, 30, 35, 0.95);
-    --color-border: #3E3E42;
-    --color-accent: #4CAF50;
-    --color-text-main: #E0E0E0;
-    --color-text-sub: #A0A0A0;
-
+    --color-border: rgb(62, 62, 66);
+    --color-accent: rgb(76, 175, 80);
+    --color-text-main: rgb(224, 224, 224);
+    --color-text-sub: rgb(160, 160, 160);
     --sidebar-width-left: 150px;
     --sidebar-width-right: 220px;
     --panel-radius: 6px;
@@ -25,6 +22,39 @@
     color: var(--color-text-main);
 }
 
+.minimap-wrapper {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    width: 200px;
+    height: 200px;
+    overflow: visible;
+}
+
+.minimap-mask {
+    width: 100%;
+    height: 100%;
+    background-color: rgb(20, 20, 20);
+    border-width: 2px;
+    border-color: rgb(100, 100, 100);
+    overflow: hidden;
+}
+
+.minimap-border {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    translate: -50% -50%;
+    width: 120%;
+    height: 120%;
+    background-image: url("project://database/Assets/UI/UIAssets/UI_MicroMap.png?fileID=2800000&guid=16fb1acc7c92f07459380590a0f307e9&type=3#UI_MicroMap");
+    -unity-background-scale-mode: scale-to-fit;
+    picking-mode: ignore;
+    border-top-width: 228px;
+    border-right-width: 228px;
+    border-bottom-width: 228px;
+    border-left-width: 228px;
+}
 
 .left-sidebar {
     position: absolute;
@@ -32,18 +62,15 @@
     top: 15px;
     bottom: 15px;
     width: var(--sidebar-width-left);
-
     flex-direction: column;
     align-items: stretch;
 }
-
 
 .left-sidebar .panel-container {
     position: relative;
     top: auto;
     left: auto;
     width: 100%;
-
     background-color: var(--color-bg);
     border-radius: var(--panel-radius);
     border-left-width: 3px;
@@ -52,7 +79,6 @@
     border-right-width: 1px;
     border-bottom-width: 1px;
     border-color: var(--color-border);
-
     padding: var(--spacing-std);
     margin-bottom: 10px;
     flex-shrink: 0;
@@ -66,7 +92,7 @@
 
 .left-sidebar .title-text {
     font-size: 18px;
-    margin-bottom: 0px;
+    margin-bottom: 0;
 }
 
 .left-sidebar .subtitle-text {
@@ -79,12 +105,10 @@
     background-color: var(--color-bg);
     border-radius: var(--panel-radius);
     padding: var(--spacing-std);
-
     border-width: 1px;
     border-color: var(--color-border);
     border-top-width: 3px;
-    border-top-color: #555;
-
+    border-top-color: rgb(85, 85, 85);
     flex-shrink: 0;
 }
 
@@ -109,21 +133,16 @@
 .objectives-box .health-bar-container {
     height: 6px;
     border-radius: 2px;
-    background-color: #222;
+    background-color: rgb(34, 34, 34);
 }
-
 
 #BuildingBarInstance {
     position: absolute;
     bottom: 20px;
     left: 50%;
-    translate: -50% 0; /* Centre horizontalement */
-
-    /* Important : permet au conteneur de s'adapter à la taille des boutons */
+    translate: -50% 0;
     width: auto;
     height: auto;
-
-    /* Assure que les clics passent à travers les zones vides */
     align-items: center;
     justify-content: flex-end;
 }
@@ -133,16 +152,11 @@
     right: 0;
     top: 0;
     bottom: 0;
-
     width: 320px;
-
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
-
-
     padding: 20px;
-
     overflow: hidden;
 }
 
@@ -153,22 +167,15 @@
     bottom: auto;
     width: 100%;
     height: auto;
-
     background-color: var(--color-bg);
     padding: 15px;
-
     border-width: 1px;
     border-color: var(--color-border);
-
-    border-left-width: 3px;
+    border-left-width: 0;
     border-left-color: var(--color-accent);
-
     border-radius: var(--panel-radius);
-
-
     translate: 120% 0;
     transition: translate 0.25s ease-out-cubic;
-
     flex-shrink: 0;
 }
 
@@ -192,13 +199,12 @@
     font-size: 11px;
     padding: 2px 0;
     border-bottom-width: 1px;
-    border-bottom-color: #333;
+    border-bottom-color: rgb(51, 51, 51);
 }
 
-
 .action-button {
-    background-color: #2ecc71;
-    color: #ffffff;
+    background-color: rgb(46, 204, 113);
+    color: rgb(255, 255, 255);
     border-radius: 4px;
     padding: 10px;
     border-width: 0;
@@ -207,12 +213,12 @@
 }
 
 .action-button:hover {
-    background-color: #27ae60;
+    background-color: rgb(39, 174, 96);
     scale: 1.05;
 }
 
 .action-button:active {
-    background-color: #1e8449;
+    background-color: rgb(30, 132, 73);
     scale: 0.95;
 }
 
@@ -226,12 +232,11 @@
     border-width: 2px;
     border-color: rgb(100, 100, 100);
     border-radius: 10px;
-    overflow: hidden; /* Important si on veut arrondir les coins de l'image */
+    overflow: hidden;
 }
 
 .minimap-render {
     width: 100%;
     height: 100%;
-    /* On force le fond blanc pour que la Render Texture (qui multiplie la couleur) se voie bien */
     background-color: white;
 }

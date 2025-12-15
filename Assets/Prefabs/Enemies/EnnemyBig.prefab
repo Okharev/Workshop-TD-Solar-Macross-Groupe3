@@ -98,7 +98,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6906813426888105464, guid: 975862d4e0621904eb497ce755294990, type: 3}
       propertyPath: m_Radius
-      value: 4
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 8726312866335424410, guid: 975862d4e0621904eb497ce755294990, type: 3}
       propertyPath: m_Size.x
@@ -120,6 +120,7 @@ PrefabInstance:
     m_RemovedGameObjects:
     - {fileID: 8925441406328049186, guid: 975862d4e0621904eb497ce755294990, type: 3}
     - {fileID: 379954490493633373, guid: 975862d4e0621904eb497ce755294990, type: 3}
+    - {fileID: 8398603408674216657, guid: 975862d4e0621904eb497ce755294990, type: 3}
     m_AddedGameObjects:
     - targetCorrespondingSourceObject: {fileID: 5283846569983871699, guid: 975862d4e0621904eb497ce755294990, type: 3}
       insertIndex: -1

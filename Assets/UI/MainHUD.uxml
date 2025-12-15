@@ -13,8 +13,14 @@
         </ui:VisualElement>
         <ui:Instance template="WaveInfoPanel" />
         <ui:VisualElement name="RightSidebar" picking-mode="Ignore" class="right-sidebar" style="border-left-color: rgba(0, 0, 0, 0); border-right-color: rgba(0, 0, 0, 0); border-top-color: rgba(0, 0, 0, 0); border-bottom-color: rgba(0, 0, 0, 0); color: rgb(224, 224, 224);">
-            <ui:VisualElement name="MinimapContainer" class="minimap-container" style="border-left-color: rgba(100, 100, 100, 0); border-right-color: rgba(100, 100, 100, 0); border-top-color: rgba(100, 100, 100, 0); border-bottom-color: rgba(100, 100, 100, 0); border-top-left-radius: 100px; border-top-right-radius: 100px; border-bottom-right-radius: 100px; border-bottom-left-radius: 100px;">
-                <ui:VisualElement name="MinimapRender" class="minimap-render" style="background-color: rgba(255, 255, 255, 0);" />
+            <ui:VisualElement name="Minimap-Wrapper" class="minimap-wrapper">
+
+                <ui:VisualElement name="MinimapContainer" class="minimap-mask" style="border-top-left-radius: 100px; border-top-right-radius: 100px; border-bottom-right-radius: 100px; border-bottom-left-radius: 100px;">
+                    <ui:VisualElement name="MinimapRender" class="minimap-render" />
+                </ui:VisualElement>
+
+                <ui:Image name="MinimapBorder" class="minimap-border" picking-mode="Ignore" />
+
             </ui:VisualElement>
             <ui:Instance template="InfoPanelTemplate" name="InfoPanelInstance" />
         </ui:VisualElement>

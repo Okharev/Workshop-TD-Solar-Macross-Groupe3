@@ -1,4 +1,4 @@
-﻿Shader "Custom/UltimateLivingCloud_WindReady"
+﻿Shader "Custom/UltimateCloud_Final"
 {
     Properties
     {
@@ -8,19 +8,23 @@
         _ShadowStrength ("Self-Shadow Strength", Range(0, 1)) = 0.5
         _Seed ("Shape Variant", Float) = 1.0
         
+        [Header(Flat Bottom)]
+        // -0.1 is slightly below center. Increase to 0.0 or 0.1 to cut more off.
+        _BottomFlatPos ("Bottom Level", Range(-0.5, 0.5)) = -0.15 
+        _BottomSoftness ("Flatness Softness", Range(0.01, 0.5)) = 0.1
+        
         [Header(Wind Interaction)]
-        _WindResponsiveness ("Wind Drag (Sensitivity)", Range(0, 2)) = 1.0
-        // Note: Direction and Speed come globally from GlobalWindManager
+        _WindResponsiveness ("Wind Sensitivity", Range(0, 2)) = 1.0
         
         [Header(Cluster Shape)]
         _CloudSize ("Base Size", Range(0.1, 0.5)) = 0.25
         _Spread ("Spread Width", Range(0, 1.0)) = 0.5
         _Padding ("Wall Padding", Range(0.0, 0.3)) = 0.1
-        _Blend ("Blob Blending", Range(0.01, 1.0)) = 0.4
+        _Blend ("Blob Blending", Range(0.0001, 1.0)) = 0.4
         
         [Header(Detail)]
-        _NoiseScale ("Distortion Scale", Float) = 2.0
-        _NoiseStr ("Distortion Strength", Range(0, 0.2)) = 0.05
+        _NoiseScale ("Noise Scale", Float) = 2.0
+        _NoiseStr ("Noise Strength", Range(0, 0.2)) = 0.05
         _Turbulence ("Internal Churn", Range(0, 0.5)) = 0.15
         
         [Header(Lighting)]
@@ -41,6 +45,9 @@
         float _ShadowStrength;
         float _Seed;
         
+        float _BottomFlatPos;
+        float _BottomSoftness;
+        
         float _WindResponsiveness;
         float _CloudSize;
         float _Spread;
@@ -52,16 +59,16 @@
         float3 _LightDir;
         float _ShadowBand;
 
-        // --- GLOBALS (From GlobalWindManager.cs & CloudInstance.cs) ---
-        float2 _WindDirection;      // Set by Manager
-        float _WindSpeed;           // Set by Manager
-        float _LocalWindStrength;   // Set by CloudInstance script (Texture Sample)
+        // --- GLOBALS (From WindManager) ---
+        float2 _WindDirection;      
+        float _WindSpeed;           
+        float _LocalWindStrength;   
 
-        // --- HELPERS ---
+        // --- MATH HELPERS ---
         float rand(float2 co){ return frac(sin(dot(co.xy ,float2(12.9898,78.233))) * 43758.5453); }
-        float smin(float a, float b, float k) { float h = clamp(0.5 + 0.5*(b-a)/k, 0.0, 1.0); return lerp(b, a, h) - k*h*(1.0-h); }
         float hash(float n) { return frac(sin(n)*43758.5453); }
         
+        // Noise Function
         float noise(float3 x) {
             float3 p = floor(x);
             float3 f = frac(x);
@@ -70,29 +77,39 @@
             return lerp(lerp(lerp(hash(n+0.0), hash(n+1.0),f.x), lerp(hash(n+57.0), hash(n+58.0),f.x),f.y),
                         lerp(lerp(hash(n+113.0), hash(n+114.0),f.x), lerp(hash(n+170.0), hash(n+171.0),f.x),f.y),f.z);
         }
+        
+        // Smooth Min (Union - Blends shapes together)
+        float smin(float a, float b, float k) { 
+            float h = clamp(0.5 + 0.5*(b-a)/k, 0.0, 1.0); 
+            return lerp(b, a, h) - k*h*(1.0-h); 
+        }
+        
+        // Smooth Max (Intersection - Cuts shape B from A)
+        // FIXED: This logic correctly prefers the Maximum value (Intersection)
+        float smax(float a, float b, float k) {
+            float h = clamp( 0.5 + 0.5*(a-b)/k, 0.0, 1.0 );
+            return lerp( b, a, h ) + k*h*(1.0-h);
+        }
 
-        // --- THE MAP FUNCTION ---
+        // --- MAIN SDF FUNCTION ---
         float map(float3 p) {
-            // 1. CALCULATE WIND IMPACT
-            // Combine the global direction with the local intensity (from texture) and material sensitivity
+            // 1. WIND CALCULATIONS
             float totalWindForce = _LocalWindStrength * _WindResponsiveness;
             
-            // 2. WIND SKEW (Bending)
-            // Clouds lean based on how strong the wind is
-            float skewFactor = p.y * totalWindForce * 0.5; // 0.5 is an arbitrary dampener
+            // Wind Skew (Leaning)
+            float skewFactor = p.y * totalWindForce * 0.5;
             p.x -= _WindDirection.x * skewFactor;
             p.z -= _WindDirection.y * skewFactor;
 
-            // 3. WIND SCROLL (Internal Noise Movement)
-            // If wind is strong, the noise moves faster
+            // Wind Scroll
             float scrollSpeed = _WindSpeed * (1.0 + totalWindForce);
             float3 windOffset = float3(_WindDirection.x, 0, _WindDirection.y) * _Time.y * scrollSpeed;
             
-            // 4. NOISE DISTORTION
+            // 2. NOISE LAYER
             float n = noise((p * _NoiseScale) - windOffset);
             
-            // 5. CLUSTER GENERATION
-            float finalDist = 100.0;
+            // 3. CLUSTER GENERATION
+            float cloudDist = 100.0;
             
             for(int i = 0; i < 5; i++) {
                 float r1 = rand(float2(i, _Seed));     
@@ -100,30 +117,42 @@
                 float r3 = rand(float2(i + 29.0, _Seed)); 
                 float rSize = rand(float2(i + 7.0, _Seed)); 
 
-                // Add Turbulence + extra jitter from Wind
+                // Internal Turbulence
                 float t = _Time.y * (_Turbulence + (totalWindForce * 0.2)); 
                 float3 motion = float3(sin(t + r1*10), cos(t*0.9 + r2*10), sin(t*1.1 + r3*10)) * 0.1;
 
+                // Base Position
                 float3 basePos = float3((r1 - 0.5) * _Spread * 2.0, (r2 - 0.5) * _Spread * 0.5, (r3 - 0.5) * _Spread);
                 
+                // Radius & Padding
                 float radius = _CloudSize * (0.6 + rSize * 0.6); 
                 float safeLimit = max(0.0, 0.5 - radius - _Padding);
                 
                 float3 finalPos = basePos + motion;
-                finalPos.x = clamp(finalPos.x, -safeLimit, safeLimit);
-                finalPos.y = clamp(finalPos.y, -safeLimit, safeLimit);
-                finalPos.z = clamp(finalPos.z, -safeLimit, safeLimit);
-
+                finalPos = clamp(finalPos, -safeLimit, safeLimit);
+                
                 float d = length(p - finalPos) - radius;
                 
-                if (i == 0) finalDist = d;
-                else finalDist = smin(finalDist, d, _Blend);
+                if (i == 0) cloudDist = d;
+                else cloudDist = smin(cloudDist, d, _Blend);
             }
             
-            return finalDist + (n * _NoiseStr);
+            // Apply Noise
+            cloudDist += (n * _NoiseStr);
+
+            // 4. FLAT BOTTOM LOGIC
+            // We calculate the SDF of the "Sky" (Everything ABOVE the floor line).
+            // Logic: distance = floorLevel - p.y
+            // If p.y is HIGH (Sky), distance is NEGATIVE (Inside Sky).
+            // If p.y is LOW (Ground), distance is POSITIVE (Outside Sky).
+            float skyRegion = _BottomFlatPos - p.y;
+            
+            // Intersection: We only draw where we are Inside the Cloud AND Inside the Sky.
+            // smax takes the Max distance (Intersection).
+            return smax(cloudDist, skyRegion, _BottomSoftness);
         }
 
-        // --- BOX INTERSECTION ---
+        // --- RAY-BOX INTERSECTION ---
         float2 boxIntersection(float3 ro, float3 rd, float3 boxSize) {
             float3 m = 1.0 / rd;
             float3 n = m * ro;
@@ -137,6 +166,9 @@
         }
         ENDCG
 
+        // =========================================================
+        // PASS 1: FORWARD RENDERING
+        // =========================================================
         Pass
         {
             Name "Forward"
@@ -176,6 +208,7 @@
                 float t = max(0.0, bounds.x);
                 float tMax = bounds.y;
                 
+                // Raymarch
                 for(int j=0; j<64; j++) {
                     if(t >= tMax) break;
                     float3 p = ro + rd * t;
@@ -205,8 +238,8 @@
             ENDCG
         }
         
-// =========================================================
-        // PASS 2: SHADOW CASTER (Volumetric Shadows)
+        // =========================================================
+        // PASS 2: SHADOW CASTER
         // =========================================================
         Pass
         {
@@ -230,41 +263,35 @@
             struct v2f { 
                 V2F_SHADOW_CASTER; 
                 float3 localPos : TEXCOORD1; 
-                float3 viewDir : TEXCOORD3; // Object space view dir
+                float3 lightDir : TEXCOORD3; // Changed from viewDir to lightDir
             };
 
-            // Dither function for softer shadow edges
-            float dither(float2 uv) {
-                return frac(sin(dot(uv, float2(12.9898, 78.233))) * 43758.5453) - 0.5;
-            }
+            float dither(float2 uv) { return frac(sin(dot(uv, float2(12.9898, 78.233))) * 43758.5453) - 0.5; }
 
             v2f vert(appdata v) {
                 v2f o;
                 o.localPos = v.vertex.xyz;
                 
-                // In the Shadow Caster pass, the "Camera" is the Light.
-                // So ObjSpaceViewDir gives us the direction from the Light to the Vertex.
-                o.viewDir = ObjSpaceViewDir(v.vertex);
+                // IMPORTANT FIX: Use ObjSpaceLightDir
+                // This returns the vector FROM the vertex TO the light source.
+                // It correctly handles the World->Object rotation.
+                o.lightDir = ObjSpaceLightDir(v.vertex);
                 
                 TRANSFER_SHADOW_CASTER_NORMALOFFSET(o)
                 return o;
             }
 
             float4 frag(v2f i) : SV_Target {
-                // 1. Setup Ray
                 float3 ro = i.localPos;
-                float3 rd = normalize(i.viewDir); 
                 
-                // In Shadow pass, rd usually points TOWARDS the light (ViewDir convention).
-                // We want to march INTO the object (away from light).
-                rd = -rd; 
+                // Ray Direction: 
+                // i.lightDir points TO the light.
+                // We want to march INTO the cloud (AWAY from the light).
+                float3 rd = -normalize(i.lightDir); 
 
-                // 2. Intersection Bounds (Where does ray enter/exit box?)
-                // We assume box is -0.5 to 0.5
+                // --- Standard Ray-Box Intersection ---
                 float3 boxMin = float3(-0.5, -0.5, -0.5);
                 float3 boxMax = float3(0.5, 0.5, 0.5);
-                
-                // Slab method for ray-box intersection
                 float3 t1 = (boxMin - ro) / rd;
                 float3 t2 = (boxMax - ro) / rd;
                 float3 tMin = min(t1, t2);
@@ -272,37 +299,28 @@
                 float tNear = max(max(tMin.x, tMin.y), tMin.z);
                 float tFar = min(min(tMax.x, tMax.y), tMax.z);
 
-                // If we are already inside, tNear is < 0, set to 0
                 float t = max(0.0, tNear);
                 float maxDist = max(0.0, tFar);
                 
-                if (maxDist <= 0.0 || tNear > tFar) clip(-1); // Missed box entirely
+                if (maxDist <= 0.0 || tNear > tFar) clip(-1);
 
-                // 3. Volumetric Raymarch
-                // We use fewer steps than the main pass for performance (20-25 is usually okay for shadows)
-                // We offset starting position by dither to hide banding
-                t += dither(i.pos.xy * 0.1) * 0.05; 
-                
+                // --- Volumetric Raymarch ---
+                t += dither(i.pos.xy * 0.5) * 0.05; 
                 bool hit = false;
                 
                 for(int j=0; j<25; j++) {
-                    if(t >= maxDist) break; // Exited box
-
+                    if(t >= maxDist) break;
                     float3 p = ro + rd * t;
-                    float d = map(p);
                     
-                    if(d < 0.001) { 
-                        hit = true;
-                        break; 
-                    }
+                    // We check map(p). If d < 0.001, we hit cloud matter.
+                    // This creates the "Cutout" for the shadow map.
+                    float d = map(p); 
                     
-                    // Optimization: Step bigger in shadow pass
-                    t += max(0.02, d); 
+                    if(d < 0.001) { hit = true; break; }
+                    t += max(0.02, d);
                 }
 
-                // 4. Result
-                if (!hit) clip(-1); // Discard pixel if we didn't hit the cloud
-                
+                if (!hit) clip(-1);
                 return 0;
             }
             ENDCG

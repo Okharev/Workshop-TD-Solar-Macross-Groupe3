@@ -31,7 +31,6 @@ namespace Towers.TowerDerived
         {
             while (true)
             {
-
                 var currentFireRate = fireRate.Value;
                 var delay = currentFireRate > 0 ? 1f / currentFireRate : 0.8f;
 
