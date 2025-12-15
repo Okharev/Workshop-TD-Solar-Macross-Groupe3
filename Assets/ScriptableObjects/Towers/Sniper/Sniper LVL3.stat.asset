@@ -10,18 +10,21 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 115b7ab753684771bc097f291235feaa, type: 3}
-  m_Name: MortarLevel2Stats
+  m_Name: Sniper LVL3.stat
   m_EditorClassIdentifier: Assembly-CSharp::Towers.Upgrades.StatUpgradeSo
-  icon: {fileID: 10901, guid: 0000000000000000f000000000000000, type: 0}
-  upgradeName: Mortar Level 2
-  description: +6 Dmg +0.5 Fire rate + 50 power consumption
+  icon: {fileID: 0}
+  upgradeName: LVL3
+  description: '+6 Dmg +0.25 Fire Rate +5 Range+ 50 Energy Consumption '
   modifiers:
   - modifierType: 100
-    value: 6
+    value: 150
+    targetStat: 3
+  - modifierType: 100
+    value: 29
     targetStat: 0
   - modifierType: 100
-    value: 2
+    value: 1.25
     targetStat: 2
   - modifierType: 100
-    value: 100
-    targetStat: 3
+    value: 55
+    targetStat: 1

@@ -10,19 +10,19 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 46b64e6b8ee74497ac3ffe45ea015ab4, type: 3}
-  m_Name: MortarUpgradeTree
+  m_Name: WindTurbine_UpgradeTree
   m_EditorClassIdentifier: Assembly-CSharp::Towers.TowerUpgradeTreeSo
   tiers:
-  - tierName: LVL 2
+  - tierName: LVL2
     options:
     - labelOverride: 
       cost: 200
-      upgradeDefinition: {fileID: 11400000, guid: b15441234b4a73b4dbb65cbd0e7fe94d, type: 2}
-  - tierName: LVL 3
+      upgradeDefinition: {fileID: 11400000, guid: d00c0726f3b49fb48a4ee61498055e6a, type: 2}
+  - tierName: LVL3
     options:
     - labelOverride: 
-      cost: 250
-      upgradeDefinition: {fileID: 11400000, guid: 6528ca34bf158bd4ab79d5686f388c0b, type: 2}
+      cost: 225
+      upgradeDefinition: {fileID: 11400000, guid: a90ecda19084d454d8f18cc2f80788dc, type: 2}
     - labelOverride: 
-      cost: 250
-      upgradeDefinition: {fileID: 11400000, guid: 205f0dad77e278c429e98383dcd19ddf, type: 2}
+      cost: 225
+      upgradeDefinition: {fileID: 11400000, guid: d557806f3bd8c684a92232df29e066c4, type: 2}

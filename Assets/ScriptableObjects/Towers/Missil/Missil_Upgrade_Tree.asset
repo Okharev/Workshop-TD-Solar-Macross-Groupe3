@@ -10,19 +10,19 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 46b64e6b8ee74497ac3ffe45ea015ab4, type: 3}
-  m_Name: MortarUpgradeTree
+  m_Name: Missil_Upgrade_Tree
   m_EditorClassIdentifier: Assembly-CSharp::Towers.TowerUpgradeTreeSo
   tiers:
-  - tierName: LVL 2
+  - tierName: LVL2
+    options:
+    - labelOverride: 
+      cost: 175
+      upgradeDefinition: {fileID: 11400000, guid: 297dfed5ed3a3914ca2e99fa82880914, type: 2}
+  - tierName: LVL3
     options:
     - labelOverride: 
       cost: 200
-      upgradeDefinition: {fileID: 11400000, guid: b15441234b4a73b4dbb65cbd0e7fe94d, type: 2}
-  - tierName: LVL 3
-    options:
+      upgradeDefinition: {fileID: 11400000, guid: 9b6930f731fb4c64b83694bb1d69d4eb, type: 2}
     - labelOverride: 
-      cost: 250
-      upgradeDefinition: {fileID: 11400000, guid: 6528ca34bf158bd4ab79d5686f388c0b, type: 2}
-    - labelOverride: 
-      cost: 250
-      upgradeDefinition: {fileID: 11400000, guid: 205f0dad77e278c429e98383dcd19ddf, type: 2}
+      cost: 200
+      upgradeDefinition: {fileID: 11400000, guid: e15aad23b59a3014cb0d7bc50f095edf, type: 2}

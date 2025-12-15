@@ -10,18 +10,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 115b7ab753684771bc097f291235feaa, type: 3}
-  m_Name: MortarLevel2Stats
+  m_Name: WindTurbine_LVL3
   m_EditorClassIdentifier: Assembly-CSharp::Towers.Upgrades.StatUpgradeSo
-  icon: {fileID: 10901, guid: 0000000000000000f000000000000000, type: 0}
-  upgradeName: Mortar Level 2
-  description: +6 Dmg +0.5 Fire rate + 50 power consumption
+  icon: {fileID: 0}
+  upgradeName: LVL3
+  description: +20% slowness +5 range +50 Power consumption
   modifiers:
   - modifierType: 100
-    value: 6
+    value: 0.2
     targetStat: 0
   - modifierType: 100
-    value: 2
-    targetStat: 2
+    value: 5
+    targetStat: 1
   - modifierType: 100
-    value: 100
+    value: 50
     targetStat: 3
