@@ -1,97 +1,85 @@
-/* 1. Main Container alignment */
 .hud-container {
-    /* Change ceci pour inverser l'ordre visuel des enfants */
     flex-direction: row-reverse;
     align-items: center;
     justify-content: flex-start;
     padding: 20px;
 }
 
-/* 2. The Wrapper for the Linear Bars */
 .bars-wrapper {
     flex-direction: column;
     justify-content: center;
-
-    /* CHANGEMENT 1 : On aligne les éléments au DÉBUT (Gauche) au lieu de la fin */
     align-items: flex-start;
-
-    /* CHANGEMENT 2 : On tire vers la gauche pour passer sous le cercle, au lieu de la droite */
     margin-left: -30px;
-    margin-right: 0; /* On réinitialise l'ancienne marge */
-
+    margin-right: 0;
     z-index: 0;
 }
 
-/* 3. The Linear Track (Background of the bar) */
 .linear-track {
     width: 250px;
     height: 20px;
     background-color: rgba(0, 0, 0, 0.5);
-    margin-bottom: 5px; /* Spacing between up and down bars */
-
-    /* KEY FOR EXPANDING LEFT: */
-    /* We flip the flex direction so items start from the Right */
+    margin-bottom: 5px;
     flex-direction: row-reverse;
-
-    /* Visual Styling */
     border-radius: 4px;
-    overflow: hidden; /* Ensures fill stays inside rounded corners */
+    overflow: hidden;
 }
 
-/* Optional: Add space between the two bars */
 .top-bar {
-    /* On met les arrondis à DROITE */
     border-top-right-radius: 24px;
     border-bottom-right-radius: 2px;
-
-    /* On met le côté gauche (contre le cercle) à plat */
     border-top-left-radius: 0;
     border-bottom-left-radius: 0;
-
     margin-bottom: 2px;
 }
 
-/* --- BARRE DU BAS --- */
 .bottom-bar {
-    /* On met les arrondis à DROITE */
     border-bottom-right-radius: 24px;
     border-top-right-radius: 2px;
-
-    /* On met le côté gauche (contre le cercle) à plat */
     border-bottom-left-radius: 0;
     border-top-left-radius: 0;
-
     margin-top: 2px;
 }
 
-/* 4. The Fill Element */
 .linear-fill {
     height: 100%;
-    width: 50%; /* This is what we animate in Code (0% to 100%) */
-
-    /* Because parent is row-reverse, this anchors to the RIGHT */
-    /* and grows towards the LEFT. */
-
-    transition: width 0.2s ease-out; /* Smooth animation */
+    width: 50%;
+    transition: width 0.2s ease-out;
 }
 
-/* Colors */
-.health-color { background-color: #FF4444; }
-.mana-color { background-color: #4444FF; }
+.health-color {
+    background-color: rgb(255, 68, 68);
+}
 
-/* 5. The Radial Wrapper */
+.mana-color {
+    background-color: rgb(68, 68, 255);
+}
+
 .radial-wrapper {
     width: 100px;
     height: 100px;
     justify-content: center;
     align-items: center;
-    z-index: 1; /* Sit ON TOP of the bars */
+    z-index: 1;
 }
 
-/* The custom element size */
 .radial-element {
     width: 100%;
     height: 100%;
+}
+
+.resource-icon {
+    /* Set the size of your icon */
+    width: 20px;
+    height: 20px;
+
+    /* Adds space between the number and the icon */
+    margin-left: 5px;
+
+    /* Assign your Scraps PNG here */
+    background-image: url("project:/Assets/UI/Textures/Icon_Scraps.png");
+
+    /* Keeps the aspect ratio correct */
+    -unity-background-scale-mode: scale-to-fit;
 }
 
 .linear-track {
@@ -99,38 +87,70 @@
     height: 24px;
     background-color: rgba(0, 0, 0, 0.6);
     margin-bottom: 5px;
-
-    /* CHANGEMENT : Revenir à la normale pour que le remplissage aille de Gauche -> Droite */
     flex-direction: row;
-
     overflow: hidden;
 }
 
 .top-bar {
-    /* Round the Top-Left corner significantly */
-    border-top-left-radius: 24px; /* Matches height for a perfect curve */
-
-    /* Keep Bottom-Left sharp (or very slightly rounded) so it "connects" to the bottom bar */
+    border-top-left-radius: 24px;
     border-bottom-left-radius: 2px;
-
-    /* The right side (touching the circle) stays flat */
     border-top-right-radius: 0;
     border-bottom-right-radius: 0;
-
-    margin-bottom: 2px; /* Tiny gap between bars looks stylish */
+    margin-bottom: 2px;
 }
 
-/* --- THE BOTTOM BAR (Mana) --- */
 .bottom-bar {
-    /* Round the Bottom-Left corner significantly */
-    border-bottom-left-radius: 24px; /* Matches height */
-
-    /* Keep Top-Left sharp to meet the top bar */
+    border-bottom-left-radius: 24px;
     border-top-left-radius: 2px;
-
-    /* The right side (touching the circle) stays flat */
     border-top-right-radius: 0;
     border-bottom-right-radius: 0;
-
     margin-top: 2px;
+}
+
+.branch-overlay {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    translate: -50% -50%;
+    width: 151%;
+    height: 870%;
+    background-image: url("project://database/Assets/UI/UIAssets/UI_Vie_G_Barre_Deco%201.png?fileID=2800000&guid=acaf5abcddde32c429b1d694c70b93e4&type=3#UI_Vie_G_Barre_Deco 1");
+    -unity-background-scale-mode: scale-and-crop;
+    picking-mode: ignore;
+    min-width: 0%;
+}
+
+.grunge-overlay {
+    /* Covers the entire parent (the mask) */
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    left: 0;
+    top: 0;
+
+    /* Assign your grunge/stripe PNG here */
+    background-image: url("project:/Assets/UI/Textures/Grunge_Stripes.png");
+
+    /* Ensures the texture fills the space */
+    -unity-background-scale-mode: scale-and-crop;
+
+    /* Optional: Blend visual polish */
+    opacity: 0.8; /* Adjust this to make the effect subtle or strong */
+}
+
+.linear-track {
+    width: 250px;
+    height: 24px;
+    margin-bottom: 5px;
+    flex-direction: row;
+    overflow: visible;
+    background-color: rgba(0, 0, 0, 0);
+}
+
+.bar-mask {
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    overflow: hidden;
+    flex-direction: row;
 }

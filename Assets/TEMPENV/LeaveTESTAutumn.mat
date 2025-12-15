@@ -122,8 +122,8 @@ Material:
     - _GlossMapScale: 0
     - _Glossiness: 0
     - _GlossyReflections: 0
-    - _GradientOffset: 9.6
-    - _GradientScale: 65.9
+    - _GradientOffset: -7.8
+    - _GradientScale: 11.79
     - _LeafFlutter: 0.047
     - _Metallic: 0
     - _NormalSpherify: 0.5
@@ -155,8 +155,8 @@ Material:
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
-    - _ColorBot: {r: 1, g: 0, b: 0, a: 1}
-    - _ColorTop: {r: 1, g: 1, b: 0, a: 1}
+    - _ColorBot: {r: 0.9924528, g: 0.58601403, b: 0.15542178, a: 1}
+    - _ColorTop: {r: 0.9924528, g: 0.9119715, b: 0.34267706, a: 1}
     - _ColorVariation: {r: 0.96981126, g: 0.87326074, b: 0.4226913, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _RimColor: {r: 1, g: 0.92773104, b: 0.48113203, a: 1}

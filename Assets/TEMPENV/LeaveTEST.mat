@@ -130,9 +130,9 @@ Material:
     - _OcclusionStrength: 1
     - _Parallax: 0.005
     - _QueueOffset: 0
-    - _ReceiveShadowStrength: 0.5
+    - _ReceiveShadowStrength: 0.988
     - _ReceiveShadows: 1
-    - _RimIntensity: 0.15
+    - _RimIntensity: 0.32
     - _RimPower: 20
     - _Smoothness: 0.5
     - _SmoothnessTextureChannel: 0
@@ -142,8 +142,8 @@ Material:
     - _SrcBlend: 1
     - _SrcBlendAlpha: 1
     - _Surface: 0
-    - _TranslucencyDistortion: 0.2
-    - _TranslucencyPower: 5
+    - _TranslucencyDistortion: 0.227
+    - _TranslucencyPower: 6.44
     - _TreeCenterOffset: 0
     - _VariationPower: 0.3
     - _VariationScale: 0.1

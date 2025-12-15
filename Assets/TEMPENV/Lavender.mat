@@ -110,6 +110,7 @@ Material:
     - _AddPrecomputedVelocity: 0
     - _AlphaClip: 0
     - _AlphaToMask: 0
+    - _BladeWidth: 1
     - _Blend: 0
     - _BlendModePreserveSpecular: 1
     - _BlendStrength: 0.415
@@ -124,6 +125,7 @@ Material:
     - _DstBlend: 0
     - _DstBlendAlpha: 0
     - _EnvironmentReflections: 1
+    - _Gloss: 32
     - _GlossMapScale: 0
     - _Glossiness: 0
     - _GlossyReflections: 0
@@ -139,6 +141,7 @@ Material:
     - _Smoothness: 0.5
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
+    - _SpecularIntensity: 0.1
     - _SrcBlend: 1
     - _SrcBlendAlpha: 1
     - _Surface: 0

@@ -130,7 +130,7 @@ Material:
     - _OcclusionStrength: 1
     - _Parallax: 0.005
     - _QueueOffset: 0
-    - _ReceiveShadowStrength: 0.801
+    - _ReceiveShadowStrength: 0
     - _ReceiveShadows: 1
     - _RimIntensity: 0.17
     - _RimPower: 16.57
@@ -142,8 +142,8 @@ Material:
     - _SrcBlend: 1
     - _SrcBlendAlpha: 1
     - _Surface: 0
-    - _TranslucencyDistortion: 0.2
-    - _TranslucencyPower: 5
+    - _TranslucencyDistortion: 0.059
+    - _TranslucencyPower: 14.58
     - _TreeCenterOffset: 7.5
     - _VariationPower: 0.125
     - _VariationScale: 0.1
@@ -155,8 +155,8 @@ Material:
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
-    - _ColorBot: {r: 0.4326528, g: 0.43137255, b: 0.89411765, a: 1}
-    - _ColorTop: {r: 0.93288195, g: 0.76669985, b: 0.96981126, a: 1}
+    - _ColorBot: {r: 0.7679053, g: 0.30290487, b: 0.98490566, a: 1}
+    - _ColorTop: {r: 0.79000217, g: 0.6160128, b: 0.90943396, a: 1}
     - _ColorVariation: {r: 0.65276754, g: 0.4584905, b: 1, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _RimColor: {r: 1, g: 0.92773104, b: 0.48113203, a: 1}

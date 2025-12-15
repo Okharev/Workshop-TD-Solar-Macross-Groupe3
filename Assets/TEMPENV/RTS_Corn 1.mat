@@ -137,6 +137,7 @@ Material:
     - _MaxScale: 0.014
     - _Metallic: 0
     - _MinScale: 0.01
+    - _NormalCorrection: 0.1
     - _OcclusionStrength: 1
     - _Parallax: 0.005
     - _QueueOffset: 0
@@ -150,8 +151,10 @@ Material:
     - _SpecularPower: 20
     - _SrcBlend: 1
     - _SrcBlendAlpha: 1
+    - _Stiffness: 0.2
     - _SunTint: 0.499
     - _Surface: 0
+    - _TipFlutter: 0.1
     - _TranslucencyDistortion: 0.2
     - _TranslucencyPower: 5
     - _Turbulence: 0.4
