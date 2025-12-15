@@ -1,0 +1,376 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &3818844923952084122
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5818943876079061353}
+  - component: {fileID: 4830362866715351792}
+  - component: {fileID: 1045625127810692603}
+  - component: {fileID: 236258547375704231}
+  - component: {fileID: 4545464759874181417}
+  - component: {fileID: 466867293548587660}
+  - component: {fileID: 8023308299223898800}
+  - component: {fileID: 6425614898181078359}
+  - component: {fileID: 3952622364584476648}
+  - component: {fileID: 9200942174418434636}
+  - component: {fileID: 6047840855137761181}
+  - component: {fileID: 8743903842725453770}
+  - component: {fileID: 2118759459649891566}
+  - component: {fileID: 88660677706600200}
+  - component: {fileID: 1133677677127886226}
+  m_Layer: 0
+  m_Name: -- GAMEMANAGERS --
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5818943876079061353
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3818844923952084122}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 11, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &4830362866715351792
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3818844923952084122}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 83df4eb7357c4b2eba057b4173058736, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Placement.PlacementManager
+  terrainLayerMask:
+    serializedVersion: 2
+    m_Bits: 128
+  obstacleLayerMask:
+    serializedVersion: 2
+    m_Bits: 320
+  energyLayerMask:
+    serializedVersion: 2
+    m_Bits: 512
+  rotationSpeed: 10
+  overlapCheckPadding: 0.9
+  validPreviewMat: {fileID: 2100000, guid: 0e7564a09b0d44f45ab36f773fc2f401, type: 2}
+  invalidPreviewMat: {fileID: 2100000, guid: e9e33962a4bfe0e4da5a4b2727878254, type: 2}
+--- !u!114 &1045625127810692603
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3818844923952084122}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2e7ade929d164dd1b6c2624d95e79185, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Economy.ElectricityVisualizer
+  linePrefab: {fileID: -5781053392132721575, guid: 42579f28da3be3444a4ea12d5264dbd5, type: 3}
+  verticalOffset: 2
+  minWidth: 0.05
+  maxWidth: 0.4
+--- !u!114 &236258547375704231
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3818844923952084122}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cd4cc5d48e68459395414b3b40eba4d8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Economy.Economy.EnergyHeatmapSystem
+  brushShader: {fileID: 4800000, guid: c3da02dcd822447eb5601418f6062530, type: 3}
+  projectorMaterial: {fileID: 2100000, guid: dcad217232085da418798a0936ec4a90, type: 2}
+  mapSize: {x: 800, y: 800}
+  mapCenterOffset: {x: 0, y: 0}
+  textureResolution: 256
+  projectorHeight: 100
+  brushCoreRadius: 0.9
+  autoRefresh: 1
+--- !u!114 &4545464759874181417
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3818844923952084122}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e2995d9d83c14e04a26d05da0e9cae17, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Economy.EnergyGridManager
+  cellSize: 100
+--- !u!114 &466867293548587660
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3818844923952084122}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6b3f459bbe2243d0997e920d0cbf156f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Enemy.WaveManager
+  roadGenerator: {fileID: 0}
+  waves:
+  - waveName: WAVE STRESS TEST
+    unlockedRoadIndices: 0000000001000000030000001b0000001f000000200000001d000000230000002b000000250000002a00000029000000280000002d000000270000002c0000002600000005000000080000000a0000000b000000130000000e000000110000001200000024000000
+    groundSegments:
+    - enemyPrefab: {fileID: 4777620063708500714, guid: 975862d4e0621904eb497ce755294990, type: 3}
+      count: 333
+      spawnInterval: 1
+      initialDelay: 0
+      specificTarget: {fileID: 0}
+      targetSpawner: {fileID: 0}
+    - enemyPrefab: {fileID: 7136175769374652440, guid: b99c312a98cafb349910328b3918ca85, type: 3}
+      count: 333
+      spawnInterval: 1
+      initialDelay: 0
+      specificTarget: {fileID: 0}
+      targetSpawner: {fileID: 0}
+    - enemyPrefab: {fileID: 7136175769374652440, guid: b99c312a98cafb349910328b3918ca85, type: 3}
+      count: 333
+      spawnInterval: 1
+      initialDelay: 0
+      specificTarget: {fileID: 0}
+      targetSpawner: {fileID: 0}
+    airSegments:
+    - enemyPrefab: {fileID: 1331084000967806856, guid: fa0219f2abd081047b478ecaf841ce54, type: 3}
+      count: 333
+      spawnInterval: 1
+      initialDelay: 0
+      specificTarget: {fileID: 0}
+      targetPath: {fileID: 0}
+    - enemyPrefab: {fileID: 1331084000967806856, guid: fa0219f2abd081047b478ecaf841ce54, type: 3}
+      count: 333
+      spawnInterval: 1
+      initialDelay: 0
+      specificTarget: {fileID: 0}
+      targetPath: {fileID: 0}
+  - waveName: WAVE SYSTEM TEST
+    unlockedRoadIndices: 
+    groundSegments:
+    - enemyPrefab: {fileID: 4777620063708500714, guid: 975862d4e0621904eb497ce755294990, type: 3}
+      count: 10
+      spawnInterval: 1.9
+      initialDelay: 0
+      specificTarget: {fileID: 0}
+      targetSpawner: {fileID: 0}
+    airSegments:
+    - enemyPrefab: {fileID: 1331084000967806856, guid: fa0219f2abd081047b478ecaf841ce54, type: 3}
+      count: 333
+      spawnInterval: 1
+      initialDelay: 0
+      specificTarget: {fileID: 0}
+      targetPath: {fileID: 0}
+    - enemyPrefab: {fileID: 1331084000967806856, guid: fa0219f2abd081047b478ecaf841ce54, type: 3}
+      count: 333
+      spawnInterval: 1
+      initialDelay: 0
+      specificTarget: {fileID: 0}
+      targetPath: {fileID: 0}
+  timeBetweenWaves: 30
+  enemiesRemaining:
+    _value: 0
+  totalEnemiesInWave:
+    _value: 0
+  timeToNextWave:
+    _value: 0
+--- !u!114 &8023308299223898800
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3818844923952084122}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 76c392e42b5098c458856cdf6ecaaaa1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.EventSystems.EventSystem
+  m_FirstSelected: {fileID: 0}
+  m_sendNavigationEvents: 1
+  m_DragThreshold: 10
+--- !u!114 &6425614898181078359
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3818844923952084122}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 01614664b831546d2ae94a42149d80ac, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.InputSystem::UnityEngine.InputSystem.UI.InputSystemUIInputModule
+  m_SendPointerHoverToParent: 1
+  m_MoveRepeatDelay: 0.5
+  m_MoveRepeatRate: 0.1
+  m_XRTrackingOrigin: {fileID: 0}
+  m_ActionsAsset: {fileID: -944628639613478452, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
+  m_PointAction: {fileID: -1654692200621890270, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
+  m_MoveAction: {fileID: -8784545083839296357, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
+  m_SubmitAction: {fileID: 392368643174621059, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
+  m_CancelAction: {fileID: 7727032971491509709, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
+  m_LeftClickAction: {fileID: 3001919216989983466, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
+  m_MiddleClickAction: {fileID: -2185481485913320682, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
+  m_RightClickAction: {fileID: -4090225696740746782, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
+  m_ScrollWheelAction: {fileID: 6240969308177333660, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
+  m_TrackedDevicePositionAction: {fileID: 6564999863303420839, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
+  m_TrackedDeviceOrientationAction: {fileID: 7970375526676320489, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
+  m_DeselectOnBackgroundClick: 1
+  m_PointerBehavior: 0
+  m_CursorLockBehavior: 0
+  m_ScrollDeltaPerTick: 6
+--- !u!114 &3952622364584476648
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3818844923952084122}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7d3ee6e392e54d7295486324a29f5389, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SelectionInputHandler
+  selectionLayer:
+    serializedVersion: 2
+    m_Bits: 9472
+--- !u!114 &9200942174418434636
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3818844923952084122}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2f2f76fb742941a8bc545aec2f58db12, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Economy.CurrencyManager
+  startingMoney: 160
+  currentMoney:
+    _value: 0
+--- !u!114 &6047840855137761181
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3818844923952084122}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d19bacb0cf114433a85a7f7213a464af, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GlobalWindManager
+  windTexture: {fileID: 2800000, guid: 798e2ce9dcc3c7b44b3d79994dadcf74, type: 3}
+  windDirection: {x: -1, y: -1}
+  windSpeed: 0.02
+  windScale: 0.002
+  globalWindStrength: 10
+  updateShaderGlobals: 0
+--- !u!114 &8743903842725453770
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3818844923952084122}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f2eb541b52ee4c66966efc4adc99d229, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GrassRenderer
+  grassMesh: {fileID: 4300000, guid: 007c7d0833473dd4d9d2fca99d796e3a, type: 2}
+  grassMaterial: {fileID: 2100000, guid: 2eb26c7bbdb0c2b4aa15aacffcb4f140, type: 2}
+  cullingComputeShader: {fileID: 7200000, guid: 5e8431bce1f1d4e41bdab0528ac8958a, type: 3}
+  terrainColorMap: {fileID: 2800000, guid: ed11d62797204c348ab3121d1b3a2798, type: 3}
+  terrainLayerIndex: 1
+  minDensity: 0.5
+  instanceCount: 6000000
+  drawDistance: 250
+  terrain: {fileID: 0}
+--- !u!114 &2118759459649891566
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3818844923952084122}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f2eb541b52ee4c66966efc4adc99d229, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GrassRenderer
+  grassMesh: {fileID: 4164511204261677510, guid: 11138aeb3a8fb7d4ebc10ab086ca706b, type: 3}
+  grassMaterial: {fileID: 2100000, guid: 9f18bc2c267b25d48b3731fbdfcc1117, type: 2}
+  cullingComputeShader: {fileID: 7200000, guid: 5e8431bce1f1d4e41bdab0528ac8958a, type: 3}
+  terrainColorMap: {fileID: 2800000, guid: f312995d1c3950345941dabfeab5a5a9, type: 3}
+  terrainLayerIndex: 1
+  minDensity: 0.5
+  instanceCount: 85000
+  drawDistance: 200
+  terrain: {fileID: 0}
+--- !u!114 &88660677706600200
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3818844923952084122}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f2eb541b52ee4c66966efc4adc99d229, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GrassRenderer
+  grassMesh: {fileID: 6099800089077584851, guid: 6146ca30f2c8e4a46b7299efa81159c2, type: 3}
+  grassMaterial: {fileID: 2100000, guid: c67617f2aa2363f4497c07660813442a, type: 2}
+  cullingComputeShader: {fileID: 7200000, guid: 5e8431bce1f1d4e41bdab0528ac8958a, type: 3}
+  terrainColorMap: {fileID: 2800000, guid: f72db5ce3f7f0ee4daf3dd2e139b9912, type: 3}
+  terrainLayerIndex: 2
+  minDensity: 0.5
+  instanceCount: 1900000
+  drawDistance: 200
+  terrain: {fileID: 0}
+--- !u!114 &1133677677127886226
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3818844923952084122}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f2eb541b52ee4c66966efc4adc99d229, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GrassRenderer
+  grassMesh: {fileID: 8211372540250625004, guid: 97d7f7b29bfae8d4e814ace1649b06ec, type: 3}
+  grassMaterial: {fileID: 2100000, guid: 499a18c26e1758f47b9a1f815151916d, type: 2}
+  cullingComputeShader: {fileID: 7200000, guid: 5e8431bce1f1d4e41bdab0528ac8958a, type: 3}
+  terrainColorMap: {fileID: 2800000, guid: f312995d1c3950345941dabfeab5a5a9, type: 3}
+  terrainLayerIndex: 3
+  minDensity: 0.5
+  instanceCount: 1000000
+  drawDistance: 200
+  terrain: {fileID: 0}

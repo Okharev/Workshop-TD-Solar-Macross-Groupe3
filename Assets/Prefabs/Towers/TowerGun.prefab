@@ -321,15 +321,15 @@ MonoBehaviour:
   icon: {fileID: 10901, guid: 0000000000000000f000000000000000, type: 0}
   currentLevelPrefab: {fileID: 5607425079627833002}
   nextLevelPrefab: {fileID: 5607425079627833002}
-  upgradeCost: 100
-  cost: 100
-  energyDrain: 100
+  upgradeCost: 25
+  cost: 150
+  energyDrain: 50
   nextUpgrade: {fileID: 0}
   refundRatio: 0.9
   powerSource: {fileID: 8506183719910781864}
-  baseDamage: 13
-  baseRange: 35
-  baseFireRate: 1.2
+  baseDamage: 8
+  baseRange: 40
+  baseFireRate: 2
   damage:
     _baseValue:
       _value: 0
