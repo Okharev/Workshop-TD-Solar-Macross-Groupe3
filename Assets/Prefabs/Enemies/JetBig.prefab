@@ -24,7 +24,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1271006721159918425}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -1, z: -0, w: 0.00000058114523}
+  m_LocalRotation: {x: 0, y: 1, z: 0, w: 0}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -32,7 +32,7 @@ Transform:
   - {fileID: 1408619238059244931}
   - {fileID: 6005638722976674783}
   m_Father: {fileID: 6778696234163456189}
-  m_LocalEulerAnglesHint: {x: 0, y: -180, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 180, z: 0}
 --- !u!1 &5069400229212143550
 GameObject:
   m_ObjectHideFlags: 0
@@ -121,8 +121,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 3.5, y: 1, z: 5.8}
-  m_Center: {x: 0, y: 0, z: 0}
+  m_Size: {x: 3.5, y: 1, z: 7.5238357}
+  m_Center: {x: 0, y: 0, z: 0.33023763}
 --- !u!114 &3399384273038241848
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -136,8 +136,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Enemy.HealthComponent
   currentHealth:
-    _value: 100
-  maxHealth: 100
+    _value: 500
+  maxHealth: 500
 --- !u!114 &5223861261425597731
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -198,8 +198,8 @@ MonoBehaviour:
   separationRadius: 3
   weightTarget: 1.2
   weightSeparation: 25
-  maxThrustSpeed: 10
-  minStallSpeed: 6
+  maxThrustSpeed: 6
+  minStallSpeed: 4
   acceleration: 3
   orbitRadius: 40
   orbitHeight: 18
@@ -212,6 +212,8 @@ MonoBehaviour:
   whiskerLength: 40
   weightAvoidance: 100
   logicTickRate: 0.15
+  currentMissionTarget: {x: 0, y: 0, z: 0}
+  currentState: 0
 --- !u!114 &1947981790946585290
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -270,7 +272,7 @@ Transform:
   m_GameObject: {fileID: 7976689814884948237}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 1, z: -0, w: 0.00000058114523}
-  m_LocalPosition: {x: 0, y: -0.138, z: -3.11}
+  m_LocalPosition: {x: 0, y: -0.14, z: -5}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -317,15 +319,15 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: daec9cf440fcbe747b5cfabc7be68680, type: 3}
       propertyPath: m_LocalScale.x
-      value: 0.4
+      value: 0.75
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: daec9cf440fcbe747b5cfabc7be68680, type: 3}
       propertyPath: m_LocalScale.y
-      value: 0.4
+      value: 0.75
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: daec9cf440fcbe747b5cfabc7be68680, type: 3}
       propertyPath: m_LocalScale.z
-      value: 0.4
+      value: 0.75
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: daec9cf440fcbe747b5cfabc7be68680, type: 3}
       propertyPath: m_LocalPosition.x
