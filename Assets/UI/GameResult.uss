@@ -1,0 +1,88 @@
+/* Container principal : L'image de fond sera ici */
+.screen-container {
+    flex-grow: 1;
+    width: 100%;
+    height: 100%;
+    align-items: center;
+    justify-content: center;
+
+    /* IMPORTANT : couleur transparente par défaut pour ne pas cacher l'image si elle charge mal */
+    background-color: rgba(0, 0, 0, 0);
+
+    /* L'image remplit l'écran en gardant ses proportions (zoom pour remplir) */
+    -unity-background-scale-mode: scale-and-crop;
+
+    opacity: 0;
+    transition-duration: 0.5s;
+}
+
+/* Le panneau central : On le rend invisible (plus de bordure, plus de fond gris) */
+.main-panel {
+    /* Largeur ajustée */
+    width: 40%;
+
+    /* Alignement du contenu */
+    align-items: center;
+    justify-content: center;
+
+    /* ZÉRO BORDURE */
+    border-width: 0px;
+
+    /* Fond très léger ou totalement transparent */
+    /* Option A : Totalement transparent (juste le texte et boutons) */
+    background-color: rgba(0, 0, 0, 0);
+
+    /* Option B : Si le texte est illisible, décommente la ligne ci-dessous pour un léger voile noir */
+    /* background-color: rgba(0, 0, 0, 0.4); */
+
+    padding: 20px;
+}
+
+.title-label {
+    font-size: 80px; /* Plus grand ! */
+    color: white;
+    -unity-font-style: bold;
+    margin-bottom: 50px;
+
+    /* Ombre portée pour lire le texte sur n'importe quelle image */
+    text-shadow: 4px 4px 0px rgba(0, 0, 0, 0.8);
+    -unity-text-align: middle-center;
+}
+
+.button-container {
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+}
+
+.menu-button {
+    width: 300px;
+    height: 70px;
+    font-size: 30px;
+    margin-bottom: 20px;
+
+    /* Style du bouton : Blanc un peu transparent */
+    background-color: rgba(255, 255, 255, 0.9);
+    color: black;
+    border-width: 0px;
+    border-radius: 8px;
+    transition: 0.1s;
+}
+
+.menu-button:hover {
+    scale: 1.1;
+    background-color: white;
+    color: rgb(0, 0, 0);
+}
+
+.menu-button:active {
+    background-color: rgb(180, 180, 180);
+}
+
+.quit-button {
+    background-color: rgba(200, 50, 50, 0.9);
+    color: white;
+}
+.quit-button:hover {
+    background-color: rgb(255, 60, 60);
+}

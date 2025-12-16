@@ -1,5 +1,6 @@
 ﻿using System;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Enemy
 {
@@ -9,6 +10,8 @@ namespace Enemy
         private ReactiveInt currentHealth = new(100);
 
         [SerializeField] private int maxHealth = 100;
+
+        [SerializeField] public GameObject onDeathVfx;
 
         public IReadOnlyReactiveProperty<int> CurrentHealth => currentHealth;
         public int CurrentHealthRaw => CurrentHealth.Value;
@@ -24,11 +27,21 @@ namespace Enemy
 
         public bool TakeDamage(int amount)
         {
+            
+            
             currentHealth.Value = Mathf.Max(0, currentHealth.Value - amount);
 
             if (currentHealth.Value <= 0)
             {
                 OnDeath?.Invoke(gameObject);
+                
+                if (onDeathVfx)
+                {
+                    Instantiate(onDeathVfx,
+                        new Vector3(transform.position.x, transform.position.y + 1.0f, transform.position.z),
+                        Quaternion.identity);
+                }
+
                 Destroy(gameObject);
                 return true;
             }
