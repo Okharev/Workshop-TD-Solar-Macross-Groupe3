@@ -27,6 +27,7 @@ Material:
   m_ValidKeywords: []
   m_InvalidKeywords:
   - _
+  - _ENABLECOLORVAR_ON
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 1
   m_DoubleSidedGI: 0
@@ -116,7 +117,7 @@ Material:
     - _DstBlend: 0
     - _DstBlendAlpha: 0
     - _EdgeFadeOffset: 0.018
-    - _EdgeFadePower: 1.1
+    - _EdgeFadePower: 1.78
     - _EnableColorVar: 1
     - _EnvironmentReflections: 1
     - _GlossMapScale: 0
@@ -127,10 +128,11 @@ Material:
     - _LeafFlutter: 0.047
     - _Metallic: 0
     - _NormalSpherify: 0.5
+    - _NormalSpherize: 0.5
     - _OcclusionStrength: 1
     - _Parallax: 0.005
     - _QueueOffset: 0
-    - _ReceiveShadowStrength: 0.85
+    - _ReceiveShadowStrength: 0.477
     - _ReceiveShadows: 1
     - _RimIntensity: 0.07
     - _RimPower: 16.57
@@ -142,6 +144,7 @@ Material:
     - _SrcBlend: 1
     - _SrcBlendAlpha: 1
     - _Surface: 0
+    - _SwayFrequency: 1
     - _TranslucencyDistortion: 0.2
     - _TranslucencyPower: 5
     - _TreeCenterOffset: 0

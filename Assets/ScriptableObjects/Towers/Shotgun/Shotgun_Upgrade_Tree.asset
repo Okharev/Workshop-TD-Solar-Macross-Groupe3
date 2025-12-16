@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 46b64e6b8ee74497ac3ffe45ea015ab4, type: 3}
+  m_Name: Shotgun_Upgrade_Tree
+  m_EditorClassIdentifier: Assembly-CSharp::Towers.TowerUpgradeTreeSo
+  tiers:
+  - tierName: LVL2
+    options:
+    - labelOverride: 
+      cost: 175
+      upgradeDefinition: {fileID: 11400000, guid: 9e15f5ab87a136a4fb88907031e342c2, type: 2}
+  - tierName: LVL3
+    options:
+    - labelOverride: 
+      cost: 200
+      upgradeDefinition: {fileID: 11400000, guid: fe61a9fdf81646041a36d901d7854d46, type: 2}
+    - labelOverride: 
+      cost: 200
+      upgradeDefinition: {fileID: 11400000, guid: 6a68bf715ae2c784c869d0bca34c4d78, type: 2}

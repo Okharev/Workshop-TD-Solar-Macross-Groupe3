@@ -20,14 +20,14 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: FoliageSpring
+  m_Name: FoliageAutumn 1
   m_Shader: {fileID: 4800000, guid: bb898ee263014f01bc5e846219c3e431, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
   m_InvalidKeywords: []
   m_LightmapFlags: 4
-  m_EnableInstancingVariants: 0
+  m_EnableInstancingVariants: 1
   m_DoubleSidedGI: 0
   m_CustomRenderQueue: -1
   stringTagMap: {}
@@ -108,50 +108,62 @@ Material:
     - _ClearCoatMask: 0
     - _ClearCoatSmoothness: 0
     - _Cull: 2
-    - _Cutoff: 0.5
+    - _Cutoff: 0.335
     - _DetailAlbedoMapScale: 1
     - _DetailNormalMapScale: 1
     - _DstBlend: 0
     - _DstBlendAlpha: 0
-    - _EdgeFadePower: 0.35
+    - _EdgeFade: 0.4
+    - _EdgeFadePower: 0.43
     - _EnvironmentReflections: 1
     - _GlossMapScale: 0
     - _Glossiness: 0
     - _GlossyReflections: 0
-    - _GradientOffset: 0
-    - _GradientScale: 10
-    - _LeafFlutter: 0.2
+    - _GradientOffset: -6.98
+    - _GradientScale: 2.93
+    - _HueVariation: 0.05
+    - _InnerOcclusion: 0.5
+    - _LeafFlutter: 0.18
+    - _LightThreshold: 0.5
     - _Metallic: 0
-    - _OcclusionStrength: 1
+    - _NormalSpherize: 0.366
+    - _OcclusionStrength: 0.496
     - _Parallax: 0.005
     - _QueueOffset: 0
     - _ReceiveShadows: 1
-    - _RimIntensity: 0.19
-    - _RimPower: 10
-    - _Smoothness: 0.5
+    - _RimIntensity: 0.51
+    - _RimPower: 5.55
+    - _ShadowOffset: 1
+    - _ShadowSoftness: 0.5
+    - _ShadowStrength: 0.8
+    - _Smoothness: 17.9
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
+    - _SpecularIntensity: 4.79
+    - _SpecularPower: 20
     - _SrcBlend: 1
     - _SrcBlendAlpha: 1
     - _Surface: 0
     - _SwayFrequency: 1
-    - _TranslucencyDistortion: 0.2
-    - _TranslucencyPower: 5
-    - _WaveOpacity: 0.08
-    - _WindMultiplier: 1
+    - _TranslucencyDistortion: 0.422
+    - _TranslucencyPower: 8.9
+    - _UseFakeNormals: 0
+    - _WaveOpacity: 0.009
+    - _WindMultiplier: 1.39
     - _WorkflowMode: 1
     - _XRMotionVectorsPass: 1
     - _ZWrite: 1
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
-    - _ColorBot: {r: 0.19999996, g: 0.39999998, b: 0.19999996, a: 1}
-    - _ColorTop: {r: 0.5, g: 0.8, b: 0.5, a: 1}
+    - _ColorBot: {r: 0.14822695, g: 0.509434, b: 0.060555335, a: 1}
+    - _ColorTop: {r: 0.34925723, g: 0.8037735, b: 0.24113198, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
-    - _RimColor: {r: 1, g: 1, b: 0.8, a: 1}
-    - _ShadowTint: {r: 0.29999998, g: 0.29999998, b: 0.5, a: 1}
+    - _RimColor: {r: 0.5016947, g: 0.4901961, b: 1, a: 1}
+    - _ShadowTint: {r: 0.5264151, g: 0.66796356, b: 1, a: 1}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
-    - _TranslucencyColor: {r: 0.8, g: 1, b: 0.5, a: 1}
-    - _WaveColor: {r: 0.9, g: 1, b: 0.7, a: 1}
+    - _SpecularColor: {r: 1, g: 1, b: 1, a: 1}
+    - _TranslucencyColor: {r: 0.7041727, g: 1, b: 0.41320753, a: 1}
+    - _WaveColor: {r: 0.9724964, g: 0.9339622, b: 1, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

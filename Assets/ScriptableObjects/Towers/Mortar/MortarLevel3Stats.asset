@@ -17,14 +17,14 @@ MonoBehaviour:
   description: This is the mortar 3 stat upgrade it does 50+ every stats
   modifiers:
   - modifierType: 100
-    value: 50
+    value: 3
     targetStat: 0
   - modifierType: 100
-    value: 50
-    targetStat: 0
-  - modifierType: 300
-    value: 20
+    value: 0.5
+    targetStat: 2
+  - modifierType: 100
+    value: 5
     targetStat: 1
-  - modifierType: 300
-    value: 20
+  - modifierType: 100
+    value: 50
     targetStat: 3

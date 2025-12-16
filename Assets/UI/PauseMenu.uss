@@ -1,0 +1,151 @@
+/* The full screen overlay. 
+   Absolute position covers the whole screen. 
+   Semi-transparent black background. */
+.overlay {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    justify-content: center;
+    align-items: center;
+    display: flex; /* Default is visible */
+}
+
+/* Class to hide the menu */
+.hidden {
+    display: none;
+}
+
+/* The box containing the buttons */
+.menu-box {
+    width: 300px;
+    background-color: rgb(60, 60, 60);
+    border-radius: 10px;
+    padding: 20px;
+    align-items: stretch;
+}
+
+/* Text Header Style */
+.header-text {
+    font-size: 24px;
+    -unity-font-style: bold;
+    color: white;
+    margin-bottom: 20px;
+    -unity-text-align: middle-center;
+}
+
+/* Button Styles */
+.menu-button {
+    height: 40px;
+    margin-bottom: 10px;
+    font-size: 16px;
+    background-color: rgb(200, 200, 200);
+    border-radius: 5px;
+}
+
+.menu-button:hover {
+    background-color: white;
+}
+
+.images-row {
+    flex-direction: row;        /* Horizontal layout */
+    justify-content: space-around; /* Space them out evenly */
+    flex-grow: 1;               /* Fill available vertical space */
+    align-items: center;        /* Center vertically */
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+/* Style for the individual images */
+.control-image {
+    width: 48%;                 /* Take up almost half width each */
+    height: 100%;               /* Fill height */
+    background-color: rgba(0,0,0,0.2); /* Dark placeholder background */
+
+    /* Crucial: Keeps aspect ratio intact */
+    -unity-background-scale-mode: scale-to-fit;
+
+    border-radius: 8px;
+    border-width: 2px;
+    border-color: rgb(100, 100, 100);
+}
+
+/* Layout for the carousel */
+.carousel-row {
+    flex-direction: row;        /* Horizontal */
+    align-items: center;        /* Vertically centered */
+    flex-grow: 1;               /* Fill all available space */
+    width: 100%;
+    margin-bottom: 10px;
+    justify-content: space-between;
+}
+
+/* The Image Display */
+.carousel-image {
+    flex-grow: 1;               /* Fill space between buttons */
+    height: 100%;
+    margin-left: 10px;
+    margin-right: 10px;
+    background-color: rgba(0,0,0,0.3);
+    border-radius: 8px;
+
+    /* Ensure the image fits without stretching */
+    -unity-background-scale-mode: scale-to-fit;
+}
+
+/* Navigation Arrow Buttons */
+.arrow-button {
+    width: 50px;
+    height: 100%;               /* Tall buttons are easier to click */
+    font-size: 30px;
+    -unity-font-style: bold;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-width: 0;
+    color: white;
+}
+
+.arrow-button:hover {
+    background-color: rgba(255, 255, 255, 0.3);
+}
+
+.arrow-button:active {
+    background-color: rgba(255, 255, 255, 0.5);
+}
+
+.option-label {
+    color: white;
+    margin-top: 5px;
+    margin-left: 2px;
+}
+
+.option-dropdown {
+    margin-bottom: 15px;
+}
+
+/* Row for Label + Button */
+.keybind-row {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    padding-right: 10px;
+}
+
+.keybind-label {
+    color: rgb(220, 220, 220);
+    font-size: 14px;
+}
+
+.keybind-button {
+    width: 80px;
+    height: 30px;
+    background-color: rgb(80, 80, 80);
+    color: white;
+    border-radius: 5px;
+}
+
+.keybind-button:hover {
+    background-color: rgb(120, 120, 120);
+}

@@ -1,66 +1,125 @@
-﻿Shader "Custom/GenshinFoliageWind_Clean"
+﻿Shader "Custom/GenshinFoliageUltimate_Merged"
 {
     Properties
     {
         [Header(Base Settings)]
-        _BaseMap("Leaf Texture (Atlas 2x2)", 2D) = "white" {}
+        [MainTexture] _BaseMap("Leaf Texture (Alpha for Cutout)", 2D) = "white" {}
         _Cutoff("Alpha Cutoff", Range(0, 1)) = 0.5
+
+        [Header(Geometry)]
+        _NormalSpherize("Fluffy Normals (0=Flat, 1=Round)", Range(0, 1)) = 0.5
 
         [Header(Genshin Stylization)]
         _ColorTop("High Color (Sun)", Color) = (0.5, 0.8, 0.5, 1)
         _ColorBot("Low Color (Shadow)", Color) = (0.2, 0.4, 0.2, 1)
-        // MODIFICATION 1 : Echelle réduite par défaut pour mieux voir le gradient
-        _GradientScale("Gradient Scale", Float) = 8.0 
+        _GradientScale("Gradient Scale", Float) = 8.0 // Valeur par défaut ajustée [cite: 2]
         _GradientOffset("Gradient Offset", Float) = 0.0
 
         [Header(Color Variation)]
-        [Toggle(_)] _EnableColorVar("Enable Position Variation", Float) = 1.0
+        [Toggle] _EnableColorVar("Enable Position Variation", Float) = 1.0
         _ColorVariation("Variation Tint", Color) = (0.6, 0.8, 0.4, 1)
-        _VariationScale("Variation Scale", Float) = 0.1
-        _VariationPower("Variation Intensity", Range(0, 1)) = 0.3
+        _VariationScale("Variation Scale", Float) = 0.5
+        _VariationPower("Variation Intensity", Range(0, 1)) = 0.2
+
+        [Header(Lighting)]
+        _RampTex("Toon Ramp (Black to White)", 2D) = "white" {}
+        _ShadowTint("Shadow Tint (Color of Shadows)", Color) = (0.3, 0.3, 0.5, 1)
+        // [FEATURE IMPORTANTE] Contrôle la force de l'ombre reçue pour éviter le bruit [cite: 4]
+        _ReceiveShadowStrength("Received Shadow Strength", Range(0, 1)) = 0.5 
         
-        [Header(Stylized Specular)]
-        _SpecularColor("Specular Tint", Color) = (1, 1, 1, 1)
-        _SpecularPower("Specular Size", Range(0.1, 100)) = 20.0
+        [Header(Specular)]
+        _SpecularColor("Specular Color", Color) = (0.9, 1.0, 0.8, 1)
+        _Smoothness("Specular Smoothness", Range(1, 50)) = 15.0
         _SpecularIntensity("Specular Intensity", Range(0, 5)) = 0.5
 
-        [Header(Lighting and Shadows)]
-        _RampTex("Toon Ramp (Black to White)", 2D) = "white" {}
-        _ShadowTint("Shadow Tint", Color) = (0.3, 0.3, 0.5, 1)
-        // MODIFICATION 2 : Nouveau paramètre pour contrôler le "bruit" des ombres
-        _ReceiveShadowStrength("Received Shadow Strength", Range(0, 1)) = 0.5
-        
-        [Header(Debug)]
-        [Toggle] _DebugShadows("Visualize Shadow Optimization", Float) = 0
-        
         [Header(Rim Light)]
-        _RimTint("Rim Tint", Color) = (1, 1, 1, 1)
-        _RimPower("Rim Sharpness", Range(0.1, 20)) = 3.0
+        _RimColor("Rim Color", Color) = (1, 1, 0.8, 1)
+        _RimPower("Rim Power (Sharpness)", Range(0.1, 10)) = 3.0
         _RimIntensity("Rim Intensity", Range(0, 5)) = 0.5
 
         [Header(Translucency)]
-        _TranslucencyTint("Translucency Tint", Color) = (0.5, 0.8, 0.2, 1)
-        _TranslucencyPower("Translucency Focus", Range(0, 20)) = 5.0
+        _TranslucencyColor("Translucency Color", Color) = (0.8, 1, 0.5, 1)
+        _TranslucencyPower("Translucency Power", Range(0, 10)) = 5.0
         _TranslucencyDistortion("Translucency Distortion", Range(0, 1)) = 0.2
 
-        [Header(Wind Physics)]
+        [Header(Wind Settings)]
         _WindMultiplier("Overall Wind Strength", Range(0, 5)) = 1.0
+        _SwayFrequency("Ambient Sway Speed", Float) = 1.0
         _LeafFlutter("Leaf Flutter Intensity", Range(0, 1)) = 0.2
         
         [Header(Wind Visuals)]
-        _WaveTint ("Gust Tint", Color) = (1, 1, 1, 1)
+        _WaveColor ("Gust Highlight Color", Color) = (0.9, 1.0, 0.7, 1)
         _WaveOpacity ("Gust Visual Strength", Range(0,1)) = 0.2
         
         [Header(Quality Of Life)]
-        _EdgeFadePower("Edge Fade Power", Range(0, 20)) = 2.0
-        _EdgeFadeOffset("Edge Fade Offset", Range(0, 1)) = 0.1
+        _EdgeFadePower("Edge Fade Power (Hide Paper Thin)", Range(0, 10)) = 2.0
     }
 
     SubShader
     {
-        Tags { "RenderType"="TransparentCutout" "Queue"="AlphaTest" "RenderPipeline" = "UniversalPipeline" }
+        Tags 
+        { 
+            "RenderType"="TransparentCutout" 
+            "Queue"="AlphaTest" 
+            "RenderPipeline" = "UniversalPipeline" 
+            "IgnoreProjector" = "True"
+        }
         LOD 100
 
+        HLSLINCLUDE
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            
+            CBUFFER_START(UnityPerMaterial)
+                float4 _BaseMap_ST;
+                half _Cutoff;
+                half _NormalSpherize; 
+                
+                half4 _ColorTop;
+                half4 _ColorBot;
+                float _GradientScale;
+                float _GradientOffset;
+                
+                float _EnableColorVar;
+                half4 _ColorVariation;
+                float _VariationScale;
+                float _VariationPower;
+
+                half4 _ShadowTint;
+                half _ReceiveShadowStrength; // 
+
+                half4 _SpecularColor;
+                half _Smoothness;
+                half _SpecularIntensity;
+
+                half4 _RimColor;
+                half _RimPower;
+                half _RimIntensity;
+                
+                half4 _TranslucencyColor;
+                half _TranslucencyPower;
+                half _TranslucencyDistortion;
+
+                half _WindMultiplier;
+                half _SwayFrequency;
+                half _LeafFlutter;
+                
+                half4 _WaveColor;
+                half _WaveOpacity;
+                half _EdgeFadePower;
+            CBUFFER_END
+            
+            TEXTURE2D(_BaseMap); SAMPLER(sampler_BaseMap);
+            TEXTURE2D(_RampTex); SAMPLER(sampler_RampTex);
+            
+            // Global Wind Inputs
+            TEXTURE2D(_WindMap); SAMPLER(sampler_WindMap);
+            float _WindSpeed;
+            float _WindScale;
+            float2 _WindDirection;
+            float _GlobalWindStrength;
+        ENDHLSL
+
+        // --- PASS 1 : FORWARD LIT ---
         Pass
         {
             Name "ForwardLit"
@@ -70,56 +129,35 @@
             HLSLPROGRAM
             #pragma vertex vert
             #pragma fragment frag
-            #pragma multi_compile_instancing
-            #pragma multi_compile_fog
             #pragma multi_compile _ _MAIN_LIGHT_SHADOWS
             #pragma multi_compile _ _MAIN_LIGHT_SHADOWS_CASCADE
             #pragma multi_compile _ _SHADOWS_SOFT
+            #pragma multi_compile_fog 
+            #pragma multi_compile_instancing 
 
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
-            #include "GenshinWindPhysics.hlsl"
 
-            // Globals
-            float _GlobalWindStrength;
-            float _WindSpeed; float _WindScale; float2 _WindDirection;
-            TEXTURE2D(_WindMap); SAMPLER(sampler_WindMap);
-
-            CBUFFER_START(UnityPerMaterial)
-                float4 _BaseMap_ST;
-                half _Cutoff;
-                half4 _ColorTop; half4 _ColorBot; float _GradientScale; float _GradientOffset;
-                float _EnableColorVar; half4 _ColorVariation; float _VariationScale; float _VariationPower;
-                half4 _SpecularColor; float _SpecularPower; float _SpecularIntensity;
-                half4 _ShadowTint; half4 _RimTint; half _RimPower; half _RimIntensity;
-                half4 _TranslucencyTint; half _TranslucencyPower; half _TranslucencyDistortion;
-                half _WindMultiplier; half _LeafFlutter;
-                half4 _WaveTint; half _WaveOpacity; half _EdgeFadePower; half _EdgeFadeOffset;
-                float _DebugShadows;
-                // Ajout CBUFFER
-                half _ReceiveShadowStrength;
-            CBUFFER_END
-            
-            TEXTURE2D(_BaseMap); SAMPLER(sampler_BaseMap);
-            TEXTURE2D(_RampTex); SAMPLER(sampler_RampTex);
-
-            struct Attributes { 
-                float4 positionOS : POSITION; 
-                float2 uv : TEXCOORD0; 
+            struct Attributes
+            {
+                float4 positionOS : POSITION;
+                float2 uv : TEXCOORD0;
                 float3 normalOS : NORMAL;
                 float4 color : COLOR; 
                 UNITY_VERTEX_INPUT_INSTANCE_ID 
             };
 
-            struct Varyings { 
-                float4 positionCS : SV_POSITION; 
-                float2 uv : TEXCOORD0; 
+            struct Varyings
+            {
+                float4 positionCS : SV_POSITION;
+                float2 uv : TEXCOORD0;
                 float3 normalWS : TEXCOORD1;
-                float3 positionWS : TEXCOORD3; 
-                float windMask : TEXCOORD4; 
-                float4 color : COLOR; 
-                float fogFactor : TEXCOORD5; 
-                UNITY_VERTEX_INPUT_INSTANCE_ID 
+                float3 positionWS : TEXCOORD3;
+                float windMask : TEXCOORD4;
+                float4 color : COLOR;
+                float randomHash : TEXCOORD5; 
+                float fogFactor : TEXCOORD6;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
+                UNITY_VERTEX_OUTPUT_STEREO
             };
 
             Varyings vert(Attributes input)
@@ -129,20 +167,45 @@
                 UNITY_TRANSFER_INSTANCE_ID(input, output);
 
                 VertexPositionInputs vertexInput = GetVertexPositionInputs(input.positionOS.xyz);
-                output.positionWS = vertexInput.positionWS;
                 VertexNormalInputs normalInput = GetVertexNormalInputs(input.normalOS, float4(1,1,1,1));
-                output.normalWS = normalInput.normalWS;
+                
+                float3 positionWS = vertexInput.positionWS;
+                float3 objectOrigin = GetObjectToWorldMatrix()._m03_m13_m23;
 
+                // --- 1. COULEUR STABLE ---
+                output.randomHash = frac(sin(dot(objectOrigin.xz, float2(12.9898, 78.233))) * 43758.5453);
+
+                // --- 2. FLUFFY NORMALS ---
+                float3 sphericalNormal = normalize(positionWS - objectOrigin);
+                output.normalWS = lerp(normalInput.normalWS, sphericalNormal, _NormalSpherize);
+
+                // --- 3. WIND PHYSICS ---
                 float time = _Time.y * _WindSpeed;
-                float2 windUV = output.positionWS.xz * _WindScale - (_WindDirection * time);
+                float2 windUV = positionWS.xz * _WindScale - (_WindDirection * time);
                 float noise = SAMPLE_TEXTURE2D_LOD(_WindMap, sampler_WindMap, windUV, 0).r;
                 float gust = noise * noise;
+                
+                // Distance Mask
+                float dist = distance(_WorldSpaceCameraPos, positionWS);
+                float distMask = 1.0 - saturate((dist - 30.0) / 40.0);
 
-                float3 bending = CalculateMainBending(output.positionWS, input.color.r, input.color.a, _WindMultiplier, _WindDirection, _WindSpeed, _GlobalWindStrength, _WindMap, sampler_WindMap, _WindScale, time);
-                float3 flutter = CalculateLeafFlutter(input.positionOS.xyz, output.normalWS, _LeafFlutter, time, input.color.g);
+                float windWeight = input.color.r;
+                
+                // Sway + Flutter
+                float swayTime = _Time.y * _SwayFrequency + (positionWS.x + positionWS.z) * 0.5;
+                float ambientSway = sin(swayTime) * 0.1;
+                float flutterFreq = _Time.y * 15.0 + dot(input.positionOS.xyz, float3(10,10,10));
+                float flutter = sin(flutterFreq) * _LeafFlutter * gust * windWeight * distMask;
 
-                output.positionWS += bending + flutter;
-                output.positionCS = TransformWorldToHClip(output.positionWS);
+                float totalPush = (gust * _GlobalWindStrength + ambientSway) * _WindMultiplier * windWeight;
+                float3 displacement = float3(_WindDirection.x * totalPush, 0, _WindDirection.y * totalPush);
+                displacement.y -= totalPush * totalPush * 0.2; 
+                displacement.xyz += output.normalWS * flutter;
+
+                positionWS += displacement;
+
+                output.positionWS = positionWS;
+                output.positionCS = TransformWorldToHClip(positionWS);
                 output.uv = TRANSFORM_TEX(input.uv, _BaseMap);
                 output.color = input.color;
                 output.windMask = gust * _GlobalWindStrength;
@@ -154,137 +217,165 @@
             half4 frag(Varyings input, bool isFrontFace : SV_IsFrontFace) : SV_Target
             {
                 UNITY_SETUP_INSTANCE_ID(input);
-
-                // --- 1. EDGE FADE ---
+                
                 half3 viewDir = GetWorldSpaceNormalizeViewDir(input.positionWS);
+                
+                // Edge Fade
                 float3 ddxPos = ddx(input.positionWS);
                 float3 ddyPos = ddy(input.positionWS);
                 float3 geometricNormal = normalize(cross(ddyPos, ddxPos));
                 float geometricNdotV = abs(dot(geometricNormal, viewDir));
-                float edgeAlpha = pow(smoothstep(_EdgeFadeOffset, 1.0, geometricNdotV), _EdgeFadePower);
+                float edgeAlpha = pow(smoothstep(0.1, 1.0, geometricNdotV), _EdgeFadePower);
 
                 half4 texColor = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv);
                 clip((texColor.a * edgeAlpha) - _Cutoff);
 
-                // --- 2. GRADIENT FIX ---
-                // Le gradient est calculé en World Space Y. 
-                // Si l'arbre est à Y=0 et fait 10m de haut, heightFactor va de 0 à 1 (si Scale=10).
+                // --- GRADIENT LISSÉ & VARIATION [cite: 33, 34, 35, 36] ---
                 float heightFactor = saturate((input.positionWS.y + _GradientOffset) / _GradientScale);
-                // On applique une courbe "pow" pour rendre le gradient plus doux vers le haut
-                half3 gradient = lerp(_ColorBot.rgb, _ColorTop.rgb, pow(heightFactor, 0.8));
+                half3 gradientColor = lerp(_ColorBot.rgb, _ColorTop.rgb, pow(heightFactor, 0.8)); // Curve 'pow' pour adoucir
                 
-                if(_EnableColorVar > 0.5) {
-                    float variationNoise = sin(input.positionWS.x * _VariationScale) + cos(input.positionWS.z * _VariationScale * 0.8);
-                    gradient = lerp(gradient, _ColorVariation.rgb, (variationNoise * 0.5 + 0.5) * _VariationPower);
+                if(_EnableColorVar > 0.5)
+                {
+                    // Utilisation du hash stable calculé dans le vertex
+                    float varNoise = input.randomHash; 
+                    gradientColor = lerp(gradientColor, _ColorVariation.rgb, (varNoise * 0.5) * _VariationPower);
                 }
-                
-                // On applique l'AO (Blue channel) directement sur la couleur de base pour assombrir l'intérieur
-                // Cela remplace les ombres "noisy" par des ombres "baking" plus propres.
-                half3 albedo = texColor.rgb * gradient * input.color.b;
 
-                // --- 3. LIGHTING & SHADOW NOISE FIX ---
+                // AO (Canal Vert)
+                float vertexAO = input.color.g; 
+                half3 albedo = texColor.rgb * gradientColor * input.color.rgb;
+
+                // --- NORMALE & BACKFACE ---
+                half3 normal = normalize(input.normalWS);
+                if (!isFrontFace) 
+                {
+                    normal = -normal; 
+                    albedo *= half3(0.9, 0.95, 1.0) * 0.8; 
+                }
+
+                // --- ECLAIRAGE & SHADOW DE-NOISING  ---
                 Light mainLight = GetMainLight(TransformWorldToShadowCoord(input.positionWS));
                 half3 lightDir = normalize(mainLight.direction);
-                half3 normal = normalize(input.normalWS); 
-                if (!isFrontFace) normal = -normal;
 
-                float NdotL = dot(normal, lightDir);
-                
-                // C'EST ICI QUE LA MAGIE OPERE :
-                // On prend l'ombre reçue brute (très bruitée)
                 float rawShadowAtten = mainLight.shadowAttenuation;
                 
-                // On la mélange avec 1 (pas d'ombre) selon le slider _ReceiveShadowStrength.
-                // Si Strength = 0.2, les feuilles s'assombrissent à peine quand elles sont à l'ombre.
-                // Cela élimine le contraste noir/blanc qui crée le bruit.
+                // MAGIE ICI : On "nettoie" l'ombre. Si Strength = 0, l'ombre disparaît. Si 1, elle est noire.
+                // Cela élimine le bruit des feuilles.
                 float cleanShadowAtten = lerp(1.0, rawShadowAtten, _ReceiveShadowStrength);
 
-                // Calcul du Ramp (Toon Shading)
-                // On calcule d'abord l'éclairage de forme (NdotL)
+                // Ramp Calculation (Découplé de l'ombre) [cite: 44, 45]
+                float NdotL = dot(normal, lightDir);
                 float lightingShape = NdotL * 0.5 + 0.5;
-                // On lit la texture de Ramp
                 half3 rampColor = SAMPLE_TEXTURE2D(_RampTex, sampler_RampTex, float2(lightingShape, 0.5)).rgb;
-                
-                // On applique l'ombre reçue APRES le ramp, comme un "tint" léger, pas comme un masque noir absolu.
+
+                // Application de l'ombre colorée APRES le ramp [cite: 47]
                 half3 lightColorResult = lerp(_ShadowTint.rgb, mainLight.color, cleanShadowAtten);
                 
-                // --- 4. SPECULAR & TRANSLUCENCY ---
-                half3 halfVector = normalize(lightDir + viewDir);
-                float NdotH = dot(normal, halfVector);
-                float specular = smoothstep(0.5, 0.55, pow(saturate(NdotH), _SpecularPower));
-                // Specular doit être masqué par l'ombre, mais on utilise cleanShadowAtten
-                half3 specularReflection = mainLight.color * _SpecularColor.rgb * specular * _SpecularIntensity * cleanShadowAtten;
-
+                // --- EFFETS SECONDAIRES (Masqués par cleanShadowAtten) ---
+                
+                // Translucidité
                 half3 transLightDir = lightDir + normal * _TranslucencyDistortion;
                 float transDot = pow(saturate(dot(viewDir, -transLightDir)), _TranslucencyPower);
-                // Translucency aide à réduire l'effet sombre à l'intérieur
-                half3 translucency = transDot * _TranslucencyTint.rgb * mainLight.color * cleanShadowAtten;
+                half3 translucency = transDot * _TranslucencyColor.rgb * mainLight.color * cleanShadowAtten * vertexAO;
 
-                // --- 5. RIM LIGHT ---
+                // Rim Light
                 float fresnel = 1.0 - saturate(dot(viewDir, normal));
                 float rimTerm = pow(fresnel, _RimPower);
-                float rimLimit = saturate(dot(normal, lightDir) + 0.5);
-                float internalOcclusion = pow(input.color.b, 4.0);
-                half3 rimLight = mainLight.color * _RimTint.rgb * rimTerm * _RimIntensity * rimLimit * internalOcclusion * cleanShadowAtten;
+                float rimLimit = saturate(dot(normal, lightDir)); 
+                half3 rimLight = _RimColor.rgb * rimTerm * _RimIntensity * rimLimit * cleanShadowAtten * vertexAO;
+
+                // Specular Stylisé
+                half3 halfVector = normalize(lightDir + viewDir);
+                float NdotH = saturate(dot(normal, halfVector));
+                float specTerm = pow(NdotH, _Smoothness);
+                specTerm = smoothstep(0.5, 0.9, specTerm); 
+                // Specular masqué par l'ombre "propre"
+                half3 specular = _SpecularColor.rgb * specTerm * _SpecularIntensity * cleanShadowAtten * saturate(dot(normal, lightDir)) * mainLight.color;
 
                 // --- COMPOSITION ---
-                float gustHighlight = input.windMask * _WaveOpacity;
-                half3 windVisualColor = mainLight.color * _WaveTint.rgb * gustHighlight;
+                float highlight = input.windMask * _WaveOpacity;
+                half3 windVisualColor = _WaveColor.rgb * highlight * mainLight.color;
+                half3 ambient = SampleSH(normal) * vertexAO;
 
-                half3 ambient = SampleSH(normal);
-                
-                // Formule finale combinée
-                half3 finalColor = albedo * (lightColorResult * rampColor + ambient) + translucency + rimLight + windVisualColor + specularReflection;
-
-                if (_DebugShadows > 0.5)
-                {
-                    bool isCore = input.color.b < 0.65;
-                    return isCore ? half4(1, 0, 0, 1) : half4(0, 1, 0, 1);
-                }
-
+                half3 finalColor = albedo * (lightColorResult * rampColor + ambient) + translucency + rimLight + specular + windVisualColor;
                 finalColor = MixFog(finalColor, input.fogFactor);
+
                 return half4(finalColor, 1.0);
             }
             ENDHLSL
         }
         
-        // --- PASS SHADOWCASTER RESTE IDENTIQUE (Optimisé) ---
-        Pass {
-            Name "ShadowCaster" Tags{"LightMode" = "ShadowCaster"} ZWrite On ZTest LEqual ColorMask 0
+        // --- PASS 2 : SHADOW CASTER (Stable Sway Only) ---
+        Pass
+        {
+            Name "ShadowCaster"
+            Tags{"LightMode" = "ShadowCaster"}
+            ZWrite On
+            ZTest LEqual
+            ColorMask 0
+
             HLSLPROGRAM
             #pragma vertex ShadowPassVertex
             #pragma fragment ShadowPassFragment
             #pragma multi_compile_instancing
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Shadows.hlsl"
-            #include "GenshinWindPhysics.hlsl"
 
-            float _GlobalWindStrength;
-            float _WindSpeed; float _WindScale; float2 _WindDirection; TEXTURE2D(_WindMap); SAMPLER(sampler_WindMap);
-            CBUFFER_START(UnityPerMaterial)
-                float4 _BaseMap_ST; half _Cutoff; half _WindMultiplier; half _LeafFlutter; half _EdgeFadePower; half _EdgeFadeOffset;
-            CBUFFER_END
-            TEXTURE2D(_BaseMap); SAMPLER(sampler_BaseMap);
-            struct Attributes { float4 positionOS : POSITION; float2 texcoord : TEXCOORD0; float4 color : COLOR; UNITY_VERTEX_INPUT_INSTANCE_ID };
-            struct Varyings { float4 positionCS : SV_POSITION; float2 uv : TEXCOORD0; float3 positionWS : TEXCOORD1; float4 color : COLOR; UNITY_VERTEX_INPUT_INSTANCE_ID };
-
-            Varyings ShadowPassVertex(Attributes input) { 
-                Varyings output; UNITY_SETUP_INSTANCE_ID(input); UNITY_TRANSFER_INSTANCE_ID(input, output);
-                VertexPositionInputs vertexInput = GetVertexPositionInputs(input.positionOS.xyz); 
+            struct Attributes 
+            { 
+                float4 positionOS : POSITION; 
+                float2 texcoord : TEXCOORD0; 
+                float4 color : COLOR; 
+                UNITY_VERTEX_INPUT_INSTANCE_ID
+            };
+            
+            struct Varyings 
+            { 
+                float4 positionCS : SV_POSITION; 
+                float2 uv : TEXCOORD0; 
+                UNITY_VERTEX_INPUT_INSTANCE_ID
+            };
+            
+            Varyings ShadowPassVertex(Attributes input)
+            {
+                Varyings output;
+                UNITY_SETUP_INSTANCE_ID(input);
+                UNITY_TRANSFER_INSTANCE_ID(input, output);
+                
+                VertexPositionInputs vertexInput = GetVertexPositionInputs(input.positionOS.xyz);
                 float3 positionWS = vertexInput.positionWS;
+
+                // WIND STABLE (Sway uniquement, pas de flutter pour éviter le scintillement)
                 float time = _Time.y * _WindSpeed;
-                float3 bending = CalculateMainBending(positionWS, input.color.r, input.color.a, _WindMultiplier, _WindDirection, _WindSpeed, _GlobalWindStrength, _WindMap, sampler_WindMap, _WindScale, time);
-                positionWS += bending; 
+                float swayTime = time * _SwayFrequency + (positionWS.x + positionWS.z) * 0.5;
+                float ambientSway = sin(swayTime) * 0.1;
+                
+                float2 windUV = positionWS.xz * _WindScale - (_WindDirection * time);
+                float noise = SAMPLE_TEXTURE2D_LOD(_WindMap, sampler_WindMap, windUV, 0).r;
+                float gust = noise * noise;
+
+                float windWeight = input.color.r;
+                float totalPush = (gust * _GlobalWindStrength + ambientSway) * _WindMultiplier * windWeight;
+                
+                positionWS.xz += _WindDirection * totalPush;
+
                 output.positionCS = TransformWorldToHClip(positionWS);
-                output.uv = TRANSFORM_TEX(input.texcoord, _BaseMap); output.positionWS = positionWS; output.color = input.color;
+                
+                #if UNITY_REVERSED_Z
+                    output.positionCS.z = min(output.positionCS.z, output.positionCS.w * UNITY_NEAR_CLIP_VALUE);
+                #else
+                    output.positionCS.z = max(output.positionCS.z, output.positionCS.w * UNITY_NEAR_CLIP_VALUE);
+                #endif
+
+                output.uv = TRANSFORM_TEX(input.texcoord, _BaseMap);
                 return output;
             }
 
-            half4 ShadowPassFragment(Varyings input) : SV_TARGET { 
+            half4 ShadowPassFragment(Varyings input) : SV_TARGET
+            {
                 UNITY_SETUP_INSTANCE_ID(input);
-                float2 localUV = frac(input.uv * 2.0); 
-                if (input.color.b < 0.65) { float dist = distance(localUV, float2(0.5, 0.5)); clip(0.5 - dist); }
-                else { half alpha = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv).a; clip(alpha - _Cutoff); }
+                half4 texColor = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv);
+                clip(texColor.a - _Cutoff);
                 return 0;
             }
             ENDHLSL
