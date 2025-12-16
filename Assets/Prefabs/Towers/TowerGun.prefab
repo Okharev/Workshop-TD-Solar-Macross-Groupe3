@@ -321,7 +321,7 @@ MonoBehaviour:
   icon: {fileID: 10901, guid: 0000000000000000f000000000000000, type: 0}
   currentLevelPrefab: {fileID: 5607425079627833002}
   nextLevelPrefab: {fileID: 5607425079627833002}
-  upgradeCost: 25
+  upgradeCost: 0
   cost: 150
   energyDrain: 50
   nextUpgrade: {fileID: 0}
@@ -398,7 +398,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f390aac0acfd4c69a7b9cdc9ac76611a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Towers.TowerLevelingManager
-  upgradeTree: {fileID: 11400000, guid: b6f7041d65fefde43b25034b07ef9c22, type: 2}
+  upgradeTree: {fileID: 11400000, guid: 161a2267cde5a964b83371553ff597d7, type: 2}
 --- !u!114 &7118159691281927813
 MonoBehaviour:
   m_ObjectHideFlags: 0

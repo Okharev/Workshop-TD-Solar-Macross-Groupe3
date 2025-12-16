@@ -147,7 +147,7 @@ MonoBehaviour:
   rotationMode: 1
   referenceTurnAngle: 120
   _activeUpgrades: []
-  slowPercent: 0.842
+  slowPercent: 0.2
   checkInterval: 0.2
   enemyLayer:
     serializedVersion: 2

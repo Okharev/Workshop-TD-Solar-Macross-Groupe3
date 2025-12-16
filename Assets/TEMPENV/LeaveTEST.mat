@@ -127,6 +127,7 @@ Material:
     - _LeafFlutter: 0.047
     - _Metallic: 0
     - _NormalSpherify: 0.5
+    - _NormalSpherize: 0.5
     - _OcclusionStrength: 1
     - _Parallax: 0.005
     - _QueueOffset: 0
@@ -142,6 +143,7 @@ Material:
     - _SrcBlend: 1
     - _SrcBlendAlpha: 1
     - _Surface: 0
+    - _SwayFrequency: 1
     - _TranslucencyDistortion: 0.149
     - _TranslucencyPower: 11
     - _TreeCenterOffset: 0

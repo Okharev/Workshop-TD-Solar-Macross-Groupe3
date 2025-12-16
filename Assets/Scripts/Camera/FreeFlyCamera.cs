@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using Economy;
 using UnityEngine;
 
 namespace Camera
@@ -60,6 +61,8 @@ namespace Camera
 
         private void Start()
         {
+            EnergyHeatmapSystem.Instance.ToggleHeatmap(false);
+            
             // Initialisation des rotations (au cas où l'intro est désactivée)
             var rot = transform.localRotation.eulerAngles;
             _rotationY = rot.y;

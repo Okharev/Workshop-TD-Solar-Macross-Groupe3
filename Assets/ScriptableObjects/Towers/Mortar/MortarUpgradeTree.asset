@@ -13,16 +13,16 @@ MonoBehaviour:
   m_Name: MortarUpgradeTree
   m_EditorClassIdentifier: Assembly-CSharp::Towers.TowerUpgradeTreeSo
   tiers:
-  - tierName: Level 2
+  - tierName: LVL 2
     options:
-    - labelOverride: Level 2 mortar
-      cost: 50
+    - labelOverride: 
+      cost: 200
       upgradeDefinition: {fileID: 11400000, guid: b15441234b4a73b4dbb65cbd0e7fe94d, type: 2}
-  - tierName: Level 3
+  - tierName: LVL 3
     options:
-    - labelOverride: Say Hello On Hit !!
-      cost: 20
+    - labelOverride: 
+      cost: 250
       upgradeDefinition: {fileID: 11400000, guid: 6528ca34bf158bd4ab79d5686f388c0b, type: 2}
-    - labelOverride: ExecuteUpgrade
-      cost: 100
-      upgradeDefinition: {fileID: 11400000, guid: 6528ca34bf158bd4ab79d5686f388c0b, type: 2}
+    - labelOverride: 
+      cost: 250
+      upgradeDefinition: {fileID: 11400000, guid: 205f0dad77e278c429e98383dcd19ddf, type: 2}
