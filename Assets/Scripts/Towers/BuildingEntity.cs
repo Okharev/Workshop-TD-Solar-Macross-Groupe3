@@ -30,7 +30,6 @@ namespace Towers
         List<InteractionAction> GetInteractions();
     }
 
-
     public abstract class BuildingEntity : MonoBehaviour, ISelectable
     {
         [Header("Identity")] public string displayName;
@@ -49,16 +48,30 @@ namespace Towers
 
         [Range(0.0f, 1.0f)] public float refundRatio;
 
+        [Header("Feedback Visuals")] 
+        [Tooltip("Effet joué lors de la construction/apparition")]
+        [SerializeField] protected GameObject buildVFX;
+        
+        [Tooltip("Effet joué lors de la vente/destruction")]
+        [SerializeField] protected GameObject sellVFX;
+        
+        [Tooltip("Effet joué lors de l'amélioration")]
+        [SerializeField] protected GameObject upgradeVFX;
+
         private int _totalInvested;
 
         public int RefundCost => Mathf.RoundToInt(_totalInvested * refundRatio);
-
 
         protected virtual void Awake()
         {
             _totalInvested = cost;
         }
 
+        protected virtual void Start()
+        {
+            // Joue l'effet de construction au démarrage
+            PlayVFX(buildVFX, transform.position);
+        }
 
         public event Action OnDataChanged;
 
@@ -90,29 +103,20 @@ namespace Towers
 
         public virtual void OnSelect()
         {
-            // 1. Existing visual selection logic (shaders, outlines, etc.)
-            // base.OnSelect() if you have logic in a parent, but here this IS the parent.
-
-            // 2. Turn on Heatmap
-            // We only show it if the system exists AND the building uses energy
             if (EnergyHeatmapSystem.Instance && UsesEnergy()) EnergyHeatmapSystem.Instance.ToggleHeatmap(true);
         }
 
         public virtual void OnDeselect()
         {
-            // 2. Turn off Heatmap
             if (EnergyHeatmapSystem.Instance) EnergyHeatmapSystem.Instance.ToggleHeatmap(false);
         }
 
-        // Méthode pour ajouter de la valeur (appelée par le système d'upgrade)
         public void AddInvestment(int amount)
         {
             _totalInvested += amount;
-            NotifyChange(); // On prévient que la valeur a changé
+            NotifyChange();
         }
 
-
-        // Méthode utilitaire pour déclencher l'événement
         public void NotifyChange()
         {
             OnDataChanged?.Invoke();
@@ -120,22 +124,38 @@ namespace Towers
 
         protected virtual void Sell()
         {
-            // 1. On force la désélection. 
-            // Cela va déclencher l'événement OnDeselected que l'InfoPanel écoute.
-            SelectionManager.Deselect();
+            // Joue l'effet de vente avant de détruire
+            PlayVFX(sellVFX, transform.position);
 
-            // 2. Ensuite, on vend/détruit le bâtiment
+            SelectionManager.Deselect();
             BuildingManager.SellBuilding(this);
         }
 
         protected virtual void Upgrade()
         {
+            // Joue l'effet d'upgrade
+            PlayVFX(upgradeVFX, transform.position);
+            
             BuildingManager.Instance.UpgradeBuilding(this);
+        }
+
+        /// <summary>
+        /// Méthode utilitaire pour instancier un VFX et le détruire après un délai.
+        /// </summary>
+        protected void PlayVFX(GameObject vfxPrefab, Vector3 position, Quaternion rotation = default)
+        {
+            if (vfxPrefab == null) return;
+
+            if (rotation.Equals(default(Quaternion))) rotation = Quaternion.identity;
+
+            GameObject instance = Instantiate(vfxPrefab, position, rotation);
+            
+            // Nettoyage automatique après 2 secondes (ajustable selon vos VFX)
+            Destroy(instance, 2.0f); 
         }
 
         private bool UsesEnergy()
         {
-            // Returns true if we have a Consumer (Tower) or Producer (Generator)
             return GetComponent<EnergyConsumer>() || GetComponent<EnergyProducer>();
         }
     }
