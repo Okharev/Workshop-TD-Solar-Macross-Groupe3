@@ -82,8 +82,24 @@ namespace UI
         
         private void OptionsButtonClicked() { }
         private void CreditsButtonClicked() { }
-        private void ZooButtonClicked() { }
-        private void LeaveButtonClicked() { }
+
+        private void ZooButtonClicked()
+        {
+            Debug.Log("Play button clicked! Starting transition...");
+            
+            if (!Application.CanStreamedLevelBeLoaded("Zoo"))
+            {
+                Debug.LogError($"ERREUR : La scène '{sceneToLoad}' ne peut pas être chargée. Vérifie le Build Settings !");
+                return;
+            }
+
+            StartCoroutine(LoadAsyncScene());
+        }
+
+        private void LeaveButtonClicked()
+        {
+            Application.Quit();
+        }
 
         IEnumerator LoadAsyncScene()
         {

@@ -18,6 +18,10 @@ namespace Economy
         [SerializeField] private Vector2 mapSize = new(100, 100);
         [SerializeField] private Vector2 mapCenterOffset = Vector2.zero;
 
+        [Header("Targeting")]
+        [Tooltip("Select the Layer that your Energy Zone colliders are on. The system will ignore physical walls.")]
+        [SerializeField] private LayerMask energyZoneLayer; // <-- NOUVEAU : Filtre de Layer
+
         [Header("Visual Settings")] 
         [Range(32, 2048)] [SerializeField] private int textureResolution = 512;
         [SerializeField] private float projectorHeight = 50f;
@@ -34,12 +38,14 @@ namespace Economy
         private CommandBuffer _cmd;
         private RenderTexture _heatmapRT;
         private Renderer _projectorRenderer;
-        private MaterialPropertyBlock _propBlock; // Gardé pour DrawMesh (lignes)
+        private MaterialPropertyBlock _propBlock;
         
+        private Mesh _unitCubeMesh;
+        private Mesh _unitSphereMesh;
         private Mesh _lineQuadMesh; 
 
         // --- PREVIEW DATA ---
-        private Vector4? _previewData; // x, y, z, maxCapacity
+        private Vector4? _previewData; 
         private float _previewRadius;
 
         public static EnergyHeatmapSystem Instance { get; private set; }
@@ -71,7 +77,7 @@ namespace Economy
             _cmd?.Release();
         }
 
-        // --- PUBLIC API (Restaurée pour le PlacementManager) ---
+        // --- PUBLIC API ---
 
         public void SetPreview(Vector3 pos, float radius, float maxCapacity)
         {
@@ -92,10 +98,7 @@ namespace Economy
             if (state) RefreshHeatmap(); 
         }
         
-        public void RefreshHeatmap() 
-        { 
-            RenderHeatmap(); 
-        }
+        public void RefreshHeatmap() { RenderHeatmap(); }
         
         private void OnGridUpdated() { if (autoRefresh) RenderHeatmap(); }
 
@@ -111,7 +114,6 @@ namespace Economy
             _cmd.SetRenderTarget(_heatmapRT);
             _cmd.ClearRenderTarget(true, true, Color.black);
 
-            // 1. CONFIGURER LA CAMÉRA VIRTUELLE (TOP-DOWN)
             float left = mapCenterOffset.x - mapSize.x * 0.5f;
             float right = mapCenterOffset.x + mapSize.x * 0.5f;
             float bottom = mapCenterOffset.y - mapSize.y * 0.5f;
@@ -123,36 +125,46 @@ namespace Economy
 
             _cmd.SetViewProjectionMatrices(viewMatrix, projectionMatrix);
 
-            // 2. DESSINER LES FORMES EXACTES (PRODUCTEURS)
+            // 2. DESSINER LES FORMES EXACTES (FILTRÉES PAR LAYER)
             foreach (var p in EnergyGridManager.Instance.AllProducers)
             {
                 if (!p || !p.isActiveAndEnabled) continue;
                 float energy = p.GetAvailable();
                 if (energy <= 0) continue;
 
-                Renderer r = p.GetComponentInChildren<Renderer>();
-                if (r != null)
+                // --- CORRECTION MAJEURE ICI ---
+                // On récupère TOUS les colliders, puis on cherche celui qui correspond au Layer
+                Collider[] allCols = p.GetComponentsInChildren<Collider>();
+                Collider targetCol = null;
+
+                foreach (var c in allCols)
                 {
-                    _cmd.SetGlobalFloat(EnergyID, energy);
-                    _cmd.DrawRenderer(r, _brushMaterial, 0, 0);
+                    // Vérification bitwise pour voir si le layer de l'objet est dans le Mask
+                    if ((energyZoneLayer.value & (1 << c.gameObject.layer)) > 0)
+                    {
+                        targetCol = c;
+                        break; // On a trouvé la zone d'énergie !
+                    }
+                }
+
+                if (targetCol != null)
+                {
+                    DrawCollider(targetCol, energy);
                 }
             }
 
-            // 3. DESSINER LE PREVIEW (Si actif)
+            // 3. DESSINER LE PREVIEW
             if (_previewData.HasValue)
             {
                 Vector3 pPos = new Vector3(_previewData.Value.x, _previewData.Value.y, _previewData.Value.z);
                 float pEnergy = _previewData.Value.w;
+                float pRadius = _previewRadius;
 
-                // On utilise le _lineQuadMesh comme base (c'est un quad 1x1 à plat)
-                // On le scale à la taille du rayon * 2
-                Matrix4x4 matrix = Matrix4x4.TRS(pPos, Quaternion.identity, new Vector3(_previewRadius * 2, 1, _previewRadius * 2));
+                Matrix4x4 matrix = Matrix4x4.TRS(pPos, Quaternion.identity, Vector3.one * (pRadius * 2));
                 
-                // Note: DrawMesh supporte le PropertyBlock, mais comme on a utilisé SetGlobalFloat 
-                // pour les DrawRenderer au-dessus, on continue d'utiliser SetGlobalFloat pour la cohérence
-                // ou on passe null au bloc.
-                _cmd.SetGlobalFloat(EnergyID, pEnergy);
-                _cmd.DrawMesh(_lineQuadMesh, matrix, _brushMaterial, 0, 0);
+                _propBlock.Clear();
+                _propBlock.SetFloat(EnergyID, pEnergy);
+                _cmd.DrawMesh(_unitSphereMesh, matrix, _brushMaterial, 0, 0, _propBlock);
             }
 
             // 4. DESSINER LES CONNEXIONS
@@ -178,6 +190,52 @@ namespace Economy
             UpdateProjectorUniforms();
         }
 
+        private void DrawCollider(Collider col, float energy)
+        {
+            Transform t = col.transform;
+            Mesh meshToDraw = null;
+            Matrix4x4 matrix = Matrix4x4.identity;
+
+            if (col is BoxCollider box)
+            {
+                meshToDraw = _unitCubeMesh;
+                Vector3 worldCenter = t.TransformPoint(box.center);
+                Vector3 worldScale = Vector3.Scale(t.lossyScale, box.size);
+                matrix = Matrix4x4.TRS(worldCenter, t.rotation, worldScale);
+            }
+            else if (col is SphereCollider sphere)
+            {
+                meshToDraw = _unitSphereMesh;
+                Vector3 worldCenter = t.TransformPoint(sphere.center);
+                float maxScale = Mathf.Max(t.lossyScale.x, Mathf.Max(t.lossyScale.y, t.lossyScale.z));
+                float worldDiameter = sphere.radius * 2f * maxScale;
+                matrix = Matrix4x4.TRS(worldCenter, t.rotation, Vector3.one * worldDiameter);
+            }
+            else if (col is MeshCollider meshCol)
+            {
+                if(meshCol.sharedMesh != null)
+                {
+                    meshToDraw = meshCol.sharedMesh;
+                    matrix = t.localToWorldMatrix; 
+                }
+            }
+            else if (col is CapsuleCollider capsule)
+            {
+                 meshToDraw = _unitSphereMesh;
+                 float maxScale = Mathf.Max(t.lossyScale.x, t.lossyScale.z); 
+                 float worldDiameter = capsule.radius * 2f * maxScale;
+                 Vector3 worldCenter = t.TransformPoint(capsule.center);
+                 matrix = Matrix4x4.TRS(worldCenter, t.rotation, Vector3.one * worldDiameter);
+            }
+
+            if (meshToDraw != null)
+            {
+                _propBlock.Clear();
+                _propBlock.SetFloat(EnergyID, energy);
+                _cmd.DrawMesh(meshToDraw, matrix, _brushMaterial, 0, 0, _propBlock);
+            }
+        }
+
         private void DrawConnectionLine(Vector3 start, Vector3 end, float energyStrength)
         {
             Vector3 direction = (end - start);
@@ -187,13 +245,10 @@ namespace Economy
             Vector3 center = (start + end) * 0.5f;
             Quaternion rotation = Quaternion.LookRotation(direction, Vector3.up);
             Vector3 scale = new Vector3(connectionLineWidth, 1f, length);
-
             Matrix4x4 matrix = Matrix4x4.TRS(center, rotation, scale);
 
-            // Pour DrawMesh, le PropertyBlock fonctionne bien et évite de changer l'état global trop souvent
             _propBlock.Clear();
             _propBlock.SetFloat(EnergyID, energyStrength);
-            
             _cmd.DrawMesh(_lineQuadMesh, matrix, _brushMaterial, 0, 0, _propBlock);
         }
 
@@ -209,14 +264,18 @@ namespace Economy
             _cmd = new CommandBuffer { name = "BakeHeatmap" };
             _propBlock = new MaterialPropertyBlock();
 
-            // Quad à plat sur XZ
-            _lineQuadMesh = new Mesh
-            {
-                name = "LineQuad",
-                vertices = new[] { new Vector3(-0.5f, 0, -0.5f), new Vector3(0.5f, 0, -0.5f), new Vector3(-0.5f, 0, 0.5f), new Vector3(0.5f, 0, 0.5f) },
-                uv = new[] { new Vector2(0, 0), new Vector2(1, 0), new Vector2(0, 1), new Vector2(1, 1) },
-                triangles = new[] { 0, 2, 1, 2, 3, 1 }
-            };
+            _lineQuadMesh = new Mesh { name = "LineQuad" };
+            _lineQuadMesh.SetVertices(new[] { new Vector3(-0.5f, 0, -0.5f), new Vector3(0.5f, 0, -0.5f), new Vector3(-0.5f, 0, 0.5f), new Vector3(0.5f, 0, 0.5f) });
+            _lineQuadMesh.SetUVs(0, new[] { new Vector2(0, 0), new Vector2(1, 0), new Vector2(0, 1), new Vector2(1, 1) });
+            _lineQuadMesh.SetTriangles(new[] { 0, 2, 1, 2, 3, 1 }, 0);
+            
+            GameObject cubeTemp = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            _unitCubeMesh = cubeTemp.GetComponent<MeshFilter>().sharedMesh;
+            Destroy(cubeTemp);
+
+            GameObject sphereTemp = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            _unitSphereMesh = sphereTemp.GetComponent<MeshFilter>().sharedMesh;
+            Destroy(sphereTemp);
         }
 
         private void InitializeProjectorVolume()

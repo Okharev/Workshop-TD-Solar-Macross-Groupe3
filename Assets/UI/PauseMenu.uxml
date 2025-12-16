@@ -1,0 +1,79 @@
+<ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Assets/UI/PauseMenu.uss?fileID=7433441132597879392&amp;guid=a4f8c6aca2aa97341b4d7b92c0c35a25&amp;type=3#PauseMenu" />
+    <ui:VisualElement name="Overlay" class="overlay hidden">
+        
+        <ui:VisualElement name="MenuContainer" class="menu-box">
+            <ui:Label text="PAUSE" class="header-text" />
+            <ui:Button name="BtnResume" text="Resume" class="menu-button" />
+            <ui:Button name="BtnControls" text="Controls" class="menu-button" /> 
+            <ui:Button name="BtnOptions" text="Options" class="menu-button" />
+            <ui:Button name="BtnLeave" text="Leave" class="menu-button" />
+        </ui:VisualElement>
+
+        <ui:VisualElement name="OptionsContainer" class="menu-box hidden">
+            <ui:Label text="OPTIONS" class="header-text" />
+    
+            <ui:Label text="Display Mode" class="option-label" />
+            <ui:DropdownField name="DrpWindowMode" class="option-dropdown" />
+
+            <ui:Label text="Resolution" class="option-label" />
+            <ui:DropdownField name="DrpResolution" class="option-dropdown" />
+
+            <ui:Label text="Graphics Quality" class="option-label" />
+            <ui:DropdownField name="DrpGraphics" class="option-dropdown" />
+            
+            <ui:Label text="Graphics Quality" class="option-label" />
+            <ui:DropdownField name="DrpGraphics" class="option-dropdown" />
+
+            <ui:Label text="Volume" class="option-label" />
+            <ui:Slider high-value="100" low-value="0" value="50" style="margin-bottom:20px;" />
+
+            <ui:Label text="CONTROLS" class="header-text" style="font-size: 18px; margin-top: 10px;" />
+    
+            <ui:ScrollView style="height: 150px; margin-bottom: 20px;">
+        
+                <ui:VisualElement class="keybind-row">
+                    <ui:Label text="Forward" class="keybind-label" />
+                    <ui:Button name="BtnBindUp" text="W" class="keybind-button" />
+                </ui:VisualElement>
+
+                <ui:VisualElement class="keybind-row">
+                    <ui:Label text="Backward" class="keybind-label" />
+                    <ui:Button name="BtnBindDown" text="S" class="keybind-button" />
+                </ui:VisualElement>
+
+                <ui:VisualElement class="keybind-row">
+                    <ui:Label text="Left" class="keybind-label" />
+                    <ui:Button name="BtnBindLeft" text="A" class="keybind-button" />
+                </ui:VisualElement>
+
+                <ui:VisualElement class="keybind-row">
+                    <ui:Label text="Right" class="keybind-label" />
+                    <ui:Button name="BtnBindRight" text="D" class="keybind-button" />
+                </ui:VisualElement>
+        
+            </ui:ScrollView>
+
+            <ui:Button name="BtnBack" text="Back" class="menu-button" />
+        </ui:VisualElement>
+        
+        <ui:VisualElement name="ControlsContainer" class="menu-box hidden" style="width: 80%; height: 80%; max-width: 1000px;">
+            <ui:Label text="CONTROLS" class="header-text" />
+    
+            <ui:VisualElement name="CarouselContainer" class="carousel-row">
+        
+                <ui:Button name="BtnPrev" text="{" class="arrow-button" />
+        
+        <ui:VisualElement name="CarouselImage" class="carousel-image" />
+        
+                <ui:Button name="BtnNext" text="}" class="arrow-button" />
+        
+            </ui:VisualElement>
+
+            <ui:Label name="LblPage" text="1 / 1" style="color:white; margin-bottom: 10px;" />
+
+            <ui:Button name="BtnControlsBack" text="Back" class="menu-button" style="width: 200px; align-self: center;" />
+        </ui:VisualElement>
+
+    </ui:VisualElement>
+</ui:UXML>
