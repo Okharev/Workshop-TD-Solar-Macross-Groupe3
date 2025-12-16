@@ -218,7 +218,8 @@ namespace UI
                     borderBottomLeftRadius = 4,
                     alignItems = Align.Center,
                     justifyContent = Justify.Center
-                }
+                },
+                pickingMode = PickingMode.Ignore
             };
 
             var label = new Label
@@ -229,8 +230,11 @@ namespace UI
                     fontSize = 11,
                     color = Color.white,
                     unityTextAlign = TextAnchor.MiddleCenter
-                }
+                },
+                pickingMode = PickingMode.Ignore
             };
+
+
 
             box.Add(label);
             return new LabelElement { Root = box, Text = label };
