@@ -113,7 +113,7 @@ Material:
     - _AlphaToMask: 0
     - _Blend: 0
     - _BlendModePreserveSpecular: 1
-    - _BlendStrength: 0
+    - _BlendStrength: 0.061
     - _BumpScale: 1
     - _ClearCoatMask: 0
     - _ClearCoatSmoothness: 0
@@ -134,10 +134,10 @@ Material:
     - _GradientOffset: 0
     - _GradientScale: 10
     - _LeafFlutter: 0.2
-    - _MaxScale: 0.014
+    - _MaxScale: 0.009
     - _Metallic: 0
-    - _MinScale: 0.01
-    - _NormalCorrection: 0.1
+    - _MinScale: 0.005
+    - _NormalCorrection: 0.342
     - _OcclusionStrength: 1
     - _Parallax: 0.005
     - _QueueOffset: 0

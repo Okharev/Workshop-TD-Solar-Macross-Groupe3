@@ -110,10 +110,10 @@ Material:
     - _AddPrecomputedVelocity: 0
     - _AlphaClip: 0
     - _AlphaToMask: 0
-    - _BladeWidth: 1.7
+    - _BladeWidth: 3
     - _Blend: 0
     - _BlendModePreserveSpecular: 1
-    - _BlendStrength: 0.298
+    - _BlendStrength: 1
     - _BumpScale: 1
     - _ClearCoatMask: 0
     - _ClearCoatSmoothness: 0
@@ -129,9 +129,9 @@ Material:
     - _GlossMapScale: 0
     - _Glossiness: 0
     - _GlossyReflections: 0
-    - _MaxScale: 0.5
+    - _MaxScale: 0.7
     - _Metallic: 0
-    - _MinScale: 1.5
+    - _MinScale: 0.5
     - _OcclusionStrength: 1
     - _Parallax: 0.005
     - _PatchScale: 0.002
@@ -141,7 +141,7 @@ Material:
     - _Smoothness: 0.5
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
-    - _SpecularIntensity: 0.02
+    - _SpecularIntensity: 0.023
     - _SrcBlend: 1
     - _SrcBlendAlpha: 1
     - _Surface: 0
@@ -150,7 +150,7 @@ Material:
     - _WaveOpacity: 0.06
     - _WindDirX: 1
     - _WindDirZ: 0.4
-    - _WindMultiplier: 0.7
+    - _WindMultiplier: 0.47
     - _WindScale: 0.05
     - _WindSpeed: 1
     - _WindStrength: 0.85

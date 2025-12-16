@@ -134,7 +134,7 @@ Material:
     - _GradientOffset: 0
     - _GradientScale: 10
     - _LeafFlutter: 0.2
-    - _MaxScale: 0.02
+    - _MaxScale: 0.012
     - _Metallic: 0
     - _MinScale: 0.01
     - _NormalCorrection: 1
