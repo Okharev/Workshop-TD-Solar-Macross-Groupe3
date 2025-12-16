@@ -217,8 +217,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 4, y: 4, z: 4}
-  m_Center: {x: 0, y: 0, z: 0}
+  m_Size: {x: 7.16, y: 4.5, z: 8.34}
+  m_Center: {x: 0, y: 2.4, z: 0}
 --- !u!114 &8506183719910781864
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -309,7 +309,7 @@ MonoBehaviour:
   - {fileID: 660517568831977804}
   - {fileID: 6510788177153953095}
   - {fileID: 3329515910738391884}
-  missileCount: 6
+  missileCount: 4
   dispatchInterval: 0.15
   maxMultiLockTargets: 4
   launchForwardBias: 2

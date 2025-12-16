@@ -282,8 +282,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 4, y: 4, z: 4}
-  m_Center: {x: 0, y: 0, z: 0}
+  m_Size: {x: 3.44, y: 3.13, z: 4.52}
+  m_Center: {x: 0, y: 1.8, z: 0}
 --- !u!114 &8506183719910781864
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -322,7 +322,7 @@ MonoBehaviour:
   currentLevelPrefab: {fileID: 5607425079627833002}
   nextLevelPrefab: {fileID: 5607425079627833002}
   upgradeCost: 0
-  cost: 150
+  cost: 100
   energyDrain: 50
   nextUpgrade: {fileID: 0}
   refundRatio: 0.9

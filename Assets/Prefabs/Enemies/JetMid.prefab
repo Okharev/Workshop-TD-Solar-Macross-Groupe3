@@ -96,11 +96,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1004739888977982886, guid: 9df7380db50448b44b860ef01dcf3a9e, type: 3}
       propertyPath: minStallSpeed
-      value: 12
+      value: 10
       objectReference: {fileID: 0}
     - target: {fileID: 1004739888977982886, guid: 9df7380db50448b44b860ef01dcf3a9e, type: 3}
       propertyPath: maxThrustSpeed
-      value: 14
+      value: 12
       objectReference: {fileID: 0}
     - target: {fileID: 1004739888977982886, guid: 9df7380db50448b44b860ef01dcf3a9e, type: 3}
       propertyPath: neighborRadius

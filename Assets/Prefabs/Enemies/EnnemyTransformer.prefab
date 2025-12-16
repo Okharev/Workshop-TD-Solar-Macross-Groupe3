@@ -112,7 +112,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3238345694428518885, guid: 8b8d71801f036614e9887ef7538737a9, type: 3}
       propertyPath: currentHealth._value
-      value: 112
+      value: 100
       objectReference: {fileID: 0}
     - target: {fileID: 3676794826586101564, guid: 8b8d71801f036614e9887ef7538737a9, type: 3}
       propertyPath: m_LocalScale.x
