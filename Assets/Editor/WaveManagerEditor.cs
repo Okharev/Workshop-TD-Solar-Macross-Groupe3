@@ -5,10 +5,10 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.Splines;
 
-namespace Pathing.EditorTools
+namespace Editor
 {
     [CustomEditor(typeof(WaveManager))]
-    public sealed class WaveManagerEditor : Editor
+    public sealed class WaveManagerEditor : UnityEditor.Editor
     {
         // Static to keep selection between reloads
         private static int _selectedWaveIndex;

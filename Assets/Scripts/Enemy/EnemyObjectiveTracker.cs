@@ -18,7 +18,7 @@ namespace Enemy
         private void OnDestroy()
         {
             // Nettoyage final pour éviter les erreurs de mémoire
-            if (_activeObjectiveScript != null) _activeObjectiveScript.OnDestroyed.RemoveListener(OnTargetDestroyed);
+            if (_activeObjectiveScript != null) _activeObjectiveScript.OnDestroyed += OnTargetDestroyed;
         }
 
         public void Initialize(DestructibleObjective primary, DestructibleObjective backup)
@@ -35,7 +35,7 @@ namespace Enemy
         private void SetNewTarget(DestructibleObjective newTarget)
         {
             // 1. Nettoyage de l'ancienne cible (désabonnement)
-            if (_activeObjectiveScript) _activeObjectiveScript.OnDestroyed.RemoveListener(OnTargetDestroyed);
+            if (_activeObjectiveScript) _activeObjectiveScript.OnDestroyed -= OnTargetDestroyed;
 
             // 2. Assignation de la nouvelle cible
             _activeObjectiveScript = newTarget;
@@ -46,7 +46,7 @@ namespace Enemy
                 CurrentTarget.Value = _activeObjectiveScript.transform;
 
                 // S'abonner à l'événement de mort de CETTE cible spécifique
-                _activeObjectiveScript.OnDestroyed.AddListener(OnTargetDestroyed);
+                _activeObjectiveScript.OnDestroyed += OnTargetDestroyed;
             }
             else
             {

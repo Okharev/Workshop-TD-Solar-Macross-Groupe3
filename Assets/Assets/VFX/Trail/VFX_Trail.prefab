@@ -4838,7 +4838,7 @@ ParticleSystemRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_RenderMode: 1
+  m_RenderMode: 0
   m_MeshDistribution: 0
   m_SortMode: 0
   m_MinParticleSize: 0
@@ -5741,7 +5741,7 @@ ParticleSystem:
       serializedVersion: 2
       minMaxState: 0
       scalar: 15
-      minScalar: 10
+      minScalar: 20
       maxCurve:
         serializedVersion: 2
         m_Curve:
@@ -9652,7 +9652,7 @@ ParticleSystemRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 93bc8afbd9fd7b945814345ece8ebd7f, type: 2}
+  - {fileID: 2100000, guid: 10a8b51684774254eaf17caafdb3557f, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
