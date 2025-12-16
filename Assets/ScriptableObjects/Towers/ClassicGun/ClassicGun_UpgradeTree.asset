@@ -15,7 +15,7 @@ MonoBehaviour:
   tiers:
   - tierName: LVL2
     options:
-    - labelOverride: test
+    - labelOverride: 
       cost: 175
       upgradeDefinition: {fileID: 11400000, guid: 43e4df662d9c60d45a091fa4294d40b9, type: 2}
   - tierName: LVL3
@@ -25,4 +25,4 @@ MonoBehaviour:
       upgradeDefinition: {fileID: 11400000, guid: 9859cee36354f09408de84ef49defa20, type: 2}
     - labelOverride: 
       cost: 200
-      upgradeDefinition: {fileID: 11400000, guid: fa5aa32b9a1486f4f96078800f30f4c9, type: 2}
+      upgradeDefinition: {fileID: 0}
