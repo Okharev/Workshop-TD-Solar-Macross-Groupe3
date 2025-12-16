@@ -1,14 +1,15 @@
 ﻿using System.Linq;
+using Pathing;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Splines;
 
 // Namespace of your generator
 
-namespace Pathing
+namespace Editor
 {
     [CustomEditor(typeof(RoadNetworkGenerator))]
-    public sealed class RoadNetworkDebugEditor : Editor
+    public sealed class RoadNetworkDebugEditor : UnityEditor.Editor
     {
         // Settings for the debug view
         private static bool _showIds = true;

@@ -115,6 +115,10 @@ PrefabInstance:
       value: 120
       objectReference: {fileID: 0}
     - target: {fileID: 3238345694428518885, guid: 8b8d71801f036614e9887ef7538737a9, type: 3}
+      propertyPath: onDeathVfx
+      value: 
+      objectReference: {fileID: 9015756034493682395, guid: 0cd026b6824ddc34a9cb7f71e2fced54, type: 3}
+    - target: {fileID: 3238345694428518885, guid: 8b8d71801f036614e9887ef7538737a9, type: 3}
       propertyPath: currentHealth._value
       value: 120
       objectReference: {fileID: 0}
@@ -235,6 +239,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Enemy.MeleeAttacker
   attackRate: 1
   attackRange: 1
+  damage: 2
 --- !u!65 &8726312866335424410
 BoxCollider:
   m_ObjectHideFlags: 0

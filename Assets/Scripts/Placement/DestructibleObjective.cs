@@ -1,6 +1,6 @@
-﻿using Enemy;
+﻿using System; // Important pour 'Action'
+using Enemy;
 using UnityEngine;
-using UnityEngine.Events;
 
 namespace Placement
 {
@@ -12,18 +12,16 @@ namespace Placement
         [SerializeField]
         private Collider _mainBodyCollider;
 
-        [Header("Events")] public UnityEvent OnDestroyed;
+        public event Action OnDestroyed;
 
         private HealthComponent _health;
 
-        // Public property so enemies can read it safely
         public Collider MainCollider => _mainBodyCollider;
 
         private void Awake()
         {
             _health = GetComponent<HealthComponent>();
 
-            // Fallback: If you forget to drag it, try to find one, but warn us
             if (!_mainBodyCollider)
             {
                 _mainBodyCollider = GetComponent<Collider>();
@@ -41,11 +39,21 @@ namespace Placement
 
         private void HandleDestruction()
         {
+            if (!gameObject.activeSelf) return;
+
             Debug.Log("Objective destroyed!");
+            
+            // On déclenche l'événement pour le GameResultController
             OnDestroyed?.Invoke();
 
             gameObject.SetActive(false);
             Destroy(gameObject, 0.1f);
+        }
+        
+        // Optionnel : On s'assure de vider les abonnés à la destruction de l'objet
+        private void OnDestroy()
+        {
+            OnDestroyed = null;
         }
     }
 }
