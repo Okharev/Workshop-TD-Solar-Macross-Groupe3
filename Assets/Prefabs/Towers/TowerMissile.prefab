@@ -345,7 +345,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f390aac0acfd4c69a7b9cdc9ac76611a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Towers.TowerLevelingManager
-  upgradeTree: {fileID: 0}
+  upgradeTree: {fileID: 11400000, guid: a8aa04cad83a83746b55cedc8b24691d, type: 2}
 --- !u!114 &1307373829171539834
 MonoBehaviour:
   m_ObjectHideFlags: 0

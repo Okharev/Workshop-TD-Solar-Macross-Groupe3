@@ -162,14 +162,14 @@ MonoBehaviour:
   currentLevelPrefab: {fileID: 7615454975634943867}
   nextLevelPrefab: {fileID: 7615454975634943867}
   upgradeCost: 100
-  cost: 100
-  energyDrain: 100
+  cost: 250
+  energyDrain: 150
   nextUpgrade: {fileID: 0}
   refundRatio: 0.9
   powerSource: {fileID: 762822935104049358}
-  baseDamage: 14
+  baseDamage: 11
   baseRange: 30
-  baseFireRate: 1
+  baseFireRate: 1.5
   damage:
     _baseValue:
       _value: 15

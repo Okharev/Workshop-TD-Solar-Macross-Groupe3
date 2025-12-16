@@ -5029,6 +5029,10 @@ PrefabInstance:
       propertyPath: currentHealth._value
       value: 75
       objectReference: {fileID: 0}
+    - target: {fileID: 3445623467357007170, guid: 9df7380db50448b44b860ef01dcf3a9e, type: 3}
+      propertyPath: attackRange
+      value: 15
+      objectReference: {fileID: 0}
     - target: {fileID: 5069400229212143550, guid: 9df7380db50448b44b860ef01dcf3a9e, type: 3}
       propertyPath: m_Name
       value: JetTransformer
