@@ -149,9 +149,9 @@ MonoBehaviour:
   sellVFX: {fileID: 301148217721381147, guid: 84825d483bf29034ba5c5b275a330a63, type: 3}
   upgradeVFX: {fileID: 2958242227251421712, guid: e8bd50f74898569439464de5f239066f, type: 3}
   powerSource: {fileID: 762822935104049358}
-  baseDamage: 11
+  baseDamage: 8
   baseRange: 30
-  baseFireRate: 1.5
+  baseFireRate: 1.75
   damage:
     _baseValue:
       _value: 15
@@ -227,7 +227,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f390aac0acfd4c69a7b9cdc9ac76611a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Towers.TowerLevelingManager
-  upgradeTree: {fileID: 0}
+  upgradeTree: {fileID: 11400000, guid: fb0273ea206eaac42bda5ae1682a2f67, type: 2}
 --- !u!114 &-1442090990408426731
 MonoBehaviour:
   m_ObjectHideFlags: 0
