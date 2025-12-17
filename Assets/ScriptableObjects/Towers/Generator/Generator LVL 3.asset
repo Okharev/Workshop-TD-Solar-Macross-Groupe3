@@ -10,21 +10,12 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 115b7ab753684771bc097f291235feaa, type: 3}
-  m_Name: MortarLevel3Stats
+  m_Name: Generator LVL 3
   m_EditorClassIdentifier: Assembly-CSharp::Towers.Upgrades.StatUpgradeSo
   icon: {fileID: 0}
-  upgradeName: LVL 3
-  description: This is the mortar 3 stat upgrade it does 50+ every stats
+  upgradeName: 
+  description: 
   modifiers:
   - modifierType: 100
-    value: 3
-    targetStat: 0
-  - modifierType: 100
-    value: 0.5
-    targetStat: 2
-  - modifierType: 100
-    value: 5
+    value: 10
     targetStat: 1
-  - modifierType: 100
-    value: 50
-    targetStat: 3

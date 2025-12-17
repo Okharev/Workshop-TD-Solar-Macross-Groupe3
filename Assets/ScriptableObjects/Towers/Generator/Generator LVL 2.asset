@@ -10,11 +10,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 0}
-  m_Name: Level2Generator
+  m_Name: Generator LVL 2
   m_EditorClassIdentifier: Assembly-CSharp:Towers:EnergyUpgradeSo
-  icon: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
-  upgradeName: More Powaaa
-  description: qsdqsd
+  icon: {fileID: 0}
+  upgradeName: 
+  description: 
   targetType: 1
   modificationType: 100
-  value: 100
+  value: 50

@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: MortarLevel2Stats
   m_EditorClassIdentifier: Assembly-CSharp::Towers.Upgrades.StatUpgradeSo
   icon: {fileID: 10901, guid: 0000000000000000f000000000000000, type: 0}
-  upgradeName: Mortar Level 2
+  upgradeName: LVL 2
   description: +6 Dmg +0.5 Fire rate + 50 power consumption
   modifiers:
   - modifierType: 100

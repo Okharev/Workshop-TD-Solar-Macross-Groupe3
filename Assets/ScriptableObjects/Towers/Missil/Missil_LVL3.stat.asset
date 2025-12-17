@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Missil_LVL3.stat
   m_EditorClassIdentifier: Assembly-CSharp::Towers.Upgrades.StatUpgradeSo
   icon: {fileID: 0}
-  upgradeName: 
+  upgradeName: LVL3 Stats
   description: +4 Dmg +0.5 Fire Rate +5 range + 50 tension
   modifiers:
   - modifierType: 100
