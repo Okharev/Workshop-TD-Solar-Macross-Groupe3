@@ -238,6 +238,7 @@ GameObject:
   - component: {fileID: 7118159691281927813}
   - component: {fileID: 4643016637651071942}
   - component: {fileID: 1934129981798643426}
+  - component: {fileID: 183874890797857711}
   m_Layer: 8
   m_Name: TowerGun
   m_TagString: Tower
@@ -428,12 +429,33 @@ CapsuleCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 2
   m_Radius: 2.45
   m_Height: 6.16
   m_Direction: 1
   m_Center: {x: 0, y: 1.18, z: 0}
+--- !u!65 &183874890797857711
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5607425079627833002}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1, y: 1, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &5674994326645783689
 GameObject:
   m_ObjectHideFlags: 0

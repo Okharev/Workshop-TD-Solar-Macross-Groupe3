@@ -168,7 +168,7 @@ Material:
     - _StepCount: 8
     - _StepSize: 0.02
     - _Surface: 0
-    - _Turbulence: 0.101
+    - _Turbulence: 0.039
     - _WindResponsiveness: 0
     - _WindSkew: 0.094
     - _WindSpeed: 0
