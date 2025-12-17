@@ -5,12 +5,20 @@ namespace Towers
 {
     public class AdvancedWindRotator : MonoBehaviour
     {
+        // --- AJOUT : Définition des axes possibles ---
+        public enum Axis { X, Y, Z }
+
+        [Header("Configuration de Rotation")]
+        [Tooltip("Choisis l'axe de rotation ici (X, Y ou Z).")]
+        public Axis rotationAxis = Axis.Y; // Par défaut sur Y comme avant
+        // ---------------------------------------------
+
         [Header("Configuration Générale")]
         // Si vide, on cherchera les enfants. Utile pour les turbines multi-rotors.
         public List<Transform> rotorsToRotate;
 
-        [Header("Paramètres de Vitesse")] public float minSpeed = 20f;
-
+        [Header("Paramètres de Vitesse")] 
+        public float minSpeed = 20f;
         public float maxSpeed = 300f;
 
         [Header("Physique (Inertie)")]
@@ -57,7 +65,15 @@ namespace Towers
         private void Update()
         {
             // Optimisation: tu pourrais ne faire ça que toutes les X frames si nécessaire
-            _currentWindIntensity = GlobalWindManager.Instance.GetWindAtPosition(transform.position);
+            // Note: Assure-toi que GlobalWindManager existe dans ta scène, sinon commente cette ligne pour tester
+            if (GlobalWindManager.Instance != null)
+            {
+                _currentWindIntensity = GlobalWindManager.Instance.GetWindAtPosition(transform.position);
+            }
+            else
+            {
+                _currentWindIntensity = 0.5f; // Valeur par défaut pour tester sans WindManager
+            }
 
             // Calcul de la vitesse cible de base
             var baseTargetSpeed = Mathf.Lerp(minSpeed, maxSpeed, _currentWindIntensity);
@@ -78,29 +94,40 @@ namespace Towers
             // Applique la variance d'inertie
             smoothTime *= rotor.inertiaMultiplier;
 
-            // Mathf.SmoothDamp est EXCELLENT pour l'inertie physique
-            var velocityRef = 0f; // Variable technique requise par SmoothDamp, non utilisée ici pour l'état
-
-            // Note: Pour une rotation simple, on peut utiliser MoveTowards ou Lerp, 
-            // mais SmoothDamp donne cet effet "élastique" et organique.
-            // Ici, j'utilise une version simplifiée similaire à un Lerp frame-rate independent pour la vitesse :
-
+            // Mathf.MoveTowards pour une accélération linéaire mais fluide
             rotor.currentVelocity = Mathf.MoveTowards(
                 rotor.currentVelocity,
                 myTargetSpeed,
                 maxSpeed / smoothTime * Time.deltaTime
             );
 
-            // Rotation effective
-            rotor.transform.Rotate(Vector3.up, rotor.currentVelocity * Time.deltaTime);
+            // --- MODIFICATION : Sélection du vecteur de rotation ---
+            Vector3 rotationVector = Vector3.up; // Valeur par défaut (Y)
+
+            switch (rotationAxis)
+            {
+                case Axis.X:
+                    rotationVector = Vector3.right; // L'axe X correspond à Vector3.right
+                    break;
+                case Axis.Y:
+                    rotationVector = Vector3.up;    // L'axe Y correspond à Vector3.up
+                    break;
+                case Axis.Z:
+                    rotationVector = Vector3.forward; // L'axe Z correspond à Vector3.forward
+                    break;
+            }
+
+            // Rotation effective avec le vecteur choisi [cite: 1]
+            rotor.transform.Rotate(rotationVector, rotor.currentVelocity * Time.deltaTime);
+            // -------------------------------------------------------
         }
 
         // Petite classe interne pour stocker l'état individuel de chaque rotor
         private class RotorState
         {
-            public float currentVelocity; // Vitesse actuelle de ce rotor spécifique
-            public float efficiencyMultiplier; // Facteur aléatoire de vitesse (ex: 0.9 à 1.1)
-            public float inertiaMultiplier; // Facteur aléatoire d'inertie
+            public float currentVelocity; 
+            public float efficiencyMultiplier; 
+            public float inertiaMultiplier; 
             public Transform transform;
         }
     }
