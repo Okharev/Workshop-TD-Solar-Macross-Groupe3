@@ -85,15 +85,7 @@ namespace UI
 
         private void ZooButtonClicked()
         {
-            Debug.Log("Play button clicked! Starting transition...");
-            
-            if (!Application.CanStreamedLevelBeLoaded("Zoo"))
-            {
-                Debug.LogError($"ERREUR : La scène '{sceneToLoad}' ne peut pas être chargée. Vérifie le Build Settings !");
-                return;
-            }
-
-            StartCoroutine(LoadAsyncScene());
+            SceneManager.LoadScene("Zoo");
         }
 
         private void LeaveButtonClicked()
