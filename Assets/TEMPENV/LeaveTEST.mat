@@ -27,6 +27,7 @@ Material:
   m_ValidKeywords: []
   m_InvalidKeywords:
   - _
+  - _ENABLECOLORVAR_ON
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 1
   m_DoubleSidedGI: 0
@@ -131,14 +132,14 @@ Material:
     - _OcclusionStrength: 1
     - _Parallax: 0.005
     - _QueueOffset: 0
-    - _ReceiveShadowStrength: 0.85
+    - _ReceiveShadowStrength: 0.846
     - _ReceiveShadows: 1
     - _RimIntensity: 0.15
-    - _RimPower: 20
-    - _Smoothness: 0.5
+    - _RimPower: 2.81
+    - _Smoothness: 6.3
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
-    - _SpecularIntensity: 0.85
+    - _SpecularIntensity: 0.94
     - _SpecularPower: 66.3
     - _SrcBlend: 1
     - _SrcBlendAlpha: 1
