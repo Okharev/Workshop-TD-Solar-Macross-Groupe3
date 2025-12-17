@@ -71,13 +71,13 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8023000701933666267}
-  - component: {fileID: 8987942396502628012}
   - component: {fileID: 8506183719910781864}
   - component: {fileID: 1515377391665533419}
   - component: {fileID: 8301971408045579564}
   - component: {fileID: 496506559688038134}
   - component: {fileID: 9092791527712303579}
   - component: {fileID: 7932943004848520115}
+  - component: {fileID: -6936447979526798748}
   m_Layer: 8
   m_Name: TowerSniper
   m_TagString: Tower
@@ -103,27 +103,6 @@ Transform:
   - {fileID: 7456147355531946606}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!65 &8987942396502628012
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5607425079627833002}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 1
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 8.7, y: 6, z: 9.9}
-  m_Center: {x: 0, y: 1, z: -0.11}
 --- !u!114 &8506183719910781864
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -158,7 +137,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Towers.TowerDerived.TowerSniper
   displayName: Sniper
   description: Sniper description
-  icon: {fileID: 10915, guid: 0000000000000000f000000000000000, type: 0}
+  icon: {fileID: 21300000, guid: 64bbf73075e927a46a8087186e66b02a, type: 3}
   currentLevelPrefab: {fileID: 5607425079627833002}
   nextLevelPrefab: {fileID: 5607425079627833002}
   upgradeCost: 100
@@ -273,6 +252,29 @@ MonoBehaviour:
   _iconSprite: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
   _color: {r: 0.1716981, g: 0.38225836, b: 1, a: 1}
   _size: 100
+--- !u!136 &-6936447979526798748
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5607425079627833002}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 3.2
+  m_Height: 7.75
+  m_Direction: 1
+  m_Center: {x: 0, y: 2.3, z: 0}
 --- !u!1001 &6022499657601313887
 PrefabInstance:
   m_ObjectHideFlags: 0
