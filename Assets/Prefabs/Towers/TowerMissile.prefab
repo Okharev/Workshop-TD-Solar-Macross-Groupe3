@@ -166,13 +166,13 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8023000701933666267}
+  - component: {fileID: 8987942396502628012}
   - component: {fileID: 8506183719910781864}
   - component: {fileID: 2416886466139490654}
   - component: {fileID: 5658357093797522187}
   - component: {fileID: 3191970374312337826}
   - component: {fileID: 1307373829171539834}
   - component: {fileID: -1942389205380275154}
-  - component: {fileID: 9175803609026208594}
   m_Layer: 8
   m_Name: TowerMissile
   m_TagString: Tower
@@ -198,6 +198,27 @@ Transform:
   - {fileID: 5808386274177772609}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!65 &8987942396502628012
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5607425079627833002}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 7.16, y: 4.5, z: 8.34}
+  m_Center: {x: 0, y: 2.4, z: 0}
 --- !u!114 &8506183719910781864
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -232,7 +253,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Towers.TowerDerived.MissileTower
   displayName: Missile
   description: Missile description
-  icon: {fileID: 21300000, guid: cce39acc2eb470e4abd8d00c4d27577a, type: 3}
+  icon: {fileID: 10915, guid: 0000000000000000f000000000000000, type: 0}
   currentLevelPrefab: {fileID: 5607425079627833002}
   nextLevelPrefab: {fileID: 5607425079627833002}
   upgradeCost: 25
@@ -240,9 +261,9 @@ MonoBehaviour:
   energyDrain: 100
   nextUpgrade: {fileID: 0}
   refundRatio: 0.9
-  buildVFX: {fileID: 0}
-  sellVFX: {fileID: 0}
-  upgradeVFX: {fileID: 0}
+  buildVFX: {fileID: 1742582791870993142, guid: db5a0496c16b6164d81ba3cef3dd03ff, type: 3}
+  sellVFX: {fileID: 301148217721381147, guid: 84825d483bf29034ba5c5b275a330a63, type: 3}
+  upgradeVFX: {fileID: 2958242227251421712, guid: e8bd50f74898569439464de5f239066f, type: 3}
   powerSource: {fileID: 8506183719910781864}
   baseDamage: 8
   baseRange: 45
@@ -358,29 +379,6 @@ MonoBehaviour:
   _iconSprite: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
   _color: {r: 0.1716981, g: 0.38225836, b: 1, a: 1}
   _size: 100
---- !u!136 &9175803609026208594
-CapsuleCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5607425079627833002}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 2
-  m_Radius: 3.12
-  m_Height: 10.05
-  m_Direction: 1
-  m_Center: {x: 0, y: 2.12, z: 0}
 --- !u!1 &6035233340053137248
 GameObject:
   m_ObjectHideFlags: 0

@@ -71,13 +71,13 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1990734976404385194}
+  - component: {fileID: 2770589792623923187}
   - component: {fileID: 762822935104049358}
   - component: {fileID: 2372113854924329592}
   - component: {fileID: -8059006769788668046}
   - component: {fileID: -9131260532169113635}
   - component: {fileID: -1442090990408426731}
   - component: {fileID: 109082639130291752}
-  - component: {fileID: 278547260983455451}
   m_Layer: 8
   m_Name: TowerShotgun
   m_TagString: Untagged
@@ -103,6 +103,27 @@ Transform:
   - {fileID: 2378517663303376032}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!65 &2770589792623923187
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7615454975634943867}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 7.56, y: 8, z: 8.77}
+  m_Center: {x: 0, y: 2, z: 0}
 --- !u!114 &762822935104049358
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -137,7 +158,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Towers.TowerDerived.TowerShotgun
   displayName: Shotgun
   description: Shotgun description
-  icon: {fileID: 21300000, guid: 2589440d9b3b4ac43a64303073af1ac9, type: 3}
+  icon: {fileID: 10915, guid: 0000000000000000f000000000000000, type: 0}
   currentLevelPrefab: {fileID: 7615454975634943867}
   nextLevelPrefab: {fileID: 7615454975634943867}
   upgradeCost: 100
@@ -145,9 +166,9 @@ MonoBehaviour:
   energyDrain: 150
   nextUpgrade: {fileID: 0}
   refundRatio: 0.9
-  buildVFX: {fileID: 0}
-  sellVFX: {fileID: 0}
-  upgradeVFX: {fileID: 0}
+  buildVFX: {fileID: 1742582791870993142, guid: db5a0496c16b6164d81ba3cef3dd03ff, type: 3}
+  sellVFX: {fileID: 301148217721381147, guid: 84825d483bf29034ba5c5b275a330a63, type: 3}
+  upgradeVFX: {fileID: 2958242227251421712, guid: e8bd50f74898569439464de5f239066f, type: 3}
   powerSource: {fileID: 762822935104049358}
   baseDamage: 11
   baseRange: 30
@@ -176,8 +197,8 @@ MonoBehaviour:
   xPivotSpeed: 120
   rotationThreshold: 5
   firePoint: {fileID: 241720310916375718}
-  muzzleFlashVFX: {fileID: 0}
-  impactVFX: {fileID: 0}
+  muzzleFlashVFX: {fileID: 8658030887369559006, guid: dfd4984d4a9220741bc6a683104a4165, type: 3}
+  impactVFX: {fileID: 5724295971325572397, guid: 966afbab5f6a0a8438df6618d6c9891d, type: 3}
   targetingUpdateRate: 0.5
   targetLayer:
     serializedVersion: 2
@@ -256,29 +277,6 @@ MonoBehaviour:
   _iconSprite: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
   _color: {r: 0.1716981, g: 0.38225836, b: 1, a: 1}
   _size: 100
---- !u!136 &278547260983455451
-CapsuleCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7615454975634943867}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 2
-  m_Radius: 3.21
-  m_Height: 8.47
-  m_Direction: 1
-  m_Center: {x: 0, y: 2.06, z: 0}
 --- !u!1001 &2098550435634007231
 PrefabInstance:
   m_ObjectHideFlags: 0

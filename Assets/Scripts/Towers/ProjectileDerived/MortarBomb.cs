@@ -7,6 +7,8 @@ namespace Towers.ProjectileDerived
     public sealed class MortarBomb : BaseProjectile
     {
         public Rigidbody rigidbody;
+        public GameObject vfxImpact;
+        
         private float _explosionRange;
 
         private bool _hasExploded;
@@ -29,6 +31,10 @@ namespace Towers.ProjectileDerived
             if (_hasExploded) return;
             _hasExploded = true;
 
+            var vfx = Instantiate(vfxImpact, other.ClosestPointOnBounds(transform.position), Quaternion.identity);
+            Destroy(vfx, 2.0f);
+            
+            
             var hits = Physics.OverlapSphereNonAlloc(transform.position, _explosionRange, collidersCache,
                 source.targetLayer);
 

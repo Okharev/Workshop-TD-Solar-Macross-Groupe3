@@ -111,6 +111,7 @@ MonoBehaviour:
   retargetingCooldown: 0.25
   wobbleMagnitude: 5
   wobbleFrequency: 4
+  vfxImpact: {fileID: 5724295971325572397, guid: 966afbab5f6a0a8438df6618d6c9891d, type: 3}
 --- !u!1001 &7231338416655479347
 PrefabInstance:
   m_ObjectHideFlags: 0

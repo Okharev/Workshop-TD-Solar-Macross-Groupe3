@@ -63,6 +63,8 @@ namespace Towers.TowerDerived
                     victim = hit.collider.GetComponentInParent<HealthComponent>();
                     if (!victim) return;
                 }
+                
+                SpawnImpactVFX(hit.point, hit.normal);
 
                 Events.OnHit?.Invoke(new UpgradeProvider.OnHitData
                 {

@@ -3,7 +3,7 @@ using Enemy;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
-namespace Towers
+namespace Towers.ProjectileDerived
 {
     [RequireComponent(typeof(Rigidbody))]
     public sealed class HomingMissile : BaseProjectile
@@ -41,9 +41,11 @@ namespace Towers
 
         [Header("Aerodynamics")] [SerializeField]
         private float wobbleMagnitude = 1.5f;
-
+        
         [SerializeField] private float wobbleFrequency = 8f;
 
+        [SerializeField] public GameObject vfxImpact;
+        
         private readonly Queue<Vector3> _flightPath = new();
         private float _currentSpeed;
         private MissileState _currentState;
@@ -162,6 +164,10 @@ namespace Towers
 
         protected override void HandleImpact(Collider other)
         {
+            var vfx = Instantiate(vfxImpact, other.ClosestPointOnBounds(transform.position), Quaternion.identity);
+            Destroy(vfx, 2.0f);
+
+            
             // Use static buffer
             var hitCount =
                 Physics.OverlapSphereNonAlloc(_transform.position, explosionRange, _sharedHitBuffer, _enemyLayer);
