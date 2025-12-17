@@ -79,18 +79,61 @@ namespace Placement
         {
             if (!data || !data.currentLevelPrefab) return ValidationResult.Fail("Data or Prefab is missing");
 
-            var refCol = data.currentLevelPrefab.GetComponent<BoxCollider>();
-            if (!refCol) refCol = data.currentLevelPrefab.GetComponentInChildren<BoxCollider>();
+            // --- CHANGEMENT : Support de tous les types de Colliders ---
+            // On cherche n'importe quel Collider, pas seulement BoxCollider
+            var refCol = data.currentLevelPrefab.GetComponent<Collider>();
+            if (!refCol) refCol = data.currentLevelPrefab.GetComponentInChildren<Collider>();
 
             if (!refCol) return ValidationResult.Success();
 
-            var localCenter = refCol.center;
+            // Initialisation des valeurs par défaut
+            Vector3 localCenter = Vector3.zero;
+            Vector3 size = Vector3.one;
+
+            // Extraction des dimensions selon le type de Collider
+            if (refCol is BoxCollider box)
+            {
+                localCenter = box.center;
+                size = box.size;
+            }
+            else if (refCol is SphereCollider sphere)
+            {
+                localCenter = sphere.center;
+                // On transforme le rayon en taille de boîte (diamètre)
+                size = Vector3.one * (sphere.radius * 2f);
+            }
+            else if (refCol is CapsuleCollider capsule)
+            {
+                localCenter = capsule.center;
+                float diameter = capsule.radius * 2f;
+                size = new Vector3(diameter, diameter, diameter);
+                
+                // La hauteur affecte un axe selon la direction (0=X, 1=Y, 2=Z)
+                switch (capsule.direction)
+                {
+                    case 0: size.x = capsule.height; break;
+                    case 1: size.y = capsule.height; break;
+                    case 2: size.z = capsule.height; break;
+                }
+            }
+            else if (refCol is MeshCollider meshCol && meshCol.sharedMesh != null)
+            {
+                localCenter = meshCol.sharedMesh.bounds.center;
+                size = meshCol.sharedMesh.bounds.size;
+            }
+            
+            // Gestion de la position relative si le collider est sur un enfant
             if (refCol.transform != data.currentLevelPrefab.transform)
-                localCenter = refCol.transform.localPosition + refCol.center;
+            {
+                // Note : Cela suppose que l'enfant n'a pas de rotation complexe par rapport au parent
+                localCenter = refCol.transform.localPosition + localCenter;
+            }
 
+            // Calcul final de la boîte de détection dans le monde
             var center = pos + rot * localCenter;
-            var halfExtents = refCol.size * (0.5f * _padding);
+            var halfExtents = size * (0.5f * _padding);
 
+            // On utilise OverlapBox qui agit comme une "Bounding Box" englobante pour tous les types
             if (Physics.OverlapBoxNonAlloc(center, halfExtents, _cache, rot, _mask) > 0)
                 return ValidationResult.Fail("Obstacle detected");
 
@@ -299,7 +342,6 @@ namespace Placement
             _cachedProducer = _currentBuilding.GetComponent<EnergyProducer>();
             _cachedConsumer = _currentBuilding.GetComponent<EnergyConsumer>();
 
-            // --- CHANGEMENT ICI : On passe l'entité entière, pas juste le prefab ---
             _ghostHelper.CreateGhost(blueprint);
 
             if (_cachedConsumer != null || _cachedProducer != null) EnergyHeatmapSystem.Instance?.ToggleHeatmap(true);
@@ -367,7 +409,6 @@ namespace Placement
             _invalidMaterial = invalidMat;
         }
 
-        // --- CHANGEMENT ICI : On accepte BuildingEntity pour lire les stats ---
         public void CreateGhost(BuildingEntity data)
         {
             ClearGhost();
@@ -400,32 +441,24 @@ namespace Placement
             foreach (var ps in _ghostObject.GetComponentsInChildren<ParticleSystem>()) ps.Stop();
 
             // 5. Gather Renderers for the material swap BEFORE adding the range indicator
-            //    Ceci est crucial pour ne pas "peindre" la portée en vert/rouge.
             _renderers = _ghostObject.GetComponentsInChildren<Renderer>();
 
             // 6. Set to IgnoreRaycast
             SetLayerRecursively(_ghostObject, LayerMask.NameToLayer("Ignore Raycast"));
 
-            // 7. --- AJOUT : VISUALISATION DE LA PORTÉE ---
-            // On vérifie si c'est une tour et si on a un visualiseur configuré
+            // 7. Visualisation de la portée
             if (data is BaseTower towerData)
             {
-                // On essaie de récupérer le prefab de l'indicateur depuis le composant TowerRangeVisualizer
-                // car le champ dans BaseTower est privé.
                 var rangeVis = prefab.GetComponent<TowerRangeVisualizer>();
                 if (rangeVis != null && rangeVis.rangeIndicatorPrefab != null)
                 {
-                    // Création de l'indicateur visuel
                     _rangeVisual = Object.Instantiate(rangeVis.rangeIndicatorPrefab, _ghostObject.transform);
                     _rangeVisual.transform.localPosition = Vector3.zero;
                     _rangeVisual.transform.localRotation = Quaternion.identity;
 
-                    // Calcul de la taille (Diamètre = Rayon * 2)
-                    // On utilise baseRange car les stats (Stat) ne sont pas init sur le prefab
                     var diameter = towerData.baseRange * 2.0f;
                     _rangeVisual.transform.localScale = new Vector3(diameter, diameter, diameter);
 
-                    // On s'assure qu'il est visible
                     _rangeVisual.SetActive(true);
                 }
             }
@@ -462,9 +495,6 @@ namespace Placement
                 for (var i = 0; i < newMats.Length; i++) newMats[i] = targetMat;
                 r.materials = newMats;
             }
-
-            // On pourrait vouloir changer la couleur du cercle de portée si invalide,
-            // mais généralement on le laisse transparent/bleu pour indiquer la zone.
         }
 
         public void Hide()
