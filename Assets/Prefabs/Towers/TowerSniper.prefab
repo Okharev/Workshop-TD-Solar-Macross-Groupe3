@@ -136,7 +136,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Towers.TowerDerived.TowerSniper
   displayName: Sniper
-  description: Sniper description
+  description: "Shoot a charged laser \n100 tension \n17 DMG\n50 Range \n0.75 Fire
+    rate"
   icon: {fileID: 21300000, guid: 64bbf73075e927a46a8087186e66b02a, type: 3}
   currentLevelPrefab: {fileID: 5607425079627833002}
   nextLevelPrefab: {fileID: 5607425079627833002}

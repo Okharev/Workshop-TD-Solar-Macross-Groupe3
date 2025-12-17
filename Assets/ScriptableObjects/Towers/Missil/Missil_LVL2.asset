@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Missil_LVL2
   m_EditorClassIdentifier: Assembly-CSharp::Towers.Upgrades.StatUpgradeSo
   icon: {fileID: 0}
-  upgradeName: 
+  upgradeName: LVL2
   description: +3 Dmg +0.5 fire rate + 50 Power Consumption
   modifiers:
   - modifierType: 100

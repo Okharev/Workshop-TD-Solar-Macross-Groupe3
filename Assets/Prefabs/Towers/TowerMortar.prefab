@@ -105,7 +105,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Towers.TowerDerived.TowerMortar
   displayName: Mortar
-  description: Mortar description
+  description: "Shoot only ground ennemies and causes damage in an area\n100 tension 
+    \n10 DMG \n45 Range \n1 Fire rate"
   icon: {fileID: 21300000, guid: 643c42f7c31c7ef439cfa137f49e713d, type: 3}
   currentLevelPrefab: {fileID: 7615454975634943867}
   nextLevelPrefab: {fileID: 7615454975634943867}
@@ -120,7 +121,7 @@ MonoBehaviour:
   powerSource: {fileID: 762822935104049358}
   baseDamage: 10
   baseRange: 45
-  baseFireRate: 1.5
+  baseFireRate: 1
   damage:
     _baseValue:
       _value: 0
