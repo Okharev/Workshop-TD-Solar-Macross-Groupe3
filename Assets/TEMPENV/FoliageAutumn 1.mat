@@ -120,7 +120,7 @@ Material:
     - _Glossiness: 0
     - _GlossyReflections: 0
     - _GradientOffset: -6.98
-    - _GradientScale: 2.93
+    - _GradientScale: 11.46
     - _HueVariation: 0.05
     - _InnerOcclusion: 0.5
     - _LeafFlutter: 0.18
@@ -156,14 +156,14 @@ Material:
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
-    - _ColorBot: {r: 0.14822695, g: 0.509434, b: 0.060555335, a: 1}
-    - _ColorTop: {r: 0.34925723, g: 0.8037735, b: 0.24113198, a: 1}
+    - _ColorBot: {r: 0.046991818, g: 0.18867922, b: 0.011569957, a: 1}
+    - _ColorTop: {r: 0.2128872, g: 0.6132076, b: 0.112807065, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _RimColor: {r: 0.5016947, g: 0.4901961, b: 1, a: 1}
-    - _ShadowTint: {r: 0.5264151, g: 0.66796356, b: 1, a: 1}
+    - _ShadowTint: {r: 0.43293878, g: 0.6509434, b: 0.46221393, a: 1}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
     - _SpecularColor: {r: 1, g: 1, b: 1, a: 1}
     - _TranslucencyColor: {r: 0.7041727, g: 1, b: 0.41320753, a: 1}
-    - _WaveColor: {r: 0.9724964, g: 0.9339622, b: 1, a: 1}
+    - _WaveColor: {r: 0.31975752, g: 0.5377358, b: 0.2663314, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

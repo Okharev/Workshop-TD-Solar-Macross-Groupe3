@@ -55,7 +55,6 @@ namespace Towers
                     Label = $"{btnLabel} ({option.cost})",
                     Icon = option.upgradeDefinition.icon,
 
-                    // --- NOUVEAU : On passe la description du SO ---
                     Description = option.upgradeDefinition.description,
 
                     CanExecute = () => CurrencyManager.Instance.CanAfford(option.cost),
@@ -87,7 +86,9 @@ namespace Towers
 
             _tower.AddInvestment(option.cost);
 
-            Debug.Log($"Upgrade applied: {option.upgradeDefinition.upgradeName}");
+            GameObject instanced = Instantiate(_tower.upgradeVFX, _tower.transform.position, Quaternion.identity);
+            
+            Destroy(instanced, 2.0f );
         }
     }
 }

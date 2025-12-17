@@ -9,13 +9,13 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 429737672628538332}
-  - component: {fileID: 1882540536912683723}
   - component: {fileID: 307039717463009344}
   - component: {fileID: 6435569474746563840}
   - component: {fileID: 3948047539880952693}
   - component: {fileID: 6748611328324755413}
   - component: {fileID: 1784826481228905436}
   - component: {fileID: 2179111538530664108}
+  - component: {fileID: 6976908571742265085}
   m_Layer: 8
   m_Name: Generator 1
   m_TagString: Untagged
@@ -41,27 +41,6 @@ Transform:
   - {fileID: 5000521131311224965}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!65 &1882540536912683723
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7970040095561613927}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 8, y: 11, z: 7}
-  m_Center: {x: -0.5, y: 5, z: 0}
 --- !u!114 &307039717463009344
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -98,7 +77,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Towers.TowerDerived.TowerGenerator
   displayName: Tower Generator
   description: 
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: de8f78559db5cb0429fc7eefdaf52c49, type: 3}
   currentLevelPrefab: {fileID: 7970040095561613927}
   nextLevelPrefab: {fileID: 7970040095561613927}
   upgradeCost: 0
@@ -106,6 +85,9 @@ MonoBehaviour:
   energyDrain: 0
   nextUpgrade: {fileID: 0}
   refundRatio: 0.9
+  buildVFX: {fileID: 0}
+  sellVFX: {fileID: 0}
+  upgradeVFX: {fileID: 0}
   powerSource: {fileID: 0}
   baseDamage: 0
   baseRange: 35
@@ -126,13 +108,16 @@ MonoBehaviour:
     _value:
       _value: 0
   scaleRotationWithFireRate: 1
+  rotationMode: 1
+  referenceTurnAngle: 120
   yPivot: {fileID: 0}
   xPivot: {fileID: 0}
   yPivotSpeed: 0
   xPivotSpeed: 0
   rotationThreshold: 5
   firePoint: {fileID: 0}
-  upgrades: []
+  muzzleFlashVFX: {fileID: 0}
+  impactVFX: {fileID: 0}
   targetingUpdateRate: 0.5
   targetLayer:
     serializedVersion: 2
@@ -145,8 +130,7 @@ MonoBehaviour:
   isBusy: 0
   rangeIndicatorPrefab: {fileID: 3864737057418952846}
   _levelingManager: {fileID: 1784826481228905436}
-  rotationMode: 1
-  referenceTurnAngle: 120
+  upgrades: []
   _activeUpgrades: []
   references:
     version: 2
@@ -206,6 +190,29 @@ MonoBehaviour:
   _iconSprite: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
   _color: {r: 0.17254902, g: 0.38039216, b: 1, a: 1}
   _size: 100
+--- !u!136 &6976908571742265085
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7970040095561613927}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 3.23
+  m_Height: 13.32
+  m_Direction: 1
+  m_Center: {x: 0, y: 3.7, z: 0}
 --- !u!1 &8165865896317137463
 GameObject:
   m_ObjectHideFlags: 0

@@ -87,7 +87,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _TerrainMap:
-        m_Texture: {fileID: 2800000, guid: f312995d1c3950345941dabfeab5a5a9, type: 3}
+        m_Texture: {fileID: 2800000, guid: 1196f12dfb2e4d3469fd01423974fdec, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _WindMap:
@@ -113,7 +113,7 @@ Material:
     - _AlphaToMask: 0
     - _Blend: 0
     - _BlendModePreserveSpecular: 1
-    - _BlendStrength: 0
+    - _BlendStrength: 0.061
     - _BumpScale: 1
     - _ClearCoatMask: 0
     - _ClearCoatSmoothness: 0
@@ -134,10 +134,10 @@ Material:
     - _GradientOffset: 0
     - _GradientScale: 10
     - _LeafFlutter: 0.2
-    - _MaxScale: 0.014
+    - _MaxScale: 0.009
     - _Metallic: 0
-    - _MinScale: 0.01
-    - _NormalCorrection: 0.1
+    - _MinScale: 0.005
+    - _NormalCorrection: 0.342
     - _OcclusionStrength: 1
     - _Parallax: 0.005
     - _QueueOffset: 0

@@ -231,13 +231,13 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8023000701933666267}
-  - component: {fileID: 8987942396502628012}
   - component: {fileID: 8506183719910781864}
   - component: {fileID: 5533547337734330103}
   - component: {fileID: 6956754297495603721}
   - component: {fileID: -3402845230094186917}
   - component: {fileID: 7118159691281927813}
   - component: {fileID: 4643016637651071942}
+  - component: {fileID: -5022583351162513744}
   m_Layer: 8
   m_Name: TowerGun
   m_TagString: Tower
@@ -263,27 +263,6 @@ Transform:
   - {fileID: 2720680866907228217}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!65 &8987942396502628012
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5607425079627833002}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 1
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 3.44, y: 3.13, z: 4.52}
-  m_Center: {x: 0, y: 1.8, z: 0}
 --- !u!114 &8506183719910781864
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -318,7 +297,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Towers.TowerDerived.TowerGun
   displayName: Gun
   description: Gun description
-  icon: {fileID: 10901, guid: 0000000000000000f000000000000000, type: 0}
+  icon: {fileID: 21300000, guid: 7dc624ecbdf51c74a811be28016efbbc, type: 3}
   currentLevelPrefab: {fileID: 5607425079627833002}
   nextLevelPrefab: {fileID: 5607425079627833002}
   upgradeCost: 0
@@ -326,6 +305,9 @@ MonoBehaviour:
   energyDrain: 50
   nextUpgrade: {fileID: 0}
   refundRatio: 0.9
+  buildVFX: {fileID: 1742582791870993142, guid: db5a0496c16b6164d81ba3cef3dd03ff, type: 3}
+  sellVFX: {fileID: 301148217721381147, guid: 84825d483bf29034ba5c5b275a330a63, type: 3}
+  upgradeVFX: {fileID: 2958242227251421712, guid: e8bd50f74898569439464de5f239066f, type: 3}
   powerSource: {fileID: 8506183719910781864}
   baseDamage: 8
   baseRange: 40
@@ -346,13 +328,16 @@ MonoBehaviour:
     _value:
       _value: 0
   scaleRotationWithFireRate: 1
+  rotationMode: 1
+  referenceTurnAngle: 120
   yPivot: {fileID: 6911345297952647148}
   xPivot: {fileID: 7011863910715184959}
   yPivotSpeed: 90
   xPivotSpeed: 90
   rotationThreshold: 5
   firePoint: {fileID: 4304091441703727443}
-  upgrades: []
+  muzzleFlashVFX: {fileID: 1725893987899281406, guid: 4d999696f8f71a849a4ecf940d033598, type: 3}
+  impactVFX: {fileID: 5724295971325572397, guid: 966afbab5f6a0a8438df6618d6c9891d, type: 3}
   targetingUpdateRate: 0.5
   targetLayer:
     serializedVersion: 2
@@ -365,8 +350,7 @@ MonoBehaviour:
   isBusy: 0
   rangeIndicatorPrefab: {fileID: 1399860383304854833, guid: ed475cce1d14fae44b911896847eabfa, type: 3}
   _levelingManager: {fileID: -3402845230094186917}
-  rotationMode: 1
-  referenceTurnAngle: 120
+  upgrades: []
   _activeUpgrades: []
   projectileThickness: 0.1
   references:
@@ -427,6 +411,27 @@ MonoBehaviour:
   _iconSprite: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
   _color: {r: 0.1716981, g: 0.38225836, b: 1, a: 1}
   _size: 100
+--- !u!65 &-5022583351162513744
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5607425079627833002}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 4.076271, y: 10.25799, z: 10.046431}
+  m_Center: {x: 0.010190129, y: 0.50250816, z: 0.8472557}
 --- !u!1 &5674994326645783689
 GameObject:
   m_ObjectHideFlags: 0
@@ -670,8 +675,8 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
+  m_LocalScale: {x: 1.2, y: 1.2, z: 1.2}
+  m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 3686809998125650367}
   - {fileID: 6620900805417054578}

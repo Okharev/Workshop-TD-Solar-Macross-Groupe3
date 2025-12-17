@@ -9,7 +9,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8023000701933666267}
-  - component: {fileID: 8987942396502628012}
   - component: {fileID: 8506183719910781864}
   - component: {fileID: -6290923537206660371}
   - component: {fileID: 3092842865332209763}
@@ -17,6 +16,7 @@ GameObject:
   - component: {fileID: 6884296905430244531}
   - component: {fileID: -8252929612517609037}
   - component: {fileID: -9083397951629444370}
+  - component: {fileID: -191789953510670733}
   m_Layer: 8
   m_Name: TowerSlow
   m_TagString: Tower
@@ -42,27 +42,6 @@ Transform:
   - {fileID: 103370186751792801}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!65 &8987942396502628012
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5607425079627833002}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 1
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 4, y: 4, z: 4}
-  m_Center: {x: 0, y: 0, z: 0}
 --- !u!114 &8506183719910781864
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -97,7 +76,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Towers.TowerSlow
   displayName: Slow
   description: Slow description
-  icon: {fileID: 10915, guid: 0000000000000000f000000000000000, type: 0}
+  icon: {fileID: 21300000, guid: a449de40eade09d44b3549106696771c, type: 3}
   currentLevelPrefab: {fileID: 5607425079627833002}
   nextLevelPrefab: {fileID: 5607425079627833002}
   upgradeCost: 100
@@ -105,6 +84,9 @@ MonoBehaviour:
   energyDrain: 100
   nextUpgrade: {fileID: 0}
   refundRatio: 0.9
+  buildVFX: {fileID: 1742582791870993142, guid: db5a0496c16b6164d81ba3cef3dd03ff, type: 3}
+  sellVFX: {fileID: 301148217721381147, guid: 84825d483bf29034ba5c5b275a330a63, type: 3}
+  upgradeVFX: {fileID: 2958242227251421712, guid: e8bd50f74898569439464de5f239066f, type: 3}
   powerSource: {fileID: 8506183719910781864}
   baseDamage: 10
   baseRange: 35
@@ -125,13 +107,16 @@ MonoBehaviour:
     _value:
       _value: 0
   scaleRotationWithFireRate: 1
+  rotationMode: 1
+  referenceTurnAngle: 120
   yPivot: {fileID: 0}
   xPivot: {fileID: 0}
   yPivotSpeed: 0
   xPivotSpeed: 0
   rotationThreshold: 5
   firePoint: {fileID: 0}
-  upgrades: []
+  muzzleFlashVFX: {fileID: 0}
+  impactVFX: {fileID: 0}
   targetingUpdateRate: 0.5
   targetLayer:
     serializedVersion: 2
@@ -144,10 +129,9 @@ MonoBehaviour:
   isBusy: 0
   rangeIndicatorPrefab: {fileID: 4792313741385751997}
   _levelingManager: {fileID: 6884296905430244531}
-  rotationMode: 1
-  referenceTurnAngle: 120
+  upgrades: []
   _activeUpgrades: []
-  slowPercent: 0.2
+  slowPercent: 0.3
   checkInterval: 0.2
   enemyLayer:
     serializedVersion: 2
@@ -204,7 +188,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f390aac0acfd4c69a7b9cdc9ac76611a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Towers.TowerLevelingManager
-  upgradeTree: {fileID: 0}
+  upgradeTree: {fileID: 11400000, guid: a8a99ec3d21c51942813ecdcee9ef70b, type: 2}
 --- !u!114 &-8252929612517609037
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -233,6 +217,29 @@ MonoBehaviour:
   _iconSprite: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
   _color: {r: 0.1716981, g: 0.38225836, b: 1, a: 1}
   _size: 100
+--- !u!136 &-191789953510670733
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5607425079627833002}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 2.05
+  m_Height: 11.67
+  m_Direction: 1
+  m_Center: {x: 0, y: 4.54, z: 0}
 --- !u!1 &8967730424825563994
 GameObject:
   m_ObjectHideFlags: 0

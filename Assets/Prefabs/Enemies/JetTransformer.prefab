@@ -5023,11 +5023,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3399384273038241848, guid: 9df7380db50448b44b860ef01dcf3a9e, type: 3}
       propertyPath: maxHealth
-      value: 75
+      value: 50
       objectReference: {fileID: 0}
     - target: {fileID: 3399384273038241848, guid: 9df7380db50448b44b860ef01dcf3a9e, type: 3}
       propertyPath: currentHealth._value
-      value: 75
+      value: 50
+      objectReference: {fileID: 0}
+    - target: {fileID: 3445623467357007170, guid: 9df7380db50448b44b860ef01dcf3a9e, type: 3}
+      propertyPath: attackRange
+      value: 25
+      objectReference: {fileID: 0}
+    - target: {fileID: 4774346428336883143, guid: 9df7380db50448b44b860ef01dcf3a9e, type: 3}
+      propertyPath: amountToLoot
+      value: 40
       objectReference: {fileID: 0}
     - target: {fileID: 5069400229212143550, guid: 9df7380db50448b44b860ef01dcf3a9e, type: 3}
       propertyPath: m_Name
