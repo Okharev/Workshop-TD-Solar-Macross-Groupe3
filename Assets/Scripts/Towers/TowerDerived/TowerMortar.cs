@@ -109,12 +109,59 @@ namespace Towers.TowerDerived
             _hasValidTarget = IsPathClear(firePoint.position, _predictedAimPoint, _currentProjectileTravelTime);
         }
 
+        private Vector3 PredictPositionOnPath(NavMeshAgent agent, float timeAhead)
+        {
+            // Fallback if agent is invalid or has no path
+            if (agent == null || !agent.hasPath || agent.path.corners.Length < 2)
+            {
+                // Default to linear prediction if path is unavailable
+                return agent != null 
+                    ? agent.transform.position + agent.velocity * timeAhead 
+                    : transform.position;
+            }
+
+            float speed = agent.velocity.magnitude;
+            // If agent is stopped, aim at current position
+            if (speed < 0.1f) return agent.transform.position;
+
+            float distanceToTravel = speed * timeAhead;
+            Vector3 currentPos = agent.transform.position;
+    
+            // Iterate through the path corners
+            var corners = agent.path.corners;
+    
+            // Start moving from current position towards corners[1]
+            // (corners[0] is the agent's current approximate location on NavMesh)
+            for (int i = 0; i < corners.Length - 1; i++)
+            {
+                Vector3 startSegment = (i == 0) ? currentPos : corners[i];
+                Vector3 endSegment = corners[i + 1];
+        
+                float segmentDist = Vector3.Distance(startSegment, endSegment);
+
+                // If the remaining distance is within this segment, find the exact point
+                if (distanceToTravel <= segmentDist)
+                {
+                    Vector3 direction = (endSegment - startSegment).normalized;
+                    return startSegment + direction * distanceToTravel;
+                }
+
+                // Otherwise, subtract this segment and continue to the next
+                distanceToTravel -= segmentDist;
+            }
+
+            // If we run out of path, aim at the final destination
+            return corners[corners.Length - 1];
+        }
+        
         private void CalculateClusterProperties(Vector3 clusterCenter)
         {
-            // Logic imported from Mortar.cs
             var totalPosition = Vector3.zero;
-            var totalVelocity = Vector3.zero;
             var validCount = 0;
+    
+            // We need to find the agent closest to the centroid to use as our "Pathfinder"
+            NavMeshAgent bestAgent = null;
+            float closestDistSqr = float.MaxValue;
 
             // Get the actual members of this best cluster
             var hitCount = Physics.OverlapSphereNonAlloc(clusterCenter, packRadius, _densityCheckCache, targetLayer);
@@ -125,13 +172,18 @@ namespace Towers.TowerDerived
                 if (member == null) continue;
 
                 totalPosition += member.transform.position;
-
-                // Accumulate velocity from Agents or Rigidbodies
-                if (member.TryGetComponent<NavMeshAgent>(out var agent))
-                    totalVelocity += agent.velocity;
-                else if (member.TryGetComponent<Rigidbody>(out var rb)) totalVelocity += rb.linearVelocity;
-
                 validCount++;
+
+                // Check if this member is a valid NavMeshAgent
+                if (member.TryGetComponent<NavMeshAgent>(out var agent))
+                {
+                    float dSqr = (member.transform.position - clusterCenter).sqrMagnitude;
+                    if (dSqr < closestDistSqr)
+                    {
+                        closestDistSqr = dSqr;
+                        bestAgent = agent;
+                    }
+                }
             }
 
             if (validCount == 0)
@@ -141,12 +193,25 @@ namespace Towers.TowerDerived
             }
 
             var centroid = totalPosition / validCount;
-            var averageVelocity = totalVelocity / validCount;
-
+    
+            // Determine Flight Time based on the centroid
             _currentProjectileTravelTime = GetDynamicTravelTime(centroid);
 
-            // Predict where the centroid will be
-            _predictedAimPoint = centroid + averageVelocity * _currentProjectileTravelTime;
+            // --- PREDICTION LOGIC ---
+            if (bestAgent != null)
+            {
+                // Use the NavMesh path of the representative agent
+                _predictedAimPoint = PredictPositionOnPath(bestAgent, _currentProjectileTravelTime);
+            }
+            else
+            {
+                // Fallback for non-NavMesh enemies (e.g. Rigidbodies)
+                // Re-calculate average velocity manually or just use zero if strictly NavMesh is expected
+                Vector3 averageVelocity = Vector3.zero; 
+                // (You could loop again to get RB velocity if needed, but for this context, let's keep it safe)
+        
+                _predictedAimPoint = centroid + averageVelocity * _currentProjectileTravelTime;
+            }
         }
 
         private void ResetTargeting()
@@ -159,6 +224,7 @@ namespace Towers.TowerDerived
         {
             if (!mortarProjectilePrefab) return;
 
+            PlayShootVFX();
             var shell = Instantiate(mortarProjectilePrefab, firePoint.position, firePoint.rotation);
             shell.Initialize(this, radiusOfImpact);
 

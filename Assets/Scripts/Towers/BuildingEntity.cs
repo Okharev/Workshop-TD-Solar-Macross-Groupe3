@@ -53,10 +53,10 @@ namespace Towers
         [SerializeField] protected GameObject buildVFX;
         
         [Tooltip("Effet joué lors de la vente/destruction")]
-        [SerializeField] protected GameObject sellVFX;
+        [SerializeField] public GameObject sellVFX;
         
         [Tooltip("Effet joué lors de l'amélioration")]
-        [SerializeField] protected GameObject upgradeVFX;
+        [SerializeField] public GameObject upgradeVFX;
 
         private int _totalInvested;
 
@@ -134,6 +134,7 @@ namespace Towers
         protected virtual void Upgrade()
         {
             // Joue l'effet d'upgrade
+            Debug.Log("VFX");
             PlayVFX(upgradeVFX, transform.position);
             
             BuildingManager.Instance.UpgradeBuilding(this);

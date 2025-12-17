@@ -357,8 +357,8 @@ MonoBehaviour:
   xPivotSpeed: 90
   rotationThreshold: 5
   firePoint: {fileID: 4304091441703727443}
-  muzzleFlashVFX: {fileID: 0}
-  impactVFX: {fileID: 0}
+  muzzleFlashVFX: {fileID: 1725893987899281406, guid: 4d999696f8f71a849a4ecf940d033598, type: 3}
+  impactVFX: {fileID: 5724295971325572397, guid: 966afbab5f6a0a8438df6618d6c9891d, type: 3}
   targetingUpdateRate: 0.5
   targetLayer:
     serializedVersion: 2

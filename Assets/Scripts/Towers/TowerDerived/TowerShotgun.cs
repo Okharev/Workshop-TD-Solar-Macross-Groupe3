@@ -88,6 +88,8 @@ namespace Towers.TowerDerived
             var spreadRot = Quaternion.Euler(-yAngle, xAngle, 0);
             var shootDir = fp.rotation * spreadRot * Vector3.forward;
 
+            PlayShootVFX();
+            
             if (Physics.BoxCast(
                     fp.position,
                     new Vector3(pelletsThickness, pelletsThickness, pelletsThickness),
@@ -106,7 +108,9 @@ namespace Towers.TowerDerived
                     Origin = gameObject,
                     Target = victim.gameObject
                 });
-
+                
+                
+                 SpawnImpactVFX(hit.point, hit.normal);
 
                 if (victim.gameObject.TryGetComponent<EnemyController>(out var movement))
                     if (!_hitTracker.TryAdd(movement, 1))

@@ -11,10 +11,8 @@ namespace Towers
             AreaOfEffect,
             DoT
         }
-
-        public Action<OnFireData> OnFire;
-
         // The Events
+        public Action<OnFireData> OnFire;
         public Action<OnHitData> OnHit;
         public Action<OnKillData> OnKill;
 
@@ -25,6 +23,8 @@ namespace Towers
             public GameObject Target;
             public float Damage;
             public DamageType DamageType;
+            public Vector3 HitPosition;
+            public Vector3 HitNormal;
         }
 
         public struct OnKillData

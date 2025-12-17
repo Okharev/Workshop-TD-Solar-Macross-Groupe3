@@ -50,6 +50,7 @@ namespace Towers.TowerDerived
 
         private void FirePiercingShot()
         {
+            PlayShootVFX();
             var currentRange = range.Value;
             var damageAmount = damage.Value;
 
@@ -96,6 +97,8 @@ namespace Towers.TowerDerived
 
                 if (!hit.collider.TryGetComponent<HealthComponent>(out var victim)) return;
 
+                SpawnImpactVFX(hit.point, hit.normal);
+                
                 Events.OnHit?.Invoke(new UpgradeProvider.OnHitData
                 {
                     Origin = gameObject,

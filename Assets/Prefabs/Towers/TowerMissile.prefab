@@ -261,6 +261,9 @@ MonoBehaviour:
   energyDrain: 100
   nextUpgrade: {fileID: 0}
   refundRatio: 0.9
+  buildVFX: {fileID: 1742582791870993142, guid: db5a0496c16b6164d81ba3cef3dd03ff, type: 3}
+  sellVFX: {fileID: 301148217721381147, guid: 84825d483bf29034ba5c5b275a330a63, type: 3}
+  upgradeVFX: {fileID: 2958242227251421712, guid: e8bd50f74898569439464de5f239066f, type: 3}
   powerSource: {fileID: 8506183719910781864}
   baseDamage: 8
   baseRange: 45
@@ -281,13 +284,16 @@ MonoBehaviour:
     _value:
       _value: 0
   scaleRotationWithFireRate: 1
+  rotationMode: 1
+  referenceTurnAngle: 120
   yPivot: {fileID: 8530764449036839582}
   xPivot: {fileID: 8530764449036839582}
   yPivotSpeed: 120
   xPivotSpeed: 120
   rotationThreshold: 5
   firePoint: {fileID: 0}
-  upgrades: []
+  muzzleFlashVFX: {fileID: 0}
+  impactVFX: {fileID: 0}
   targetingUpdateRate: 0.5
   targetLayer:
     serializedVersion: 2
@@ -300,8 +306,7 @@ MonoBehaviour:
   isBusy: 0
   rangeIndicatorPrefab: {fileID: 1402028908444870493}
   _levelingManager: {fileID: 3191970374312337826}
-  rotationMode: 1
-  referenceTurnAngle: 120
+  upgrades: []
   _activeUpgrades: []
   missilePrefab: {fileID: 7303159094743476213, guid: ed903675cecb39244a27cbbdca1ecafb, type: 3}
   launchPoints:

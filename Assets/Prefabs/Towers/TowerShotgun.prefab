@@ -166,6 +166,9 @@ MonoBehaviour:
   energyDrain: 150
   nextUpgrade: {fileID: 0}
   refundRatio: 0.9
+  buildVFX: {fileID: 1742582791870993142, guid: db5a0496c16b6164d81ba3cef3dd03ff, type: 3}
+  sellVFX: {fileID: 301148217721381147, guid: 84825d483bf29034ba5c5b275a330a63, type: 3}
+  upgradeVFX: {fileID: 2958242227251421712, guid: e8bd50f74898569439464de5f239066f, type: 3}
   powerSource: {fileID: 762822935104049358}
   baseDamage: 11
   baseRange: 30
@@ -186,13 +189,16 @@ MonoBehaviour:
     _value:
       _value: 0
   scaleRotationWithFireRate: 1
+  rotationMode: 1
+  referenceTurnAngle: 120
   yPivot: {fileID: 2687526501871532275}
   xPivot: {fileID: 2687526501871532275}
   yPivotSpeed: 120
   xPivotSpeed: 120
   rotationThreshold: 5
   firePoint: {fileID: 241720310916375718}
-  upgrades: []
+  muzzleFlashVFX: {fileID: 8658030887369559006, guid: dfd4984d4a9220741bc6a683104a4165, type: 3}
+  impactVFX: {fileID: 5724295971325572397, guid: 966afbab5f6a0a8438df6618d6c9891d, type: 3}
   targetingUpdateRate: 0.5
   targetLayer:
     serializedVersion: 2
@@ -205,8 +211,7 @@ MonoBehaviour:
   isBusy: 0
   rangeIndicatorPrefab: {fileID: 7128275039639639996}
   _levelingManager: {fileID: -9131260532169113635}
-  rotationMode: 1
-  referenceTurnAngle: 120
+  upgrades: []
   _activeUpgrades: []
   pelletCount: 6
   knockbackForce: 2
