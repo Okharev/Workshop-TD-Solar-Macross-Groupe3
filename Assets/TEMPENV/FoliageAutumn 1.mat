@@ -131,12 +131,12 @@ Material:
     - _Parallax: 0.005
     - _QueueOffset: 0
     - _ReceiveShadows: 1
-    - _RimIntensity: 0.51
+    - _RimIntensity: 0.77
     - _RimPower: 5.55
     - _ShadowOffset: 1
     - _ShadowSoftness: 0.5
     - _ShadowStrength: 0.8
-    - _Smoothness: 17.9
+    - _Smoothness: 1
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
     - _SpecularIntensity: 4.79
@@ -159,11 +159,11 @@ Material:
     - _ColorBot: {r: 0.046991818, g: 0.18867922, b: 0.011569957, a: 1}
     - _ColorTop: {r: 0.2128872, g: 0.6132076, b: 0.112807065, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
-    - _RimColor: {r: 0.5016947, g: 0.4901961, b: 1, a: 1}
-    - _ShadowTint: {r: 0.43293878, g: 0.6509434, b: 0.46221393, a: 1}
+    - _RimColor: {r: 0.5479032, g: 0.85660374, b: 0.72850305, a: 1}
+    - _ShadowTint: {r: 0.7905661, g: 1, b: 0.8184906, a: 1}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
-    - _SpecularColor: {r: 1, g: 1, b: 1, a: 1}
-    - _TranslucencyColor: {r: 0.7041727, g: 1, b: 0.41320753, a: 1}
+    - _SpecularColor: {r: 0.37874714, g: 0.5018867, b: 0.26798856, a: 1}
+    - _TranslucencyColor: {r: 0.3803922, g: 0.5019608, b: 0.26666668, a: 1}
     - _WaveColor: {r: 0.31975752, g: 0.5377358, b: 0.2663314, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
