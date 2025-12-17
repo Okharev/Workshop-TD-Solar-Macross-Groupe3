@@ -76,11 +76,22 @@ namespace Enemy
         // --- AJOUT : Logique quand un ennemi meurt ---
         private void HandleEnemyDeath(GameObject enemyObj)
         {
-            // On décrémente le compteur
+            // 1. IMPORTANT : On récupère le composant pour se désabonner
+            // Cela évite que l'événement s'empile si l'ennemi est recyclé (Pool)
+            var enemyHealth = enemyObj.GetComponent<HealthComponent>();
+            if (enemyHealth != null)
+            {
+                enemyHealth.OnDeath -= HandleEnemyDeath;
+            }
+
+            // 2. On décrémente le compteur
             enemiesRemaining.Value--;
 
-            // On vérifie si la vague est finie
-            if (enemiesRemaining.Value <= 0 && IsWaveActive) OnWaveDefeated();
+            // 3. On vérifie si la vague est finie
+            if (enemiesRemaining.Value <= 0 && IsWaveActive) 
+            {
+                OnWaveDefeated();
+            }
         }
         // -----------------------------------------------------
 

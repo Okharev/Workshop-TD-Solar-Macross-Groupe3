@@ -1,6 +1,6 @@
 <ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
     <Style src="project://database/Assets/UI/WaveInfoPanel.uss?fileID=7433441132597879392&amp;guid=1e4ed89ffd114fca84e23d9ab4b2cda1&amp;type=3#WaveInfoPanel" />
-    <ui:VisualElement name="WaveInfoContainer" class="wave-info-panel">
+    <ui:VisualElement name="WaveInfoContainer" class="wave-info-panel" style="-unity-font-definition: url(&quot;project://database/Assets/UI/UIAssets/Nunito-VariableFont_wght.ttf?fileID=12800000&amp;guid=6fe7d516eb36ebe4982d4b41197302b1&amp;type=3#Nunito-VariableFont_wght&quot;); padding-bottom: 10px; background-image: url(&quot;project://database/Assets/UI/UIAssets/UI_Vie_G_Back%201.png?fileID=2800000&amp;guid=e0d7338f0fb412a46b3bb2d93914b9d2&amp;type=3#UI_Vie_G_Back 1&quot;); height: 148px; -unity-background-image-tint-color: rgb(105, 144, 164);">
         <ui:Label name="WaveTitleLabel" text="WAVE 1" class="wave-title" />
         <ui:VisualElement name="CombatStateContainer">
             <ui:Label name="EnemyCountLabel" text="Enemies: 12 / 20" class="wave-text" />

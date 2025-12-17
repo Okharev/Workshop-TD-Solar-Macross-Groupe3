@@ -1,31 +1,15 @@
 <ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
     <Style src="project://database/Assets/UI/NexusHealth.uss?fileID=7433441132597879392&amp;guid=bbe5a8acdea6dfa4caf8da7ff17b6337&amp;type=3#NexusHealth" />
-    <ui:VisualElement name="HUD-Container" class="hud-container">
-        <ui:VisualElement name="Linear-Bars-Wrapper" class="bars-wrapper">
-            <ui:VisualElement name="Health-Bar-Track" class="linear-track" style="height: 30px;">
-                <ui:VisualElement name="Bar-Mask" class="bar-mask top-bar">
-                    <ui:VisualElement name="Health-Fill" class="linear-fill health-color" />
-                    <ui:Image name="GrungeOverlay" picking-mode="Ignore" class="grunge-overlay" style="background-image: url(&quot;project://database/Assets/UI/UIAssets/UI_Vie_G_Vide.png?fileID=2800000&amp;guid=627045a9cfe93f54f8cf655476df8313&amp;type=3#UI_Vie_G_Vide&quot;); -unity-background-image-tint-color: rgba(255, 255, 255, 0.43);" />
-                </ui:VisualElement>
-                <ui:Image name="BranchOverlay" picking-mode="Ignore" class="branch-overlay" style="-unity-background-scale-mode: scale-to-fit; scale: 1 1;" />
-            </ui:VisualElement>
-            <ui:VisualElement name="Mana-Bar-Track" class="linear-track bottom-bar" style="height: 30px; -unity-text-align: upper-left; align-self: auto; align-items: auto; justify-content: center; -unity-font-definition: url(&quot;project://database/Assets/UI/UIAssets/Nunito-VariableFont_wght.ttf?fileID=12800000&amp;guid=6fe7d516eb36ebe4982d4b41197302b1&amp;type=3#Nunito-VariableFont_wght&quot;); flex-direction: row-reverse;">
-                <ui:Label text="100&#10;" name="Amount" style="-unity-text-align: upper-left; color: rgb(230, 230, 230); font-size: 18px; margin-top: 0; margin-right: 0; margin-bottom: 0; margin-left: 0; padding-left: 0; padding-right: 0; padding-top: 0; padding-bottom: 0; -unity-font-style: bold;">
-                    <Bindings>
-                        <ui:DataBinding property="text" data-source-path="currentMoney._value" data-source-type="Economy.CurrencyManager, Assembly-CSharp" binding-mode="ToTarget" />
-                    </Bindings>
-                </ui:Label>
-                <ui:Image name="ScrapsIcon" class="resource-icon" style="background-image: url(&quot;project://database/Assets/UI/UIAssets/UI_scraps.png?fileID=2800000&amp;guid=83501a55ef6d77e429f9e747024d1e10&amp;type=3#UI_scraps&quot;); align-items: auto; align-self: center; align-content: auto; width: 35px; height: 35px; margin-left: 0; margin-right: 8px;" />
-            </ui:VisualElement>
+    <ui:VisualElement name="Linear-Bars-Wrapper" class="bars-wrapper" style="margin-left: 0; align-items: flex-start; width: 251px;">
+        <ui:VisualElement style="flex-grow: 1; padding-top: 1px; padding-right: 1px; padding-bottom: 1px; padding-left: 1px; background-color: rgb(96, 144, 164); border-top-left-radius: 18px; border-top-right-radius: 18px; border-bottom-right-radius: 18px; border-bottom-left-radius: 18px; margin-bottom: 3px; align-items: auto; align-self: flex-end; color: rgb(255, 255, 255);">
+            <ui:Label text="Nexus" style="-unity-font-definition: url(&quot;project://database/Assets/UI/UIAssets/Nunito-VariableFont_wght.ttf?fileID=12800000&amp;guid=6fe7d516eb36ebe4982d4b41197302b1&amp;type=3#Nunito-VariableFont_wght&quot;); -unity-font-style: bold; font-size: 24px; color: rgb(255, 255, 255);" />
         </ui:VisualElement>
-        <ui:VisualElement name="Radial-Wrapper" class="radial-wrapper">
-            <UI.RadialProgress line-width="25" progress="100" name="NexusHealth" style="height: 89px; background-size: 100px 100px; width: 94px;">
-                <Bindings>
-                    <ui:DataBinding property="Progress" data-source-path="currentHealth._value" data-source-type="Enemy.HealthComponent, Assembly-CSharp" binding-mode="ToTarget" />
-                    <ui:DataBinding property="MaxValue" data-source-path="maxHealth" data-source-type="Enemy.HealthComponent, Assembly-CSharp" binding-mode="ToTarget" />
-                    <ui:DataBinding property="CurrentValue" data-source-path="currentHealth._value" data-source-type="Enemy.HealthComponent, Assembly-CSharp" binding-mode="ToTarget" />
-                </Bindings>
-            </UI.RadialProgress>
+        <ui:VisualElement name="Health-Bar-Track" class="linear-track" style="height: 30px;">
+            <ui:VisualElement name="Bar-Mask" class="bar-mask top-bar">
+                <ui:VisualElement name="Health-Fill" class="linear-fill health-color" />
+                <ui:Image name="GrungeOverlay" picking-mode="Ignore" class="grunge-overlay" style="background-image: url(&quot;project://database/Assets/UI/UIAssets/UI_Vie_G_Vide.png?fileID=2800000&amp;guid=627045a9cfe93f54f8cf655476df8313&amp;type=3#UI_Vie_G_Vide&quot;); -unity-background-image-tint-color: rgba(255, 255, 255, 0.43);" />
+            </ui:VisualElement>
+            <ui:Image name="BranchOverlay" picking-mode="Ignore" class="branch-overlay" style="-unity-background-scale-mode: scale-to-fit; scale: 1 1;" />
         </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

@@ -1,11 +1,15 @@
 <ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
     <Style src="project://database/Assets/UI/MainMenu.uss?fileID=7433441132597879392&amp;guid=7cdfd1572533ea64c928789fe567a989&amp;type=3#MainMenu" />
-    <ui:VisualElement style="flex-grow: 1; justify-content: center; align-content: auto; align-items: center; border-top-left-radius: 25px; border-top-right-radius: 25px; border-bottom-right-radius: 25px; border-bottom-left-radius: 25px; background-image: url(&quot;project://database/Assets/UI/UIAssets/Menu_principal.png?fileID=2800000&amp;guid=b20bf95419e742b47bb11aa5d9f1cc90&amp;type=3#Menu_principal&quot;);">
-        <ui:Button text="Play" name="ButtonPlay" class="button-menu" />
-        <ui:Button text="Options" name="ButtonOptions" class="button-menu" />
-        <ui:Button text="Credits" name="ButtonCredits" class="button-menu" />
-        <ui:Button text="Zoo" name="ButtonZoo" class="button-menu" />
-        <ui:Button text="Leave" name="ButtonLeave" class="button-menu" />
+    <ui:VisualElement name="VisualElement" style="flex-grow: 1; background-image: url(&quot;project://database/Assets/UI/UIAssets/KEY_art.png?fileID=2800000&amp;guid=eb865e657894546419a5b991c3511008&amp;type=3#KEY_art&quot;);">
+        <ui:VisualElement name="VisualElement" style="flex-grow: 1;" />
+        <ui:VisualElement style="flex-grow: 1;" />
+        <ui:VisualElement style="flex-grow: 1; justify-content: flex-end; align-content: auto; align-items: center; border-top-left-radius: 25px; border-top-right-radius: 25px; border-bottom-right-radius: 25px; border-bottom-left-radius: 25px; background-image: none; height: 75%; min-height: 75%; padding-top: 0; margin-bottom: 39px;">
+            <ui:Button text="Play" name="ButtonPlay" class="button-menu" />
+            <ui:Button text="Options" name="ButtonOptions" class="button-menu" />
+            <ui:Button text="Credits" name="ButtonCredits" class="button-menu" />
+            <ui:Button text="Zoo" name="ButtonZoo" class="button-menu" />
+            <ui:Button text="Leave" name="ButtonLeave" class="button-menu" />
+        </ui:VisualElement>
     </ui:VisualElement>
-    <ui:VisualElement name="Fader" class="fader" picking-mode="Ignore" />
+    <ui:VisualElement name="Fader" picking-mode="Ignore" class="fader" />
 </ui:UXML>

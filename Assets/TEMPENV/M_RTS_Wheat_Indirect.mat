@@ -150,7 +150,7 @@ Material:
     - _WaveOpacity: 0.196
     - _WindDirX: 1
     - _WindDirZ: 0.4
-    - _WindMultiplier: 0.47
+    - _WindMultiplier: 0.2
     - _WindScale: 0.05
     - _WindSpeed: 1
     - _WindStrength: 0.85

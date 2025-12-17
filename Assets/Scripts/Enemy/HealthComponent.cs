@@ -19,8 +19,12 @@ namespace Enemy
 
         private void Start()
         {
-            var waveManager = FindAnyObjectByType<WaveManager>();
-            if (waveManager) waveManager.RegisterEnemy(this);
+            if (CompareTag("Enemy"))
+            {
+                var waveManager = FindAnyObjectByType<WaveManager>();
+            
+                if (waveManager) waveManager.RegisterEnemy(this);
+            }
         }
 
         public event Action<GameObject> OnDeath;
