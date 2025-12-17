@@ -296,7 +296,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Towers.TowerDerived.TowerGun
   displayName: Gun
-  description: Gun description
+  description: "50 tension \n8 DMG \n40 range \n2 fire rate"
   icon: {fileID: 21300000, guid: 7dc624ecbdf51c74a811be28016efbbc, type: 3}
   currentLevelPrefab: {fileID: 5607425079627833002}
   nextLevelPrefab: {fileID: 5607425079627833002}

@@ -75,7 +75,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Towers.TowerSlow
   displayName: Slow
-  description: Slow description
+  description: "Slow ennemies in the area\n100 tension \n35 range\n30% slowness"
   icon: {fileID: 21300000, guid: a449de40eade09d44b3549106696771c, type: 3}
   currentLevelPrefab: {fileID: 5607425079627833002}
   nextLevelPrefab: {fileID: 5607425079627833002}
