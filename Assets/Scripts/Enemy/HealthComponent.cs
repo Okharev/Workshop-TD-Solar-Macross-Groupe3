@@ -37,9 +37,11 @@ namespace Enemy
                 
                 if (onDeathVfx)
                 {
-                    Instantiate(onDeathVfx,
+                    var vfx = Instantiate(onDeathVfx,
                         new Vector3(transform.position.x, transform.position.y + 1.0f, transform.position.z),
                         Quaternion.identity);
+                    
+                    Destroy(vfx, 2.3f);
                 }
 
                 Destroy(gameObject);
