@@ -124,36 +124,50 @@ public sealed class GrassRenderer : MonoBehaviour
         occluderBuffer = new ComputeBuffer(200, sizeof(float) * 4);
     }
 
-    void Update()
+void Update()
     {
         if (allInstancesBuffer == null || instanceCount == 0) return;
 
-        // --- Mise à jour des Occluders ---
         UpdateOccluders();
-        // ---------------------------------
 
         visibleInstancesBuffer.SetCounterValue(0);
 
         cullingComputeShader.SetBuffer(0, "_AllInstances", allInstancesBuffer);
         cullingComputeShader.SetBuffer(0, "_VisibleInstances", visibleInstancesBuffer);
-        
-        // --- Envoi des occluders au Shader ---
         cullingComputeShader.SetBuffer(0, "_Occluders", occluderBuffer);
         cullingComputeShader.SetInt("_OccluderCount", activeOccluders.Count);
-        // -------------------------------------
-
-        // --- AJOUT : Envoi de l'option de debug ---
-        // Si renderAllGrass est vrai, on envoie 1, sinon 0
         cullingComputeShader.SetInt("_RenderAll", renderAllGrass ? 1 : 0);
-        // ------------------------------------------
 
         Matrix4x4 vp = UnityEngine.Camera.main.projectionMatrix * UnityEngine.Camera.main.worldToCameraMatrix;
         cullingComputeShader.SetMatrix("_VPMatrix", vp);
         cullingComputeShader.SetVector("_CamPos", UnityEngine.Camera.main.transform.position);
         cullingComputeShader.SetFloat("_MaxDistance", drawDistance);
-        
-        int groups = Mathf.CeilToInt(instanceCount / 64f);
-        cullingComputeShader.Dispatch(0, groups, 1, 1);
+
+        // --- CORRECTION DU DISPATCH ---
+        // 1. On définit la limite matérielle (65535 groupes max par axe)
+        int maxGroupsX = 65535; 
+        int threadGroupSize = 64; // Doit correspondre au [numthreads(64, 1, 1)]
+
+        // 2. On calcule le nombre total de groupes nécessaires
+        int totalGroups = Mathf.CeilToInt(instanceCount / (float)threadGroupSize);
+
+        // 3. On divise ces groupes en X et Y
+        int dispatchX = totalGroups;
+        int dispatchY = 1;
+
+        if (dispatchX > maxGroupsX)
+        {
+            dispatchX = maxGroupsX;
+            dispatchY = Mathf.CeilToInt(totalGroups / (float)maxGroupsX);
+        }
+
+        // 4. On envoie la "largeur" (Stride) au shader pour qu'il puisse recalculer l'index
+        // La largeur est le nombre de groupes X * taille du groupe
+        cullingComputeShader.SetInt("_DispatchStride", dispatchX * threadGroupSize);
+
+        // 5. On lance le calcul avec les nouvelles dimensions
+        cullingComputeShader.Dispatch(0, dispatchX, dispatchY, 1);
+        // -----------------------------
 
         ComputeBuffer.CopyCount(visibleInstancesBuffer, argsBuffer, 4); 
 

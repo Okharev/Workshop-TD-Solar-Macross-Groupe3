@@ -12,6 +12,7 @@ float3 _CamPos;
 
 // --- AJOUT : Variable pour forcer le rendu ---
 int _RenderAll; 
+int _DispatchStride;
 // ---------------------------------------------
 
 float RandomNoise(float2 pos)
@@ -60,12 +61,19 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 {
     uint count, stride;
     _AllInstances.GetDimensions(count, stride);
-    if (id.x >= count) return;
 
-    float4 instanceData = _AllInstances[id.x];
+    // --- MODIFICATION : Calcul de l'index 1D à partir de la grille 2D ---
+    // On combine la position X et Y pour retrouver notre index linéaire
+    uint index = id.x + id.y * _DispatchStride;
+    // --------------------------------------------------------------------
+
+    if (index >= count) return; // On utilise 'index' au lieu de 'id.x'
+
+    // Utilise 'index' pour récupérer les données
+    float4 instanceData = _AllInstances[index];
     
     if (IsVisible(instanceData.xyz))
     {
         _VisibleInstances.Append(instanceData);
     }
-}   
+}
