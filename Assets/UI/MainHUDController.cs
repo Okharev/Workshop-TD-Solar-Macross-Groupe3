@@ -196,6 +196,8 @@ public class InfoPanelView : IDisposable
         }
     }
 }
+
+
     
     public class ObjectivesPanelView
     {
@@ -482,37 +484,87 @@ public class InfoPanelView : IDisposable
         }
     }
     
-    [RequireComponent(typeof(UIDocument))]
+    public class NexusLinearView : IDisposable
+    {
+        private readonly VisualElement _fillElement;
+        private readonly HealthComponent _healthComponent;
+        private readonly IDisposable _healthSubscription;
+
+        public NexusLinearView(VisualElement root, HealthComponent healthComponent)
+        {
+            _healthComponent = healthComponent;
+            
+            // On cherche l'élément "Health-Fill" défini dans ton UXML 
+            _fillElement = root.Q("Health-Fill");
+
+            if (_fillElement == null)
+            {
+                Debug.LogWarning("[NexusLinearView] 'Health-Fill' introuvable dans le UXML.");
+                return;
+            }
+
+            if (_healthComponent != null)
+            {
+                // Mise à jour initiale
+                UpdateFill(_healthComponent.CurrentHealth.Value);
+
+                // Abonnement aux changements (ReactiveProperty)
+                _healthSubscription = _healthComponent.CurrentHealth.Subscribe(UpdateFill);
+            }
+        }
+
+        private void UpdateFill(int currentHealth)
+        {
+            if (_fillElement == null) return;
+
+            // Calcul du pourcentage (0.0 à 1.0)
+            float max = _healthComponent.MaxHealth > 0 ? _healthComponent.MaxHealth : 100f;
+            float ratio = Mathf.Clamp01((float)currentHealth / max);
+
+            // Application à la largeur en pourcentage
+            _fillElement.style.width = Length.Percent(ratio * 100f);
+        }
+
+        public void Dispose()
+        {
+            _healthSubscription?.Dispose();
+        }
+    }
+    
+[RequireComponent(typeof(UIDocument))]
     public class MainHUDController : MonoBehaviour
     {
-        [Header("Game Dependencies")] [SerializeField]
-        private WaveManager _waveManager;
+        [Header("Game Dependencies")] 
+        [SerializeField] private WaveManager _waveManager;
         
-        [SerializeField] private HealthComponent _nexus;
-
+        [Header("Nexus & Objectives")]
+        [SerializeField] private HealthComponent _nexus; // C'est celui qu'on va utiliser !
         [SerializeField] private DestructibleObjective _mainBase;
         [SerializeField] private DestructibleObjective _northPylon;
         [SerializeField] private DestructibleObjective _southPylon;
+
         [Header("Minimap")]
         [SerializeField] private RenderTexture _minimapTexture;
+        [SerializeField] private UnityEngine.Camera _minimapCamera;
+        [SerializeField] private FreeFlyCamera _playerCamera;
+
         [Header("Currency")]
         [SerializeField] private CurrencyManager _currencyManager;
-
-        [Header("Minimap Interaction")]
-        [SerializeField] private UnityEngine.Camera _minimapCamera; // Référence à la caméra Ortho du ciel
-        [SerializeField] private FreeFlyCamera _playerCamera;
         
         [Header("Building System")]
-        [SerializeField]
-        private List<BuildingEntity> _availableBuildings;
+        [SerializeField] private List<BuildingEntity> _availableBuildings;
 
-        private BuildingBarView _buildingBar;
-
-        // Les références aux sous-vues
+        // --- VUES ---
         private InfoPanelView _infoPanel;
         private ObjectivesPanelView _objectivesPanel;
         private WavePanelView _wavePanel;
-        private RadialProgress _nexusPanel;
+        private BuildingBarView _buildingBar;
+        
+        // Nouvelle référence pour la barre linéaire
+        private NexusLinearView _nexusLinearView;
+        
+        // Anciennes références (tu peux les garder si tu utilises les deux)
+        private RadialProgress _nexusRadialPanel;
         private Label _labelAmount;
 
         private void OnEnable()
@@ -520,49 +572,52 @@ public class InfoPanelView : IDisposable
             var doc = GetComponent<UIDocument>();
             var root = doc.rootVisualElement;
 
-            var nexusRoot = root.Q("NexusHealthInstance");
-            if (nexusRoot != null)
-                _wavePanel = new WavePanelView(nexusRoot, _waveManager);
-            
-            // 1. Initialiser le Wave Panel
+            // 1. Initialisation des Vagues
             var waveRoot = root.Q("WaveInfoContainer") ?? root.Q("WavePanelInstance");
-            
-            if (waveRoot != null)
-                _wavePanel = new WavePanelView(waveRoot, _waveManager);
-            else
-                Debug.LogWarning("WavePanel UI not found!");
+            if (waveRoot != null) _wavePanel = new WavePanelView(waveRoot, _waveManager);
 
-            // 2. Initialiser l'Info Panel
+            // 2. Initialisation du Panneau d'Infos
             var infoRoot = root.Q("InfoPanelInstance");
-            if (infoRoot != null)
-                _infoPanel = new InfoPanelView(infoRoot);
+            if (infoRoot != null) _infoPanel = new InfoPanelView(infoRoot);
 
-            // 3. Initialiser les Objectifs
+            // 3. Initialisation des Objectifs
             _objectivesPanel = new ObjectivesPanelView(root, _mainBase, _northPylon, _southPylon);
 
-            _nexusPanel = root.Q<RadialProgress>("NexusHealth");
-            _nexusPanel.dataSource = _nexus;
-            
-            _labelAmount = root.Q<Label>("Amount");
-            _labelAmount.dataSource = _currencyManager;
+            // 4. Initialisation de la Barre de Vie Linéaire (NOUVEAU)
+            // On passe 'root' car 'Health-Fill' est dans le HUD-Container principal
+            if (_nexus != null)
+            {
+                _nexusLinearView = new NexusLinearView(root, _nexus);
+            }
 
+            // 5. Initialisation du Radial (Si tu veux le garder aussi)
+            _nexusRadialPanel = root.Q<RadialProgress>("NexusHealth");
+            if (_nexusRadialPanel != null && _nexus != null)
+            {
+                _nexusRadialPanel.dataSource = _nexus;
+            }
+            
+            // 6. Argent
+            _labelAmount = root.Q<Label>("Amount");
+            if (_labelAmount != null) _labelAmount.dataSource = _currencyManager;
+
+            // 7. Barre de construction
             var buildingRoot = root.Q("BuildingBarInstance");
             if (buildingRoot != null)
             {
-                Debug.Log("sdfsdfsdfsdfs");
                 _buildingBar = new BuildingBarView(buildingRoot, _availableBuildings, OnBuildingSelected);
             }
-            else
-            {
-                Debug.LogWarning("BuildingBarInstance introuvable dans le UXML.");
-            }
             
+            // 8. Minimap
+            SetupMinimap(root);
+        }
+
+        private void SetupMinimap(VisualElement root)
+        {
             var minimapRender = root.Q<VisualElement>("MinimapRender");
             if (minimapRender != null && _minimapTexture != null)
             {
                 minimapRender.style.backgroundImage = Background.FromRenderTexture(_minimapTexture);
-                
-                // Enregistrement du clic (PointerDown est mieux que Click pour la réactivité)
                 minimapRender.RegisterCallback<PointerDownEvent>(evt => OnMinimapClicked(evt, minimapRender));
             }
         }
@@ -570,34 +625,17 @@ public class InfoPanelView : IDisposable
         private void OnMinimapClicked(PointerDownEvent evt, VisualElement element)
         {
             if (_minimapCamera == null || _playerCamera == null) return;
-
-            // 1. Convertir la position de la souris (pixels locaux) en coordonnées normalisées (0 à 1)
-            // L'origine (0,0) dans UI Toolkit est en HAUT à gauche.
             Vector2 localPos = evt.localPosition;
             float normalizedX = localPos.x / element.contentRect.width;
             float normalizedY = localPos.y / element.contentRect.height;
-
-            // 2. Convertir en Viewport Point pour la caméra Minimap
-            // Dans Unity Caméra, (0,0) est en BAS à gauche. Il faut inverser Y.
-            Vector3 viewportPoint = new Vector3(normalizedX, 1f - normalizedY, 0f);
-
-            // 3. Convertir en point dans le monde
-            // ViewportToWorldPoint projette depuis la caméra.
-            // Z correspond à la distance depuis la caméra. Comme elle est en haut (ex: Y=100), 
-            // on veut projeter sur le sol.
             
-            // Méthode Raycast (plus précise) :
-            Ray ray = _minimapCamera.ViewportPointToRay(viewportPoint);
-            Plane groundPlane = new Plane(Vector3.up, Vector3.zero); // Plan au sol (Y=0)
+            // Raycast depuis la caméra Minimap vers le sol
+            Ray ray = _minimapCamera.ViewportPointToRay(new Vector3(normalizedX, 1f - normalizedY, 0f));
+            Plane groundPlane = new Plane(Vector3.up, Vector3.zero);
 
             if (groundPlane.Raycast(ray, out float enter))
             {
-                Vector3 targetWorldPos = ray.GetPoint(enter);
-                
-                // 4. Déplacer le joueur
-                _playerCamera.TeleportTo(targetWorldPos);
-                
-                Debug.Log($"Minimap Clicked! Moving to {targetWorldPos}");
+                _playerCamera.TeleportTo(ray.GetPoint(enter));
             }
         }
 
@@ -605,12 +643,11 @@ public class InfoPanelView : IDisposable
         {
             _infoPanel?.Dispose();
             _wavePanel?.Dispose();
+            _nexusLinearView?.Dispose(); // Ne pas oublier de nettoyer l'abonnement !
         }
 
         private void OnBuildingSelected(BuildingEntity data)
         {
-            Debug.Log($"[MainHUD] Joueur veut construire : {data.name} pour {data.cost} or.");
-
             PlacementManager.Instance.StartPlacement(data);
         }
     }

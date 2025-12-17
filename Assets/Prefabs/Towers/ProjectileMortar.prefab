@@ -97,7 +97,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Towers.ProjectileDerived.MortarBomb
   source: {fileID: 0}
   rigidbody: {fileID: 455617667321049896}
-  vfxImpact: {fileID: 9015756034493682395, guid: 0cd026b6824ddc34a9cb7f71e2fced54, type: 3}
+  vfxImpact: {fileID: 301148217721381147, guid: 84825d483bf29034ba5c5b275a330a63, type: 3}
 --- !u!1001 &7551342938968025966
 PrefabInstance:
   m_ObjectHideFlags: 0

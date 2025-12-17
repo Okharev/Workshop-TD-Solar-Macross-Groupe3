@@ -5,6 +5,7 @@
     <ui:Template name="InfoPanelTemplate" src="project://database/Assets/UI/InfoPanel.uxml?fileID=9197481963319205126&amp;guid=9845de91a8cc2ba4a97fa959f6e2d2ab&amp;type=3#InfoPanel" />
     <ui:Template name="BuildingBarPanelTemplate" src="project://database/Assets/UI/BuildingBarPanel.uxml?fileID=9197481963319205126&amp;guid=326864c4138978846b20e21745c0a539&amp;type=3#BuildingBarPanel" />
     <Style src="project://database/Assets/UI/MainHUD.uss?fileID=7433441132597879392&amp;guid=5d8070681b9bcdc4498a14543835ab31&amp;type=3#MainHUD" />
+    <Style src="project://database/Assets/UI/NexusHealth.uss?fileID=7433441132597879392&amp;guid=bbe5a8acdea6dfa4caf8da7ff17b6337&amp;type=3#NexusHealth" />
     <ui:VisualElement name="HUD_Root" picking-mode="Ignore" class="hud-root">
         <ui:VisualElement name="LeftSidebar" picking-mode="Ignore" class="left-sidebar" style="width: 200px;">
             <ui:Instance template="NexusHealth" name="TemplateContainer" />
@@ -13,16 +14,25 @@
         </ui:VisualElement>
         <ui:Instance template="WaveInfoPanel" />
         <ui:VisualElement name="RightSidebar" picking-mode="Ignore" class="right-sidebar" style="border-left-color: rgba(0, 0, 0, 0); border-right-color: rgba(0, 0, 0, 0); border-top-color: rgba(0, 0, 0, 0); border-bottom-color: rgba(0, 0, 0, 0); color: rgb(224, 224, 224);">
-            <ui:VisualElement name="Minimap-Wrapper" class="minimap-wrapper">
-
-                <ui:VisualElement name="MinimapContainer" class="minimap-mask" style="border-top-left-radius: 100px; border-top-right-radius: 100px; border-bottom-right-radius: 100px; border-bottom-left-radius: 100px;">
-                    <ui:VisualElement name="MinimapRender" class="minimap-render" />
+            <ui:VisualElement name="VisualElement" style="flex-grow: 1; min-height: 10px; max-height: 55px;">
+                <ui:VisualElement name="VisualElement" class="currency-container" style="-unity-font-definition: url(&quot;project://database/Assets/UI/UIAssets/Nunito-VariableFont_wght.ttf?fileID=12800000&amp;guid=6fe7d516eb36ebe4982d4b41197302b1&amp;type=3#Nunito-VariableFont_wght&quot;); background-color: rgb(79, 102, 119); border-top-left-radius: 20px; border-top-right-radius: 20px; border-bottom-right-radius: 20px; border-bottom-left-radius: 20px;">
+                    <ui:VisualElement class="icon" style="background-image: url(&quot;project://database/Assets/UI/UIAssets/UI_scraps.png?fileID=2800000&amp;guid=83501a55ef6d77e429f9e747024d1e10&amp;type=3#UI_scraps&quot;);" />
+                    <ui:Label text="500" name="Amount" class="amount-text">
+                        <Bindings>
+                            <ui:DataBinding property="text" data-source-path="currentMoney._value" data-source-type="Economy.CurrencyManager, Assembly-CSharp" binding-mode="ToTarget" />
+                        </Bindings>
+                    </ui:Label>
                 </ui:VisualElement>
-
-                <ui:Image name="MinimapBorder" class="minimap-border" picking-mode="Ignore" />
-
             </ui:VisualElement>
             <ui:Instance template="InfoPanelTemplate" name="InfoPanelInstance" />
+            <ui:VisualElement name="VisualElement" style="flex-grow: 1;">
+                <ui:VisualElement name="Minimap-Wrapper" class="minimap-wrapper">
+                    <ui:VisualElement name="MinimapContainer" class="minimap-mask" style="border-top-left-radius: 100px; border-top-right-radius: 100px; border-bottom-right-radius: 100px; border-bottom-left-radius: 100px;">
+                        <ui:VisualElement name="MinimapRender" class="minimap-render" />
+                    </ui:VisualElement>
+                    <ui:Image name="MinimapBorder" picking-mode="Ignore" class="minimap-border" />
+                </ui:VisualElement>
+            </ui:VisualElement>
         </ui:VisualElement>
         <ui:Instance template="BuildingBarPanelTemplate" name="BuildingBarInstance" />
     </ui:VisualElement>

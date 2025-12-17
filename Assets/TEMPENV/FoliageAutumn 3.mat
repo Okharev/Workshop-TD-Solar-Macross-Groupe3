@@ -126,7 +126,7 @@ Material:
     - _LeafFlutter: 0.18
     - _LightThreshold: 0.5
     - _Metallic: 0
-    - _NormalSpherize: 0.366
+    - _NormalSpherize: 0.564
     - _OcclusionStrength: 0.496
     - _Parallax: 0.005
     - _QueueOffset: 0
@@ -159,7 +159,7 @@ Material:
     - _ColorBot: {r: 0.05895337, g: 0.16981131, b: 0.031238876, a: 1}
     - _ColorTop: {r: 0.44541135, g: 0.82641506, b: 0.347718, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
-    - _RimColor: {r: 0.5016947, g: 0.4901961, b: 1, a: 1}
+    - _RimColor: {r: 0.5848084, g: 0.8867924, b: 0.5069775, a: 1}
     - _ShadowTint: {r: 0.110137075, g: 0.31132078, b: 0.13887759, a: 1}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
     - _SpecularColor: {r: 1, g: 1, b: 1, a: 1}

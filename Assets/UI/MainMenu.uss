@@ -17,18 +17,18 @@
 
 .button-menu {
     background-color: rgba(170, 240, 225, 0.5);
-    border-top-left-radius: 52px;
-    border-top-right-radius: 52px;
-    border-bottom-right-radius: 52px;
-    border-bottom-left-radius: 52px;
-    font-size: 58px;
+    border-top-left-radius: 34px;
+    border-top-right-radius: 34px;
+    border-bottom-right-radius: 34px;
+    border-bottom-left-radius: 34px;
+    font-size: 34px;
     -unity-font-definition: url("project://database/Assets/UI/UIAssets/space%20Xrebron.ttf?fileID=12800000&guid=07da749f81306ef4ab98e07a2320e5c6&type=3#space Xrebron");
     -unity-text-align: upper-left;
-    padding-top: 15px;
-    padding-bottom: 15px;
-    padding-left: 30px;
-    padding-right: 30px;
-    margin-bottom: 30px;
+    padding-top: 19px;
+    padding-bottom: 19px;
+    padding-left: 19px;
+    padding-right: 19px;
+    margin-bottom: 6px;
     color: rgb(255, 255, 255);
     -unity-font-style: bold;
     border-left-color: rgb(98, 130, 123);
@@ -44,28 +44,32 @@
     border-right-width: 3px;
     border-bottom-width: 3px;
     border-left-width: 3px;
+    margin-top: 6px;
+    margin-right: 6px;
+    margin-left: 6px;
+    transition-property: background-color;
 }
 
 .button-menu:hover {
-    background-color: rgb(170, 240, 225);
-    border-top-left-radius: 52px;
-    border-top-right-radius: 52px;
-    border-bottom-right-radius: 52px;
-    border-bottom-left-radius: 52px;
-    font-size: 58px;
+    background-color: rgba(170, 240, 225, 0.5);
+    border-top-left-radius: 34px;
+    border-top-right-radius: 34px;
+    border-bottom-right-radius: 34px;
+    border-bottom-left-radius: 34px;
+    font-size: 34px;
     -unity-font-definition: url("project://database/Assets/UI/UIAssets/space%20Xrebron.ttf?fileID=12800000&guid=07da749f81306ef4ab98e07a2320e5c6&type=3#space Xrebron");
     -unity-text-align: upper-left;
-    padding-top: 15px;
-    padding-bottom: 15px;
-    padding-left: 30px;
-    padding-right: 30px;
-    margin-bottom: 30px;
+    padding-top: 19px;
+    padding-bottom: 19px;
+    padding-left: 19px;
+    padding-right: 19px;
+    margin-bottom: 6px;
     color: rgb(255, 255, 255);
     -unity-font-style: bold;
-    border-left-color: rgb(98, 130, 123);
-    border-right-color: rgb(98, 130, 123);
-    border-top-color: rgb(98, 130, 123);
-    border-bottom-color: rgb(98, 130, 123);
+    border-left-color: rgb(133, 188, 176);
+    border-right-color: rgb(133, 188, 176);
+    border-top-color: rgb(133, 188, 176);
+    border-bottom-color: rgb(133, 188, 176);
     background-image: none;
     background-position-x: right 0;
     background-position-y: bottom 0;
@@ -75,7 +79,8 @@
     border-right-width: 3px;
     border-bottom-width: 3px;
     border-left-width: 3px;
+    margin-top: 6px;
+    margin-right: 6px;
+    margin-left: 6px;
     transition-property: background-color;
-    transition-duration: 0.3s;
-    transition-timing-function: ease-in-out-cubic;
 }
