@@ -7,8 +7,8 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: M_RTS_Cloud
-  m_Shader: {fileID: 4800000, guid: 3c29ab77449386c4dbfe7f813b52f606, type: 3}
+  m_Name: MI_ BrokenGlassHouse_01
+  m_Shader: {fileID: -6465566751694194690, guid: 6b46e49aa5a084448a685fcf3b4b8a88, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
@@ -24,8 +24,16 @@ Material:
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
+    - _AO:
+        m_Texture: {fileID: 2800000, guid: df4e1574179910047911c4e3ca963517, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _BaseMap:
         m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Basecolor:
+        m_Texture: {fileID: 2800000, guid: 82c630be550596149b0593295c9fc5ad, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _BumpMap:
@@ -48,20 +56,28 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _Emissive:
+        m_Texture: {fileID: 2800000, guid: f1054778754776a41b1a5639eceb83da, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _MainTex:
         m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Metalic:
+        m_Texture: {fileID: 2800000, guid: df4e1574179910047911c4e3ca963517, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MetallicGlossMap:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
-    - _NoiseMap:
-        m_Texture: {fileID: 2800000, guid: 798e2ce9dcc3c7b44b3d79994dadcf74, type: 3}
+    - _NormalMap:
+        m_Texture: {fileID: 2800000, guid: 0c44f900a87cfac4eb84f31c2921813c, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
-    - _NoiseTex:
-        m_Texture: {fileID: 2800000, guid: 798e2ce9dcc3c7b44b3d79994dadcf74, type: 3}
+    - _ORM_Oclusion_Roughtess_Metal:
+        m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _OcclusionMap:
@@ -70,6 +86,10 @@ Material:
         m_Offset: {x: 0, y: 0}
     - _ParallaxMap:
         m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Smoothness:
+        m_Texture: {fileID: 2800000, guid: df4e1574179910047911c4e3ca963517, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _SpecGlossMap:
@@ -91,115 +111,57 @@ Material:
     m_Ints: []
     m_Floats:
     - _AddPrecomputedVelocity: 0
-    - _Alpha: 1
     - _AlphaClip: 0
-    - _AlphaCutoff: 0
     - _AlphaToMask: 0
-    - _Blend: 0.068
+    - _Blend: 0
     - _BlendModePreserveSpecular: 1
-    - _BottomFlatPos: -0.109
-    - _BottomSoftness: 0.01
-    - _BoxFalloff: 0.5
     - _BumpScale: 1
     - _ClearCoatMask: 0
     - _ClearCoatSmoothness: 0
-    - _CloudSize: 0.258
     - _Cull: 2
     - _Cutoff: 0.5
-    - _Density: 1.087
     - _DetailAlbedoMapScale: 1
     - _DetailNormalMapScale: 1
-    - _DetailScale: 1
-    - _DetailStrength: 0.609
-    - _Displacement: 1
-    - _DisplacementAmount: 5
-    - _DisplacementStrength: 0
     - _DstBlend: 0
     - _DstBlendAlpha: 0
-    - _EdgeFade: 0.217
-    - _EdgeSoftness: 0.207
+    - _EmissiveIntensity: 0
     - _EnvironmentReflections: 1
-    - _Erosion: 1.434
-    - _FlattenLevel: 0.2
-    - _FlattenSoftness: 0.1
-    - _FlattenY: 0.573
     - _GlossMapScale: 0
     - _Glossiness: 0
     - _GlossyReflections: 0
-    - _HeightVar: 0.383
-    - _L1_Amp: 1
-    - _L1_Scale: 0.5
-    - _L2_Amp: 0.3
-    - _L2_Scale: 1
-    - _L3_Amp: 0.05
-    - _L3_Scale: 4
-    - _Layers: 1.81
     - _Metallic: 0
-    - _MistRemoval: 0
-    - _NoiseScale: 0.5
-    - _NoiseStr: 0.093
-    - _NormalStrength: 1.96
+    - _MettalicValue: 0.4
+    - _NOAO: 1
     - _OcclusionStrength: 1
-    - _Padding: 0.084
     - _Parallax: 0.005
+    - _QueueControl: 0
     - _QueueOffset: 0
     - _ReceiveShadows: 1
-    - _RimPower: 2.49
-    - _Roundness: 0.497
-    - _Scale: 2
-    - _Scale1: 5
-    - _Scale2: 15
-    - _Seed: 3.59
-    - _ShadowBand: 0.5
-    - _ShadowSoftness: 1
-    - _ShadowStrength: 1
-    - _ShadowThreshold: 0.01
-    - _ShapeDeform: 1.79
-    - _ShapeDistortion: 7.8
-    - _ShapeScale: 0.1
     - _Smoothness: 0.5
     - _SmoothnessTextureChannel: 0
-    - _Softness: 1.05
+    - _SmoothnessValue: 0.5
     - _SpecularHighlights: 1
-    - _Speed: 0.1
-    - _Spread: 0.628
     - _SrcBlend: 1
     - _SrcBlendAlpha: 1
-    - _StepCount: 8
-    - _StepSize: 0.02
     - _Surface: 0
-    - _Turbulence: 0.039
-    - _WindResponsiveness: 0
-    - _WindSkew: 0.094
-    - _WindSpeed: 0
+    - _UseAO: 1
+    - _UseBaseColor: 1
+    - _UseEmissive: 0
+    - _UseMettalic: 0
+    - _UseSmoothness: 1
+    - _Use_ORM: 0
     - _WorkflowMode: 1
     - _XRMotionVectorsPass: 1
     - _ZWrite: 1
     m_Colors:
-    - _BaseColor: {r: 0.89433956, g: 0.89433956, b: 0.89433956, a: 1}
-    - _BottomColor: {r: 0.7, g: 0.7, b: 0.8, a: 1}
-    - _BoxSize: {r: 5, g: 2, b: 5, a: 0}
+    - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
-    - _ColorA: {r: 1, g: 1, b: 1, a: 1}
-    - _ColorB: {r: 0.6, g: 0.6, b: 0.7, a: 1}
-    - _DetailSpeed: {r: 0, g: 0.1, b: 0, a: 0}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
-    - _L1_Speed: {r: 0.05, g: 0, b: 0, a: 0}
-    - _L2_Speed: {r: 0.1, g: 0.05, b: 0, a: 0}
-    - _L3_Speed: {r: -0.05, g: 0.1, b: 0, a: 0}
-    - _LightDir: {r: 1, g: 1, b: 0, a: 0}
-    - _MainColor: {r: 0.8, g: 0.9, b: 1, a: 1}
-    - _NoiseSpeed: {r: 1, g: 1, b: 1, a: 1}
-    - _RimColor: {r: 0.6301887, g: 0.6301887, b: 0.6301887, a: 1}
-    - _ScrollSpeed: {r: 0.1, g: 0.05, b: 0, a: 0}
-    - _ShadowColor: {r: 0.554717, g: 0.554717, b: 0.554717, a: 1}
-    - _ShapeSpeed: {r: 0, g: 0, b: 0, a: 0}
+    - _FlatColor: {r: 1, g: 1, b: 1, a: 0}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
-    - _Speed: {r: 0.03, g: 0.03, b: 0, a: 0}
-    - _WindDir: {r: 1, g: 0, b: 0, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
---- !u!114 &6316229436205897844
+--- !u!114 &7876583544148720222
 MonoBehaviour:
   m_ObjectHideFlags: 11
   m_CorrespondingSourceObject: {fileID: 0}
